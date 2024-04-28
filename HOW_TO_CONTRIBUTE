@@ -1,0 +1,5 @@
+You can contribute by contacting Rob Izzard (rob.izzard@gmail.com) or David Hendriks (davidhendriks93@gmail.com) and asking what needs to be done,
+
+There are many TODO items scattered throughout the codebase, but its probably best to discuss with us first before making pull requests though.
+
+For new features, please make a new branch called `feature/<feature_name>`. When finished, please make a merge request to the appropriate development branch.

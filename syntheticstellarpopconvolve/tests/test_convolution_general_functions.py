@@ -1,19 +1,5 @@
 """
 Testcases for convolution_general_functions file
-
-functions to cover:
-
-TODO: merge_dict_light
-TODO: extract_arguments
-TODO: create_extended_time_bins
-TODO: create_bins_from_centers
-TODO: JsonCustomEncoder
-TODO: custom_json_serializer
-TODO: verbose_print
-TODO: vb
-TODO: handle_extra_weights_function
-TODO: calculate_origin_time_array
-TODO: calculate_digitized_sfr_rates
 """
 
 import copy

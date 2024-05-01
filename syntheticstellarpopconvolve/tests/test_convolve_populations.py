@@ -1,16 +1,5 @@
 """
 Testcases for convolve_populations file
-
-functions to cover:
-
-TODO: get_tmp_dir
-TODO: pre_multiprocessing
-TODO: post_multiprocessing
-TODO: convolution_job_worker
-TODO: convolution_queue_filler
-TODO: generate_data_dict
-TODO: multiprocess_convolution
-TODO: convolve_populations
 """
 
 import copy

@@ -8,14 +8,14 @@ import unittest
 
 import numpy as np
 
-from binarycpython import convolution_options_defaults
-from binarycpython.utils.convolution.convolution_calculate_birth_redshift_array import (
+from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve.convolution_calculate_birth_redshift_array import (
     calculate_origin_redshift_array,
 )
-from binarycpython.utils.convolution.prepare_redshift_interpolator import (
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     prepare_redshift_interpolator,
 )
-from binarycpython.utils.functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests",

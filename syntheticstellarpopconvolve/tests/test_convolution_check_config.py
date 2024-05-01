@@ -13,15 +13,15 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from binarycpython import convolution_options_defaults
-from binarycpython.utils.convolution.convolution_check_config import (
+from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve.convolution_check_config import (
     check_convolution_config,
     check_convolution_instruction,
     check_metallicity,
     check_required,
     check_sfr_dict,
 )
-from binarycpython.utils.functions import temp_dir
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_convolution_check_config", clean_path=True

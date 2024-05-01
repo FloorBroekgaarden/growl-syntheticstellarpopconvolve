@@ -124,9 +124,9 @@ def mor19_sfr(config, lookback_time):
     Input: time since birth of the Galaxy / years
     """
 
-    print(lookback_time)
+    # print(lookback_time)
 
-    lookback_time_in_Gyr = lookback_time.to(u.Gyr)
+    # lookback_time_in_Gyr = lookback_time.to(u.Gyr)
 
     # hence age in Gyr
     age_Gyr = config["cosmology"].age(0) - lookback_time

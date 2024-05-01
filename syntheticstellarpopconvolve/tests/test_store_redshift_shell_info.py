@@ -8,12 +8,12 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from binarycpython import convolution_options_defaults
-from binarycpython.utils.convolution.store_redshift_shell_info import (
+from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.store_redshift_shell_info import (
     create_shell_volume_dict,
     store_redshift_shell_info,
 )
-from binarycpython.utils.functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_store_redshift_shell_info", clean_path=True
@@ -30,10 +30,7 @@ class test_store_redshift_shell_info(unittest.TestCase):
         # Set up SFR
         convolution_config["SFR_info"] = {
             "redshift_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         #
@@ -85,10 +82,7 @@ class test_store_redshift_shell_info(unittest.TestCase):
         # Set up SFR
         convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         #

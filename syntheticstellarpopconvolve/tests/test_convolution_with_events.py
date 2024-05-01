@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from binarycpython import convolution_options_defaults, convolve
-from binarycpython.utils.functions import temp_dir
+from syntheticstellarpopconvolve import convolution_options_defaults, convolve
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_convolution_with_events", clean_path=True
@@ -55,8 +55,8 @@ class test_convolution_with_events(unittest.TestCase):
             ###############
             # Readout population settings
             population_settings_filename = pkg_resources.resource_filename(
-                "binarycpython",
-                "utils/convolution/example_data/example_population_settings.json",
+                "syntheticstellarpopconvolve",
+                "example_data/example_population_settings.json",
             )
 
             with open(population_settings_filename, "r") as f:
@@ -80,10 +80,7 @@ class test_convolution_with_events(unittest.TestCase):
         # Set up SFR
         convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
-            "starformation_array": np.array([1, 1, 1, 1, 1])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         # set up convolution bins

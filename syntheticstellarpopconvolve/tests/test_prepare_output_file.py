@@ -8,9 +8,9 @@ import unittest
 
 import h5py
 
-from binarycpython import convolution_options_defaults
-from binarycpython.utils.convolution.prepare_output_file import prepare_output_file
-from binarycpython.utils.functions import temp_dir
+from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_prepare_output_file", clean_path=True

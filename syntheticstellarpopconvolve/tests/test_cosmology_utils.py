@@ -6,13 +6,13 @@ import unittest
 
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
-from binarycpython.utils.convolution.cosmology_utils import (
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.cosmology_utils import (
     age_of_universe_to_redshift,
     lookback_time_to_redshift,
     redshift_to_age_of_universe,
     redshift_to_lookback_time,
 )
-from binarycpython.utils.functions import Capturing, temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_cosmology_utils", clean_path=True
@@ -23,10 +23,6 @@ class test_age_of_universe_to_redshift(unittest.TestCase):
     """ """
 
     def test_age_of_universe_to_redshift(self):
-        with Capturing() as _:
-            self._test_age_of_universe_to_redshift()
-
-    def _test_age_of_universe_to_redshift(self):
 
         redshift = age_of_universe_to_redshift(age_of_universe=1, cosmology=cosmo)
 
@@ -39,10 +35,6 @@ class test_lookback_time_to_redshift(unittest.TestCase):
     """ """
 
     def test_lookback_time_to_redshift(self):
-        with Capturing() as _:
-            self._test_lookback_time_to_redshift()
-
-    def _test_lookback_time_to_redshift(self):
         redshift = lookback_time_to_redshift(lookback_time=1, cosmology=cosmo)
 
         self.assertAlmostEqual(
@@ -50,10 +42,6 @@ class test_lookback_time_to_redshift(unittest.TestCase):
         )
 
     def test_lookback_time_to_redshift_at_zero(self):
-        with Capturing() as _:
-            self._test_lookback_time_to_redshift_at_zero()
-
-    def _test_lookback_time_to_redshift_at_zero(self):
 
         redshift = lookback_time_to_redshift(lookback_time=0, cosmology=cosmo)
 
@@ -69,10 +57,6 @@ class test_redshift_to_lookback_time(unittest.TestCase):
     """ """
 
     def test_redshift_to_lookback_time(self):
-        with Capturing() as _:
-            self._test_redshift_to_lookback_time()
-
-    def _test_redshift_to_lookback_time(self):
         lookback_time = redshift_to_lookback_time(redshift=1, cosmology=cosmo)
 
         self.assertAlmostEqual(
@@ -87,10 +71,6 @@ class test_redshift_to_age_of_universe(unittest.TestCase):
     """ """
 
     def test_redshift_to_age_of_universe(self):
-        with Capturing() as _:
-            self._test_redshift_to_age_of_universe()
-
-    def _test_redshift_to_age_of_universe(self):
         age_of_universe = redshift_to_age_of_universe(redshift=1, cosmology=cosmo)
 
         self.assertAlmostEqual(

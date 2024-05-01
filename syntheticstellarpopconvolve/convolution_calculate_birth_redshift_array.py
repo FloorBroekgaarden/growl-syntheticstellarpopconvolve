@@ -2,11 +2,8 @@
 Functions related to the arrays we store the
 """
 
-
 import astropy.units as u
 import numpy as np
-
-from syntheticstellarpopconvolve
 
 from syntheticstellarpopconvolve.cosmology_utils import redshift_to_lookback_time
 

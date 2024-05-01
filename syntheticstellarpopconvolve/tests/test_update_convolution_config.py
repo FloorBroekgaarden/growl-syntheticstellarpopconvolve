@@ -9,14 +9,14 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from binarycpython import convolution_options_defaults
-from binarycpython.utils.convolution.convolution_check_config import (
+from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve.convolution_check_config import (
     check_convolution_config,
 )
-from binarycpython.utils.convolution.update_convolution_config import (
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.update_convolution_config import (
     update_convolution_config,
 )
-from binarycpython.utils.functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_update_convolution_config", clean_path=True
@@ -39,10 +39,7 @@ class test_update_convolution_config(unittest.TestCase):
         # Set up SFR
         config["SFR_info"] = {
             "redshift_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         #

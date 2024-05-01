@@ -28,8 +28,8 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from binarycpython import convolution_options_defaults
-from binarycpython.utils.convolution.convolution_general_functions import (
+from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve.convolution_general_functions import (
     calculate_bincenters,
     calculate_digitized_sfr_rates,
     calculate_edge_values,
@@ -40,13 +40,13 @@ from binarycpython.utils.convolution.convolution_general_functions import (
     handle_custom_scaling_or_conversion,
     handle_extra_weights_function,
     pad_function,
+    temp_dir,
 )
-from binarycpython.utils.convolution.convolve_populations import update_sfr_dict
-from binarycpython.utils.convolution.prepare_output_file import prepare_output_file
-from binarycpython.utils.convolution.prepare_redshift_interpolator import (
+from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
+from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
+from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     prepare_redshift_interpolator,
 )
-from binarycpython.utils.functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_convolution_general_functions", clean_path=True
@@ -80,8 +80,8 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
             ###############
             # Readout population settings
             population_settings_filename = pkg_resources.resource_filename(
-                "binarycpython",
-                "utils/convolution/example_data/example_population_settings.json",
+                "syntheticstellarpopconvolve",
+                "example_data/example_population_settings.json",
             )
 
             with open(population_settings_filename, "r") as f:
@@ -105,10 +105,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * 1e9 * u.yr,
-            "starformation_array": np.array([1, 2, 3, 4, 5])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 2, 3, 4, 5]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -123,9 +120,9 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         self.convolution_config["input_filename"] = input_hdf5_filename
         self.convolution_config["output_filename"] = output_hdf5_filename
 
-        self.convolution_config[
-            "redshift_interpolator_data_output_filename"
-        ] = os.path.join(TMP_DIR, "interpolator_dict.p")
+        self.convolution_config["redshift_interpolator_data_output_filename"] = (
+            os.path.join(TMP_DIR, "interpolator_dict.p")
+        )
 
         #
         self.convolution_config["convolution_instructions"] = [
@@ -257,8 +254,8 @@ class test_handle_extra_weights_function(unittest.TestCase):
             ###############
             # Readout population settings
             population_settings_filename = pkg_resources.resource_filename(
-                "binarycpython",
-                "utils/convolution/example_data/example_population_settings.json",
+                "syntheticstellarpopconvolve",
+                "example_data/example_population_settings.json",
             )
 
             with open(population_settings_filename, "r") as f:
@@ -282,10 +279,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -300,9 +294,9 @@ class test_handle_extra_weights_function(unittest.TestCase):
         self.convolution_config["input_filename"] = input_hdf5_filename
         self.convolution_config["output_filename"] = output_hdf5_filename
 
-        self.convolution_config[
-            "redshift_interpolator_data_output_filename"
-        ] = os.path.join(TMP_DIR, "interpolator_dict.p")
+        self.convolution_config["redshift_interpolator_data_output_filename"] = (
+            os.path.join(TMP_DIR, "interpolator_dict.p")
+        )
 
         #
         self.convolution_config["convolution_instructions"] = [

@@ -6,10 +6,12 @@ TODO: allow the yield-rate and extra weights function to pass units to the ensem
 stripping the end-points we should make sure to handle that properly.
 """
 
+import collections
 import copy
 import json
 from collections import OrderedDict
 
+import astropy.units as u
 import h5py
 import numpy as np
 
@@ -22,7 +24,285 @@ from syntheticstellarpopconvolve.convolution_general_functions import (
     handle_custom_scaling_or_conversion,
     handle_extra_weights_function,
 )
-from binarycpython.utils.dicts import merge_dicts
+
+
+class AutoVivificationDict(dict):
+    """
+    Implementation of perl's autovivification feature, by overriding the
+    get item and the __iadd__ operator (https://docs.python.org/3/reference/datamodel.html?highlight=iadd#object.__iadd__)
+
+    This allows to set values within a subdict that might not exist yet:
+
+    Example:
+        newdict = {}
+        newdict['example']['mass'] += 10
+        print(newdict)
+        >>> {'example': {'mass': 10}}
+    """
+
+    def __getitem__(self, item):
+        """
+        Getitem function for the autovivication dict
+        """
+
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            value = self[item] = type(self)()
+            return value
+
+    def __iadd__(self, other):
+        """
+        iadd function (handling the +=) for the autovivication dict.
+        """
+
+        # if a value does not exist, assume it is 0.0
+        try:
+            self += other
+        except:
+            self = other
+        return self
+
+
+def merge_dicts(
+    dict_1: dict,
+    dict_2: dict,
+    use_ordereddict=True,
+    allow_matching_key_type_mismatch=True,
+) -> dict:
+    """
+    Function to merge two dictionaries in a custom way. Taken from binarycpython
+
+    Behaviour:
+
+    When dict keys are only present in one of either:
+        - we just add the content to the new dict
+
+    When dict keys are present in both, we decide based on the value types how to combine them:
+        - dictionaries will be merged by calling recursively calling this function again
+        - numbers will be added
+        - (opt) lists will be appended
+        - booleans are merged with logical OR
+        - identical strings are just set to the string
+        - non-identical strings are concatenated
+        - NoneTypes are set to None
+        - In the case that the instances do not match: for now I will raise an error
+
+    Args:
+        dict_1: first dictionary
+        dict_2: second dictionary
+
+    Returns:
+        Merged dictionary
+
+    """
+
+    # Set up new dict
+    if use_ordereddict:
+        new_dict = collections.OrderedDict()
+    else:
+        new_dict = {}
+
+    ##################
+    #
+    keys_1 = dict_1.keys()
+    keys_2 = dict_2.keys()
+
+    ##################
+    # Find overlapping keys of both dicts
+    overlapping_keys = set(keys_1).intersection(set(keys_2))
+
+    # Find the keys that are unique
+    unique_to_dict_1 = set(keys_1).difference(set(keys_2))
+    unique_to_dict_2 = set(keys_2).difference(set(keys_1))
+
+    ##################
+    # Add the unique keys to the new dict
+    for key in unique_to_dict_1:
+        # If these items are numerical or string, then just put them in
+        if isinstance(dict_1[key], ALLOWED_NUMERICAL_TYPES + (str,)):
+            new_dict[key] = dict_1[key]
+        # Else, to be safe we should deepcopy them
+        else:
+            copy_dict = dict_1[key]
+            new_dict[key] = copy_dict
+
+    for key in unique_to_dict_2:
+        # If these items are numerical or string, then just put them in
+        if isinstance(dict_2[key], ALLOWED_NUMERICAL_TYPES + (str,)):
+            new_dict[key] = dict_2[key]
+        # Else, to be safe we should deepcopy them
+        else:
+            copy_dict = dict_2[key]
+            new_dict[key] = copy_dict
+
+    ##################
+    # Go over the common keys:
+    for key in overlapping_keys:
+
+        ##################
+        # If they keys are not the same, it depends on their type whether we still deal with them at all, or just raise an error
+        if not isinstance(dict_1[key], type(dict_2[key])):
+
+            ##################
+            # Exceptions: numbers can be added
+            if isinstance(dict_1[key], ALLOWED_NUMERICAL_TYPES) and isinstance(
+                dict_2[key], ALLOWED_NUMERICAL_TYPES
+            ):
+                new_dict[key] = dict_1[key] + dict_2[key]
+
+            ##################
+            # Exceptions: versions of dicts can be merged
+            elif isinstance(
+                dict_1[key], (dict, collections.OrderedDict, type(AutoVivificationDict))
+            ) and isinstance(
+                dict_2[key], (dict, collections.OrderedDict, type(AutoVivificationDict))
+            ):
+                new_dict[key] = merge_dicts(
+                    dict_1[key],
+                    dict_2[key],
+                    use_ordereddict=use_ordereddict,
+                    allow_matching_key_type_mismatch=allow_matching_key_type_mismatch,
+                )
+
+            ##################
+            #
+            if not allow_matching_key_type_mismatch:
+                print(
+                    "Error key: {} value: {} type: {} and key: {} value: {} type: {} are not of the same type and cannot be merged".format(
+                        key,
+                        dict_1[key],
+                        type(dict_1[key]),
+                        key,
+                        dict_2[key],
+                        type(dict_2[key]),
+                    )
+                )
+                raise ValueError
+
+            ##################
+            # one key is None, just use the other
+            elif dict_1[key] is None:
+                try:
+                    new_dict[key] = dict_2[key]
+                except:
+                    msg = f"{key}: Failed to set from {dict_2[key]} when other key was of NoneType "
+                    raise ValueError(msg)
+
+            elif dict_1[key] is None:
+                try:
+                    new_dict[key] = dict_1[key]
+                except:
+                    msg = f"{key}: Failed to set from {dict_1[key]} when other key was of NoneType "
+                    raise ValueError(msg)
+
+            # string-int clash : convert both to ints and save
+            elif (
+                isinstance(dict_1[key], str)
+                and isinstance(dict_2[key], int)
+                or isinstance(dict_1[key], int)
+                and isinstance(dict_2[key], str)
+            ):
+                try:
+                    new_dict[key] = int(dict_1[key]) + int(dict_2[key])
+                except ValueError as e:
+                    msg = "{}: Failed to convert string (either '{}' or '{}') to an int".format(
+                        key, dict_1[key], dict_2[key]
+                    )
+                    raise ValueError(msg) from e
+
+            # string-float clash : convert both to floats and save
+            elif (
+                isinstance(dict_1[key], str)
+                and isinstance(dict_2[key], float)
+                or isinstance(dict_1[key], float)
+                and isinstance(dict_2[key], str)
+            ):
+                try:
+                    new_dict[key] = float(dict_1[key]) + float(dict_2[key])
+                except ValueError as e:
+                    msg = "{}: Failed to convert string (either '{}' or '{}') to an float".format(
+                        key, dict_1[key], dict_2[key]
+                    )
+                    raise ValueError(msg) from e
+
+            # If the above cases have not dealt with it, then we should raise an error
+            else:
+                msg = "merge_dicts error: key: {key} value: {value1} type: {type1} and key: {key} value: {value2} type: {type2} are not of the same type and cannot be merged".format(
+                    key=key,
+                    value1=dict_1[key],
+                    type1=type(dict_1[key]),
+                    value2=dict_2[key],
+                    type2=type(dict_2[key]),
+                )
+                raise ValueError(msg)
+
+        # Here the keys are the same type
+        # Here we check for the cases that we want to explicitly catch. Ints will be added,
+        # floats will be added, lists will be appended (though that might change) and dicts will be
+        # dealt with by calling this function again.
+        else:
+            # ints
+            # Booleans (has to be the type Bool, not just a 0 or 1)
+            if isinstance(dict_1[key], bool) and isinstance(dict_2[key], bool):
+                new_dict[key] = dict_1[key] or dict_2[key]
+
+            elif isinstance(dict_1[key], int) and isinstance(dict_2[key], int):
+                new_dict[key] = dict_1[key] + dict_2[key]
+
+            elif isinstance(dict_1[key], np.int64) and isinstance(
+                dict_2[key], np.int64
+            ):
+                new_dict[key] = dict_1[key] + dict_2[key]
+
+            # floats
+            elif isinstance(dict_1[key], float) and isinstance(dict_2[key], float):
+                new_dict[key] = dict_1[key] + dict_2[key]
+
+            # lists
+            elif isinstance(dict_1[key], list) and isinstance(dict_2[key], list):
+                new_dict[key] = dict_1[key] + dict_2[key]
+
+            # Astropy quantities (using a dummy type representing the numpy array)
+            elif isinstance(dict_1[key], type(np.array([1]) * u.m)) and isinstance(
+                dict_2[key], type(np.array([1]) * u.m)
+            ):
+                new_dict[key] = dict_1[key] + dict_2[key]
+
+            # dicts
+            elif isinstance(dict_1[key], dict) and isinstance(dict_2[key], dict):
+                new_dict[key] = merge_dicts(
+                    dict_1[key],
+                    dict_2[key],
+                    use_ordereddict=use_ordereddict,
+                    allow_matching_key_type_mismatch=allow_matching_key_type_mismatch,
+                )
+
+            # strings
+            elif isinstance(dict_1[key], str) and isinstance(dict_2[key], str):
+                if dict_1[key] == dict_2[key]:
+                    # same strings
+                    new_dict[key] = dict_1[key]
+                else:
+                    # different strings: just concatenate them
+                    new_dict[key] = dict_1[key] + dict_2[key]
+
+            # None types
+            elif dict_1[key] is None and dict_2[key] is None:
+                new_dict[key] = None
+
+            else:
+                msg = "Object types {}: {} ({}), {} ({}) not supported.".format(
+                    key,
+                    dict_1[key],
+                    type(dict_1[key]),
+                    dict_2[key],
+                    type(dict_2[key]),
+                )
+                raise ValueError(msg)
+
+    #
+    return new_dict
 
 
 def multiply_ensemble(ensemble, factor):

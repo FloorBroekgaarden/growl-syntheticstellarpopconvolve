@@ -6,10 +6,13 @@ import inspect
 import json
 import logging
 import os
+import shutil
+import tempfile
 from inspect import isfunction
 
 import astropy.units as u
 import numpy as np
+import psutil
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 from scipy import interpolate
 
@@ -18,6 +21,14 @@ from syntheticstellarpopconvolve.convolution_calculate_birth_redshift_array impo
 )
 
 logger = logging.getLogger(__name__)
+
+
+def get_username():
+    """
+    Function to get the username of the user that spawned the current process
+    """
+
+    return psutil.Process().username()
 
 
 def extract_arguments(func, arg_dict):
@@ -493,3 +504,35 @@ def handle_custom_scaling_or_conversion(config, data_layer_or_column_dict_entry,
         )
 
     return value
+
+
+def temp_dir(*child_dirs: str, clean_path=False) -> str:
+    """
+    Function to create directory within the TMP directory of the file system, starting with `/<TMP>/binary_c_python-<username>`
+
+    Makes use of os.makedirs exist_ok which requires python 3.2+
+
+    Args:
+        *child_dirs: str input where each next input will be a child of the previous full_path. e.g. ``temp_dir('tests', 'grid')`` will become ``'/tmp/binary_c_python-<username>/tests/grid'``
+        *clean_path (optional): Boolean to make sure that the directory is cleaned if it exists
+    Returns:
+        the path of a sub directory called binary_c_python in the TMP of the file system
+    """
+
+    tmp_dir = tempfile.gettempdir()
+    username = get_username()
+    full_path = os.path.join(tmp_dir, "binary_c_python-{}".format(username))
+
+    # loop over the other paths if there are any:
+    if child_dirs:
+        for extra_dir in child_dirs:
+            full_path = os.path.join(full_path, extra_dir)
+
+    # Check if we need to clean the path
+    if clean_path and os.path.isdir(full_path):
+        shutil.rmtree(full_path)
+
+    #
+    os.makedirs(full_path, exist_ok=True)
+
+    return full_path

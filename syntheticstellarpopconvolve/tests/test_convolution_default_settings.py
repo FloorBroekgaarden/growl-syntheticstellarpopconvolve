@@ -9,7 +9,7 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from binarycpython.utils.convolution.convolution_default_settings import (
+from syntheticstellarpopconvolve.convolution_default_settings import (
     array_validation,
     callable_or_none_validation,
     callable_validation,
@@ -17,7 +17,7 @@ from binarycpython.utils.convolution.convolution_default_settings import (
     logger_validation,
     unit_validation,
 )
-from binarycpython.utils.functions import temp_dir
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_convolution_default_settings", clean_path=True

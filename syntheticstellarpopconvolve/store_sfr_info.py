@@ -4,10 +4,6 @@ Function to calculate the SFR information and store it in the output file
 
 # import h5py
 
-# from binarycpython.utils.convolution.convolution_sfr_distributions import (
-#     generate_metallicity_sfr_array,
-# )
-
 
 # def extract_sfr_info_from_file(SFR_file):
 #     """

@@ -1,6 +1,6 @@
-1  # """
-# Metallicity distribution function from COMPAS
-# """
+"""
+Metallicity distribution function from COMPAS
+"""
 
 import numpy as np
 from scipy.stats import norm as NormDist

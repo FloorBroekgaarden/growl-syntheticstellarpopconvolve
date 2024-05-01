@@ -118,7 +118,7 @@ def event_convolution_function(
     convolved_rate_array = convolved_rate_array * extra_weights
 
     # TODO: do something with the units
-    convolved_rate_array_unit = convolved_rate_array.unit
+    # convolved_rate_array_unit = convolved_rate_array.unit
     convolved_rate_array = convolved_rate_array.value
 
     return {"convolution_result": convolved_rate_array}

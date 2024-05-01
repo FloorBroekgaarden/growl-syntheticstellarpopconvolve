@@ -25,6 +25,7 @@ FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s ] %(asctime)s: %(message)s"
 logging.basicConfig(format=FORMAT)
 logger.setLevel(logging.INFO)
 
+
 #################
 # Validation routines
 def unit_validation(value):
@@ -290,12 +291,12 @@ convolution_options_defaults_dict = {
     },
     "cosmology": {
         "value": cosmo,
-        "description": "Astropy cosmology used throughout the code. "  # TODO: expand explanation
+        "description": "Astropy cosmology used throughout the code. ",  # TODO: expand explanation
         # "validation": # TODO: add validation
     },
     "convolution_instructions": {
         "value": [{}],
-        "description": "List of instructions for the convolution. "  # TODO: expand explanation
+        "description": "List of instructions for the convolution. ",  # TODO: expand explanation
         # "validation": # NOTE: validation handled with custom function
     },
     "input_filename": {

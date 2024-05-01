@@ -11,14 +11,14 @@ import astropy.units as u
 import numpy as np
 from scipy import interpolate
 
-from binarycpython import convolution_options_defaults
-from binarycpython.utils.convolution.cosmology_utils import redshift_to_lookback_time
-from binarycpython.utils.convolution.prepare_redshift_interpolator import (
+from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.cosmology_utils import redshift_to_lookback_time
+from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     create_interpolation_datasets,
     load_interpolation_data,
     prepare_redshift_interpolator,
 )
-from binarycpython.utils.functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_prepare_redshift_interpolator", clean_path=True
@@ -32,10 +32,7 @@ class test_prepare_redshift_interpolator(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -48,9 +45,9 @@ class test_prepare_redshift_interpolator(unittest.TestCase):
 
         self.convolution_config["redshift_interpolator_use_log"] = True
 
-        self.convolution_config[
-            "redshift_interpolator_data_output_filename"
-        ] = os.path.join(TMP_DIR, "interpolator_dict.p")
+        self.convolution_config["redshift_interpolator_data_output_filename"] = (
+            os.path.join(TMP_DIR, "interpolator_dict.p")
+        )
 
     def test_prepare_redshift_interpolator_general(self):
         config = prepare_redshift_interpolator(self.convolution_config)
@@ -119,9 +116,9 @@ class test_prepare_redshift_interpolator(unittest.TestCase):
 class test_create_interpolation_datasets(unittest.TestCase):
     def setUp(self):
         self.convolution_config = copy.copy(convolution_options_defaults)
-        self.convolution_config[
-            "redshift_interpolator_data_output_filename"
-        ] = os.path.join(TMP_DIR, "interpolator_dict.p")
+        self.convolution_config["redshift_interpolator_data_output_filename"] = (
+            os.path.join(TMP_DIR, "interpolator_dict.p")
+        )
 
     def test_create_interpolation_datasets(self):
         create_interpolation_datasets(self.convolution_config)
@@ -154,10 +151,7 @@ class test_load_interpolation_data(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1])
-            * u.Msun
-            / u.yr
-            / u.Gpc**3,
+            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -170,9 +164,9 @@ class test_load_interpolation_data(unittest.TestCase):
 
         self.convolution_config["redshift_interpolator_use_log"] = True
 
-        self.convolution_config[
-            "redshift_interpolator_data_output_filename"
-        ] = os.path.join(TMP_DIR, "interpolator_dict.p")
+        self.convolution_config["redshift_interpolator_data_output_filename"] = (
+            os.path.join(TMP_DIR, "interpolator_dict.p")
+        )
 
     def test_general(self):
         redshift_interpolator_dict = load_interpolation_data(self.convolution_config)

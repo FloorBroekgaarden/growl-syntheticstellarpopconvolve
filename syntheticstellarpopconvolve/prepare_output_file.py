@@ -8,9 +8,7 @@ import shutil
 
 import h5py
 
-from syntheticstellarpopconvolve.convolution_general_functions import (
-    JsonCustomEncoder,
-)
+from syntheticstellarpopconvolve.convolution_general_functions import JsonCustomEncoder
 
 
 def prepare_output_file(config):

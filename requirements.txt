@@ -1,0 +1,6 @@
+h5py
+astropy
+pandas
+numpy
+voluptuous
+scipy

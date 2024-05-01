@@ -1,0 +1,19 @@
+#!/bin/bash
+# NOTE: this script needs revision. Does not work properly currently
+
+# Script to install syntheticstellarpopconvolve in the current venv
+VERSION_NUMBER=$(cat "VERSION")
+echo "installing syntheticstellarpopconvolve version $VERSION_NUMBER"
+
+# Clean up all the stuff from before
+python setup.py clean --all
+
+# Go into a directory that doesnt contain 'syntheticstellarpopconvolve' so pip will uninstall the one in the venv, not the local one.
+cd src
+pip uninstall -y syntheticstellarpopconvolve
+cd ../
+
+# Create build, sdist and install it into the venv
+python setup.py build --force
+python setup.py sdist
+pip install --ignore-installed --no-dependencies -v dist/syntheticstellarpopconvolve-$VERSION_NUMBER.tar.gz

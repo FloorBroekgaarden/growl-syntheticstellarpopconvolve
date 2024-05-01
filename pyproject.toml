@@ -1,6 +1,6 @@
 [pydocstyle]
 convention = 'google'
-match_dir = ['binarycpython/utils/*']
+match_dir = ['syntheticstellarpopconvolve/*']
 match = '(?!test_).*\.py'
 
 [tool.black]
@@ -26,4 +26,4 @@ max-line-length = 89
 max-complexity = 18
 
 [tool.coverage]
-omit = ["binarycpython/tests/*", "*/tests/*"]
+omit = ["syntheticstellarpopconvolve/tests/*", "*/tests/*"]

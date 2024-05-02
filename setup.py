@@ -70,7 +70,7 @@ setup(
     author_email="davidhendriks93@gmail.com",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    url="https://binary_c.gitlab.io/binary_c-python",
+    url="https://gitlab.com/dhendriks/syntheticstellarpopconvolve",
     license="gpl",
     keywords=[
         "astrophysics",

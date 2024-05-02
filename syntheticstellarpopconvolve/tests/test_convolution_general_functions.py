@@ -48,7 +48,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         ##############
         # SET UP DATA
         self.dummy_data = {
-            "delay_time": np.array([0, 1, 2, 3]),
+            "delay_time": np.array([0, 1, 2, 3]) * u.yr,
             "probability": np.array([1, 2, 3, 4]),
         }
         dummy_df = pd.DataFrame.from_records(self.dummy_data)
@@ -187,7 +187,7 @@ class test_calculate_origin_time_array(unittest.TestCase):
 
         origin_time_array = calculate_origin_time_array(
             config=convolution_config,
-            data_dict={"delay_time": np.array([1, 2, 3]) * 1e9},
+            data_dict={"delay_time": np.array([1, 2, 3]) * 1e9 * u.yr},
             convolution_time_bin_center=0.5 * 1e9,
         )
         np.testing.assert_array_equal(
@@ -204,7 +204,7 @@ class test_calculate_origin_time_array(unittest.TestCase):
 
         origin_time_array = calculate_origin_time_array(
             config=convolution_config,
-            data_dict={"delay_time": np.array([1, 2, 3]) * 1e9},
+            data_dict={"delay_time": np.array([1, 2, 3]) * 1e9 * u.yr},
             convolution_time_bin_center=0.5,
         )
         np.testing.assert_array_almost_equal(

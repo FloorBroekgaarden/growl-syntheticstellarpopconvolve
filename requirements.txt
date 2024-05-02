@@ -6,3 +6,4 @@ voluptuous
 scipy
 setproctitle
 psutil
+tables

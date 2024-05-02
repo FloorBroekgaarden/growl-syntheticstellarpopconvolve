@@ -45,6 +45,10 @@ from syntheticstellarpopconvolve.tests.test_convolution_with_ensemble import (
 from syntheticstellarpopconvolve.tests.test_convolution_with_events import (
     test_convolution_with_events,
 )
+from syntheticstellarpopconvolve.tests.test_convolve_custom_data import (
+    test_custom_convolution_function,
+    test_extract_custom_data,
+)
 from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
     test__get_ensemble_structure,
     test_attach_endpoints,
@@ -82,10 +86,6 @@ from syntheticstellarpopconvolve.tests.test_convolve_populations import (
     test_pad_sfr_dict,
     test_update_sfr_dict,
 )
-from syntheticstellarpopconvolve.tests.test_convolve_with_custom_data import (
-    test_custom_convolution_function,
-    test_extract_custom_data,
-)
 from syntheticstellarpopconvolve.tests.test_cosmology_utils import (
     test_age_of_universe_to_redshift,
     test_lookback_time_to_redshift,
@@ -107,7 +107,7 @@ from syntheticstellarpopconvolve.tests.test_store_redshift_shell_info import (
     test_create_shell_volume_dict,
     test_store_redshift_shell_info,
 )
-from syntheticstellarpopconvolve.tests.update_convolution_config import (
+from syntheticstellarpopconvolve.tests.test_update_convolution_config import (
     test_update_convolution_config,
 )
 

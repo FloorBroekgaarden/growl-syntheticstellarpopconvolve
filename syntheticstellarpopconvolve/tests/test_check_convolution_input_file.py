@@ -10,10 +10,10 @@ import unittest
 import h5py
 
 from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
-from syntheticstellarpopconvolve.tests.check_convolution_input_file import (
+from syntheticstellarpopconvolve.check_convolution_input_file import (
     check_convolution_input_file,
 )
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_check_convolution_input_file", clean_path=True

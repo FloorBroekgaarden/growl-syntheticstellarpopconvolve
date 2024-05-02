@@ -6,6 +6,7 @@ import copy
 import os
 import unittest
 
+import astropy.units as u
 import numpy as np
 
 from syntheticstellarpopconvolve import convolution_options_defaults
@@ -38,7 +39,7 @@ class test_calculate_origin_redshift_array(unittest.TestCase):
         #
         origin_redshift_array = calculate_origin_redshift_array(
             config=convolution_config,
-            data_dict={"delay_time": np.array([1, 2, 3]) * 1e9},
+            data_dict={"delay_time": np.array([1, 2, 3]) * 1e9 * u.yr},
             convolution_redshift_value=0.5,
         )
         np.testing.assert_array_almost_equal(
@@ -58,7 +59,7 @@ class test_calculate_origin_redshift_array(unittest.TestCase):
         #
         origin_redshift_array = calculate_origin_redshift_array(
             config=convolution_config,
-            data_dict={"delay_time": np.array([1, 2, 3 * 1e9]) * 1e9},
+            data_dict={"delay_time": np.array([1, 2, 3 * 1e9]) * 1e9 * u.yr},
             convolution_redshift_value=0.5,
         )
         np.testing.assert_array_almost_equal(

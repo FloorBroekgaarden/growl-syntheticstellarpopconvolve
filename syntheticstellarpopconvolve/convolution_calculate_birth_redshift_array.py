@@ -47,10 +47,10 @@ def calculate_origin_redshift_array(
 
     # Get the indices where the event falls inside the correct starformation time range
     indices_within_first_starformation = (
-        origin_lookback_time_values_in_gyr < lookback_time_of_first_starformation.value
+        origin_lookback_time_values_in_gyr < lookback_time_of_first_starformation
     )
     indices_outside_first_starformation = (
-        origin_lookback_time_values_in_gyr >= lookback_time_of_first_starformation.value
+        origin_lookback_time_values_in_gyr >= lookback_time_of_first_starformation
     )
 
     # Create redshift values array of the event

@@ -143,9 +143,10 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
             data_dict={"delay_time": np.array([-1, 1, 2, 3, 100]) * 1e9 * u.yr},
             sfr_dict=sfr_dict,
         )
+        output_unit = u.Msun / u.yr / u.Gpc**3
 
         np.testing.assert_array_equal(
-            digitized_sfr_rates, np.array([0.0, 2.0, 3.0, 4.0, 0.0])
+            digitized_sfr_rates, np.array([0.0, 2.0, 3.0, 4.0, 0.0]) * output_unit
         )
 
     # def test_calculate_digitized_sfr_rates_metallicity(self):
@@ -188,10 +189,11 @@ class test_calculate_origin_time_array(unittest.TestCase):
         origin_time_array = calculate_origin_time_array(
             config=convolution_config,
             data_dict={"delay_time": np.array([1, 2, 3]) * 1e9 * u.yr},
-            convolution_time_bin_center=0.5 * 1e9,
+            convolution_time_bin_center=0.5 * 1e9 * u.yr,
         )
+
         np.testing.assert_array_equal(
-            origin_time_array, np.array([1.5, 2.5, 3.5]) * 1e9
+            origin_time_array, np.array([1.5, 2.5, 3.5]) * 1e9 * u.yr
         )
 
     def test_calculate_origin_time_array_redshift(self):
@@ -207,6 +209,8 @@ class test_calculate_origin_time_array(unittest.TestCase):
             data_dict={"delay_time": np.array([1, 2, 3]) * 1e9 * u.yr},
             convolution_time_bin_center=0.5,
         )
+        # output_unit = u.Msun/u.yr/u.Gpc**3
+
         np.testing.assert_array_almost_equal(
             origin_time_array,
             np.array([0.6501032923316669, 0.8336451543045214, 1.0661079791875108]),

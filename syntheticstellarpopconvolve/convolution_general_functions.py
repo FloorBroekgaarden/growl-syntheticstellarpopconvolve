@@ -233,7 +233,7 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
     """
     Function to calculate the origin time array
 
-    TODO: more elsewhere
+    TODO: move elsewhere
     """
 
     config["logger"].debug("Calculating origin-time array")

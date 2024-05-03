@@ -62,22 +62,30 @@ def write_custom_footer():
     ############
     # Construct footer text
 
+    string = """
+<br><br>
+Generated on Synthetic Stellar Pop Convolve branch {sspc_git_branch_name}: <a href="{sspc_branch_url}">git branch url</a>.
+""".format(
+        sspc_git_branch_name=sspc_git_branch_name,
+        sspc_branch_url=sspc_branch_url,
+    )
+
+    if not os.getenv("READTHEDOCS", False):
+        string += ' and <a href="{sspc_commit_url}">git commit url</a>'.format(
+            sspc_commit_url=sspc_commit_url,
+        )
+
     # Set up template
     output_text = """
 {{% extends '!footer.html' %}}
 
 {{%- block extrafooter %}}
-<br><br>
-Generated on Synthetic Stellar Pop Convolve branch {sspc_git_branch_name}: <a href="{sspc_commit_url}">git commit url</a> and <a href="{sspc_branch_url}">git branch url</a>.
+{footerstring}
 {{% endblock %}}
 """
 
     # format
-    formatted_text = output_text.format(
-        sspc_git_branch_name=sspc_git_branch_name,
-        sspc_commit_url=sspc_commit_url,
-        sspc_branch_url=sspc_branch_url,
-    ).strip()
+    formatted_text = output_text.format(footerstring=string).strip()
 
     # Write to file
     with open("_templates/footer.html", "w") as outfile_filehandle:

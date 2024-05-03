@@ -7,3 +7,5 @@ scipy
 setproctitle
 psutil
 tables
+simplejson
+halo

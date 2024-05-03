@@ -4,16 +4,24 @@ Ensemble convolution functions
 TODO: put all the general ensemble files into the ensemble file
 TODO: allow the yield-rate and extra weights function to pass units to the ensemble and when
 stripping the end-points we should make sure to handle that properly.
+TODO: move the ensemble utils functions to a different place maybe.
 """
 
+import bz2
 import collections
 import copy
+import gzip
 import json
+import sys
+import time
 from collections import OrderedDict
 
 import astropy.units as u
 import h5py
+import msgpack
 import numpy as np
+import simplejson
+from halo import Halo
 
 from syntheticstellarpopconvolve.convolution_default_settings import (
     ALLOWED_NUMERICAL_TYPES,
@@ -24,6 +32,217 @@ from syntheticstellarpopconvolve.convolution_general_functions import (
     handle_custom_scaling_or_conversion,
     handle_extra_weights_function,
 )
+
+
+def ensemble_compression(filename):
+    """
+    Return the compression type of the ensemble file, based on its filename extension.
+    """
+
+    if filename.endswith(".bz2"):
+        return "bzip2"
+    if filename.endswith(".gz"):
+        return "gzip"
+    return None
+
+
+def open_ensemble(filename, encoding="utf-8"):
+    """
+    Function to open an ensemble at filename for reading and decompression if required.
+    """
+
+    compression = ensemble_compression(filename)
+    if ensemble_file_type(filename) == "msgpack":
+        flags = "rb"
+    else:
+        flags = "rt"
+    if compression == "bzip2":
+        file_object = bz2.open(filename, flags, encoding=encoding)
+    elif compression == "gzip":
+        file_object = gzip.open(filename, flags, encoding=encoding)
+    else:
+        file_object = open(filename, flags, encoding=encoding)
+    return file_object
+
+
+def keys_to_floats(input_dict: dict) -> dict:
+    """
+    Function to convert all the keys of the dictionary to float to float
+
+    we need to convert keys to floats:
+        this is ~ a factor 10 faster than David's ``recursive_change_key_to_float`` routine, probably because this version only does the float conversion, nothing else.
+
+    Args:
+        input_dict: dict of which we want to turn all the keys to float types if possible
+
+    Returns:
+        new_dict: dict of which the keys have been turned to float types where possible
+    """
+
+    # this adopts the type correctly *and* is fast
+    new_dict = type(input_dict)()
+
+    for k, v in input_dict.items():
+        # convert key to a float, if we can
+        # otherwise leave as is
+        try:
+            newkey = float(k)
+        except ValueError:
+            newkey = k
+
+        # act on value(s)
+        if isinstance(v, list):
+            # list data
+            new_dict[newkey] = [
+                (
+                    keys_to_floats(item)
+                    if isinstance(item, collections.abc.Mapping)
+                    else item
+                )
+                for item in v
+            ]
+        elif isinstance(v, collections.abc.Mapping):
+            # dict, ordereddict, etc. data
+            new_dict[newkey] = keys_to_floats(v)
+        else:
+            # assume all other data are scalars
+            new_dict[newkey] = v
+
+    return new_dict
+
+
+def ensemble_file_type(filename):
+    """
+    Returns the file type of an ensemble file.
+    """
+
+    if ".json" in filename:
+        filetype = "JSON"
+    elif ".msgpack" in filename:
+        filetype = "msgpack"
+    else:
+        filetype = None
+    return filetype
+
+
+def load_ensemble(
+    filename,
+    convert_float_keys=True,
+    select_keys=None,
+    timing=False,
+    flush=False,
+    quiet=False,
+):
+    """
+    Function to load an ensemeble file, even if it is compressed,
+    and return its contents to as a Python dictionary.
+
+    Args:
+        convert_float_keys : if True, converts strings to floats.
+        select_keys : a list of keys to be selected from the ensemble.
+    """
+
+    # open the file
+
+    # load with some info to the terminal
+    if not quiet:
+        print("Loading JSON...", flush=flush)
+
+    # open the ensemble and get the file type
+    file_object = open_ensemble(filename)
+    filetype = ensemble_file_type(filename)
+
+    if not filetype or not file_object:
+        print(
+            "Unknown filetype : your ensemble should be saved either as JSON or msgpack data.",
+            flush=flush,
+        )
+        sys.exit()
+
+    if quiet:
+        tstart = time.time()
+        if filetype == "JSON":
+            data = simplejson.load(file_object)
+            file_object.close()
+        elif filetype == "msgpack":
+            data = msgpack.load(file_object, object_hook=_hook)  # noqa: F821
+            file_object.close()
+        if timing:
+            print(
+                "\n\nTook {} s to load the data\n\n".format(time.time() - tstart),
+                flush=True,
+            )
+    else:
+        with Halo(text="Loading", interval=250, spinner="moon", color="yellow"):
+            tstart = time.time()
+            _loaded = False
+
+            def _hook(obj):
+                """
+                Hook to load ensemble
+                """
+
+                nonlocal _loaded
+                if not _loaded:
+                    _loaded = True
+                    print(
+                        "\nLoaded {} data, now putting in a dictionary".format(
+                            filetype
+                        ),
+                        flush=True,
+                    )
+                return obj
+
+            if filetype == "JSON":
+                # orjson promises to be fast, but it doesn't seem to be
+                # and fails on "Infinity"... oops
+                # data = orjson.loads(file_object.read())
+
+                # simplejson is faster than standard json and "just works"
+                # on the big Moe set in 37s
+                if not quiet:
+                    data = simplejson.load(file_object, object_hook=_hook)
+                else:
+                    data = simplejson.load(file_object)
+                file_object.close()
+
+                # standard json module
+                # on the big Moe set takes 42s
+                # data = json.load(file_object,
+                #                 object_hook=_hook)
+            elif filetype == "msgpack":
+                data = msgpack.load(file_object, object_hook=_hook)
+                file_object.close()
+
+            if timing:
+                print(
+                    "\n\nTook {} s to load the data\n\n".format(time.time() - tstart),
+                    flush=True,
+                )
+
+    # strip non-selected keys, if a list is given in select_keys
+    if select_keys:
+        keys = list(data["ensemble"].keys())
+        for key in keys:
+            if key not in select_keys:
+                del data["ensemble"][key]
+
+    # perhaps convert floats?
+    tstart = time.time()
+    if convert_float_keys:
+        # timings are for 100 iterations on the big Moe data set
+        # data = format_ensemble_results(data) # 213s
+        # data = recursive_change_key_to_float(data) # 61s
+        data = keys_to_floats(data)  # 6.94s
+
+        if timing:
+            print(
+                "\n\nTook {} s to convert floats\n\n".format(time.time() - tstart),
+                flush=True,
+            )
+
+    # return data
+    return data
 
 
 class AutoVivificationDict(dict):

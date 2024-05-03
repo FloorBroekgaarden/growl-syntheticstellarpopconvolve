@@ -27,14 +27,10 @@ import sys
 import m2r2
 from git import Repo
 
-# from binarycpython import Population
-# from binarycpython.utils.event_logging import (
-#     event_based_logging_write_event_descriptions_to_rst_file,
-# )
-# from binarycpython.utils.functions import (
-#     call_binary_c_config,
-#     write_binary_c_parameter_descriptions_to_rst_file,
-# )
+from syntheticstellarpopconvolve.convolution_default_settings import (
+    convolution_options_defaults_dict,
+    write_default_settings_to_rst_file,
+)
 
 
 def write_custom_footer():
@@ -108,7 +104,6 @@ def patched_m2r2_setup(app):
 
 # Include paths for python code
 sys.path.insert(0, os.path.abspath("."))
-# sys.path.insert(0, os.path.join(os.getenv("BINARY_C"), "src/API/"))
 
 # include paths for c code
 cautodoc_root = os.path.abspath("../../")
@@ -200,22 +195,12 @@ current_m2r2_setup = m2r2.setup
 #
 m2r2.setup = patched_m2r2_setup
 
-# # Generate some custom documentations for this version of binarycpython and binary_c
-# docs_pop = Population()
-
-# print("Generating population_options_descriptions.rst")
-# docs_pop.write_population_options_to_rst_file("population_options_descriptions.rst")
-# print("Done")
-
-# print("Generating binary_c_parameters.rst")
-# write_binary_c_parameter_descriptions_to_rst_file("binary_c_parameters.rst")
-# print("Done")
-
-# print("event_based_logging_descriptions.rst")
-# event_based_logging_write_event_descriptions_to_rst_file(
-#     "event_based_logging_descriptions.rst"
-# )
-# print("Done")
+print("Generating population_options_descriptions.rst")
+write_default_settings_to_rst_file(
+    options_defaults_dict=convolution_options_defaults_dict,
+    output_file="convolution_options.rst",
+)
+print("Done")
 
 # Generate a custom footer
 print("Generating custom footer")

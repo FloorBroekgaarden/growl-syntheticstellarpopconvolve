@@ -15,6 +15,7 @@ Welcome to the documentation of Synthetic Stellar Pop Convolve (SSPC)!
    readme_link
    example_notebooks
    modules
+   convolution_options
    Visit the GitLab repo <https://gitlab.com/dhendriks/syntheticstellarpopconvolve/>
    Submit an issue <https://gitlab.com/dhendriks/syntheticstellarpopconvolve/-/issues/new>
 

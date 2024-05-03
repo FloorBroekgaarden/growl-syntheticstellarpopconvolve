@@ -37,78 +37,55 @@ from git import Repo
 # )
 
 
-# def write_custom_footer():
-#     """
-#     Function to write the custom footer to the template file
-#     """
+def write_custom_footer():
+    """
+    Function to write the custom footer to the template file
+    """
 
-#     #
-#     branch_infix = "/-/tree/"
-#     commit_infix = "/-/commit/"
+    #
+    branch_infix = "/-/tree/"
+    commit_infix = "/-/commit/"
 
-#     ############
-#     # Construct binary_c git information
-#     binary_c_git_branch_name = call_binary_c_config("git_branch").strip()
-#     binary_c_git_revision = call_binary_c_config("git_revision").strip()
+    ############
+    # Construct binary_c-python git information
+    base_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+    local_repo = Repo(path=base_dir)
 
-#     #
-#     binary_c_git_root = "https://gitlab.com/binary_c/binary_c"
-#     binary_c_branch_url = binary_c_git_root + branch_infix + binary_c_git_branch_name
-#     binary_c_commit_url = (
-#         binary_c_git_root
-#         + commit_infix
-#         + binary_c_git_revision.replace('"', "").split(":")[-1]
-#     )
+    sspc_git_branch_name = str(local_repo.active_branch.name)
+    sspc_git_revision = str(local_repo.active_branch.commit)
 
-#     ############
-#     # Construct binary_c-python git information
-#     base_dir = os.path.dirname(
-#         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#     )
-#     local_repo = Repo(path=base_dir)
+    #
+    sspc_git_root = "https://gitlab.com/dhendriks/syntheticstellarpopconvolve"
+    sspc_branch_url = sspc_git_root + branch_infix + sspc_git_branch_name
+    sspc_commit_url = (
+        sspc_git_root + commit_infix + sspc_git_revision.replace('"', "").split(":")[-1]
+    )
 
-#     binary_c_python_git_branch_name = str(local_repo.active_branch.name)
-#     binary_c_python_git_revision = str(local_repo.active_branch.commit)
+    ############
+    # Construct footer text
 
-#     #
-#     binary_c_python_git_root = "https://gitlab.com/binary_c/binary_c-python"
-#     binary_c_python_branch_url = (
-#         binary_c_python_git_root + branch_infix + binary_c_python_git_branch_name
-#     )
-#     binary_c_python_commit_url = (
-#         binary_c_python_git_root
-#         + commit_infix
-#         + binary_c_python_git_revision.replace('"', "").split(":")[-1]
-#     )
+    # Set up template
+    output_text = """
+{{% extends '!footer.html' %}}
 
-#     ############
-#     # Construct footer text
+{{%- block extrafooter %}}
+<br><br>
+Generated on Synthetic Stellar Pop Convolve branch {sspc_git_branch_name}: <a href="{sspc_commit_url}">git commit url</a> and <a href="{sspc_branch_url}">git branch url</a>.
+{{% endblock %}}
+"""
 
-#     # Set up template
-#     output_text = """
-# {{% extends '!footer.html' %}}
+    # format
+    formatted_text = output_text.format(
+        sspc_git_branch_name=sspc_git_branch_name,
+        sspc_commit_url=sspc_commit_url,
+        sspc_branch_url=sspc_branch_url,
+    ).strip()
 
-# {{%- block extrafooter %}}
-# <br><br>
-# Generated on binary_c-python branch {binary_c_python_git_branch_name}: <a href="{binary_c_python_commit_url}">git commit url</a> and <a href="{binary_c_python_branch_url}">git branch url</a>.
-# <br><br>
-# Using binary_c branch {binary_c_git_branch_name}: <a href="{binary_c_commit_url}">git commit url</a> and <a href="{binary_c_branch_url}">git branch url</a>.
-# {{% endblock %}}
-# """
-
-#     # format
-#     formatted_text = output_text.format(
-#         binary_c_python_git_branch_name=binary_c_python_git_branch_name,
-#         binary_c_python_commit_url=binary_c_python_commit_url,
-#         binary_c_python_branch_url=binary_c_python_branch_url,
-#         binary_c_git_branch_name=binary_c_git_branch_name,
-#         binary_c_commit_url=binary_c_commit_url,
-#         binary_c_branch_url=binary_c_branch_url,
-#     ).strip()
-
-#     # Write to file
-#     with open("_templates/footer.html", "w") as outfile_filehandle:
-#         outfile_filehandle.write(formatted_text)
+    # Write to file
+    with open("_templates/footer.html", "w") as outfile_filehandle:
+        outfile_filehandle.write(formatted_text)
 
 
 #
@@ -138,7 +115,7 @@ cautodoc_root = os.path.abspath("../../")
 
 # -- Project information -----------------------------------------------------
 
-project = "Synthetic Stellar Pop Convolve (SSPC)S"
+project = "Synthetic Stellar Pop Convolve (SSPC)"
 copyright = "{}, David Hendriks".format(datetime.datetime.now().year)
 author = "David Hendriks"
 
@@ -240,7 +217,7 @@ m2r2.setup = patched_m2r2_setup
 # )
 # print("Done")
 
-# # Generate a custom footer
-# print("Generating custom footer")
-# write_custom_footer()
-# print("Done")
+# Generate a custom footer
+print("Generating custom footer")
+write_custom_footer()
+print("Done")

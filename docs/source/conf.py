@@ -211,6 +211,7 @@ write_default_settings_to_rst_file(
 print("Done")
 
 # Generate a custom footer
-print("Generating custom footer")
-write_custom_footer()
-print("Done")
+if not os.getenv("READTHEDOCS", False):
+    print("Generating custom footer")
+    write_custom_footer()
+    print("Done")

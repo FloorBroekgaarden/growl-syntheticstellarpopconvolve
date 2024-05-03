@@ -1,0 +1,5 @@
+Changes for each syntheticstellarpopconvolve version since 0.1
+https://keepachangelog.com/en/0.3.0/
+
+	* 0.1:
+	Initialised the repository. Migrated the code-base from binary_c-python to its own repo. Set up documentation, fixed testing and polishing notebooks.

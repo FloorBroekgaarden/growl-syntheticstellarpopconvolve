@@ -16,7 +16,7 @@ import psutil
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 from scipy import interpolate
 
-from syntheticstellarpopconvolve.convolution_calculate_birth_redshift_array import (
+from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
     calculate_origin_redshift_array,
 )
 

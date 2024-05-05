@@ -10,7 +10,7 @@ import astropy.units as u
 import numpy as np
 
 from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_calculate_birth_redshift_array import (
+from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
     calculate_origin_redshift_array,
 )
 from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
@@ -21,13 +21,13 @@ from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
 TMP_DIR = temp_dir(
     "tests",
     "tests_convolution",
-    "tests_convolution_calculate_birth_redshift_array",
+    "tests_calculate_birth_redshift_array",
     clean_path=True,
 )
 
 
-class test_calculate_origin_redshift_array(unittest.TestCase):
-    def test_calculate_origin_redshift_array_all_good(self):
+class test_origin_redshift_array(unittest.TestCase):
+    def test_origin_redshift_array_all_good(self):
         #
         convolution_config = copy.copy(convolution_options_defaults)
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(

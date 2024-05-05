@@ -54,11 +54,13 @@ class test_check_convolution_config(unittest.TestCase):
                 {
                     "name": "test",
                     "lookback_time_bin_edges": np.array([0, 1, 2, 3]) * 1e9 * u.yr,
-                    "starformation_array": np.array([1, 2, 3]),
+                    "starformation_array": np.array([1, 2, 3]) * u.Msun / u.yr,
                     "metallicity_bin_edges": np.array([0.1, 0.2, 0.3]),
                     "metallicity_weighted_starformation_array": np.array(
                         [[0.5, 0.6, 0.7], [0.5, 0.6, 0.7], [0.5, 0.6, 0.7]]
-                    ),
+                    )
+                    * u.Msun
+                    / u.yr,
                 }
             ],
         }
@@ -76,9 +78,11 @@ class test_check_convolution_config(unittest.TestCase):
             "SFR_info": [
                 {
                     "lookback_time_bin_edges": [0, 1, 2, 3],
-                    "starformation_array": [1, 2, 3],
+                    "starformation_array": [1, 2, 3] * u.Msun / u.yr,
                     "metallicity_bin_edges": [0.1, 0.2, 0.3],
-                    "metallicity_weighted_starformation_array": [0.5, 0.6, 0.7],
+                    "metallicity_weighted_starformation_array": [0.5, 0.6, 0.7]
+                    * u.Msun
+                    / u.yr,
                 }
             ],
         }
@@ -242,11 +246,11 @@ class test_check_sfr_dict(unittest.TestCase):
         self.sfr_dict = {
             "name": "test_sfr_dict",
             "lookback_time_bin_edges": np.array([1, 2, 3]) * 1e9 * u.yr,
-            "starformation_array": np.array([10, 20, 30]),
+            "starformation_array": np.array([10, 20, 30]) * u.Msun / u.yr,
             "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
-            "metallicity_weighted_starformation_array": np.array(
-                [[1, 2, 3], [4, 5, 6]]
-            ),
+            "metallicity_weighted_starformation_array": np.array([[1, 2, 3], [4, 5, 6]])
+            * u.Msun
+            / u.yr,
         }
 
     def test_check_sfr_dict_with_name(self):

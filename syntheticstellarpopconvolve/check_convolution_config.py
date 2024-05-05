@@ -84,6 +84,14 @@ def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type
                 "metallicity_weighted_starformation_array is required in the sfr dictionary"
             )
 
+        # check if starformation array has any unit
+        try:
+            sfr_dict["metallicity_weighted_starformation_array"].unit
+        except AttributeError:
+            raise AttributeError(
+                "metallicity_weighted_starformation_array requires an astropy unit"
+            )
+
 
 def check_required(config, required_list):
     """

@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolution_options_defaults, convolve
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve import convolve, default_convolution_config
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_convolution_with_events", clean_path=True
@@ -75,7 +75,7 @@ class test_convolution_with_events(unittest.TestCase):
         dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
 
         #
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         convolution_config["SFR_info"] = {

@@ -6,13 +6,13 @@ import unittest
 
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 from syntheticstellarpopconvolve.cosmology_utils import (
     age_of_universe_to_redshift,
     lookback_time_to_redshift,
     redshift_to_age_of_universe,
     redshift_to_lookback_time,
 )
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_cosmology_utils", clean_path=True

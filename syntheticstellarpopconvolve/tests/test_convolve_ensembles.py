@@ -12,11 +12,10 @@ import h5py
 import numpy as np
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
 )
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 from syntheticstellarpopconvolve.convolve_ensembles import (
     _get_ensemble_structure,
     attach_endpoints,
@@ -46,6 +45,7 @@ from syntheticstellarpopconvolve.convolve_ensembles import (
     strip_ensemble_endpoints,
 )
 from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
@@ -55,7 +55,7 @@ TMP_DIR = temp_dir(
 
 class test_handle_binsize_multiplication_factor(unittest.TestCase):
     def test_handle_binsize_multiplication_factor_no_binsize_multiplication(self):
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
 
         binsizes, extra_value_dict = handle_binsize_multiplication_factor(
             config=convolution_config,
@@ -71,7 +71,7 @@ class test_handle_binsize_multiplication_factor(unittest.TestCase):
         self.assertFalse(extra_value_dict)
 
     def test_handle_binsize_multiplication_factor_binsizes_passed(self):
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
 
         binsizes, extra_value_dict = handle_binsize_multiplication_factor(
             config=convolution_config,
@@ -86,7 +86,7 @@ class test_handle_binsize_multiplication_factor(unittest.TestCase):
         self.assertTrue(extra_value_dict == {"delay_time_binsize": 0.1})
 
     def test_handle_binsize_multiplication_factor_binsizes_calculated(self):
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
 
         binsizes, extra_value_dict = handle_binsize_multiplication_factor(
             config=convolution_config,
@@ -114,7 +114,7 @@ class test_get_ensemble_binsizes(unittest.TestCase):
 
     def test_get_ensemble_binsizes_no_scaling(self):
 
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
 
         binsizes = get_ensemble_binsizes(
             config=convolution_config,
@@ -127,7 +127,7 @@ class test_get_ensemble_binsizes(unittest.TestCase):
 
     def test_get_ensemble_binsizes_factor_scaling(self):
 
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
 
         binsizes = get_ensemble_binsizes(
             config=convolution_config,
@@ -140,7 +140,7 @@ class test_get_ensemble_binsizes(unittest.TestCase):
 
     def test_get_ensemble_binsizes_factor_function(self):
 
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
 
         binsizes = get_ensemble_binsizes(
             config=convolution_config,
@@ -209,7 +209,7 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
             )
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -367,7 +367,7 @@ class test_ensemble_convolution_function(unittest.TestCase):
             )
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -554,7 +554,7 @@ class test_ensemble_handle_marginalisation(unittest.TestCase):
             )
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -780,7 +780,7 @@ class test_extract_ensemble_data(unittest.TestCase):
             )
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {

@@ -9,9 +9,9 @@ import unittest
 
 import h5py
 
-from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_input_file import check_input_file
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_check_input_file", clean_path=True
@@ -40,12 +40,12 @@ class test_check_input_file(unittest.TestCase):
         create input files
         """
 
-        self.config_working = copy.copy(convolution_options_defaults)
+        self.config_working = copy.copy(default_convolution_config)
         self.config_working["input_filename"] = os.path.join(
             TMP_DIR, "working_file.hdf5"
         )
 
-        self.config_not_working = copy.copy(convolution_options_defaults)
+        self.config_not_working = copy.copy(default_convolution_config)
         self.config_not_working["input_filename"] = os.path.join(
             TMP_DIR, "not_working_file.hdf5"
         )

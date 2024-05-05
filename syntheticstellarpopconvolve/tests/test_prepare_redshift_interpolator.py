@@ -11,9 +11,9 @@ import astropy.units as u
 import numpy as np
 from scipy import interpolate
 
-from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.cosmology_utils import redshift_to_lookback_time
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     create_interpolation_datasets,
     load_interpolation_data,
@@ -27,7 +27,7 @@ TMP_DIR = temp_dir(
 
 class test_prepare_redshift_interpolator(unittest.TestCase):
     def setUp(self):
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -115,7 +115,7 @@ class test_prepare_redshift_interpolator(unittest.TestCase):
 
 class test_create_interpolation_datasets(unittest.TestCase):
     def setUp(self):
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
         self.convolution_config["redshift_interpolator_data_output_filename"] = (
             os.path.join(TMP_DIR, "interpolator_dict.p")
         )
@@ -146,7 +146,7 @@ class test_create_interpolation_datasets(unittest.TestCase):
 
 class test_load_interpolation_data(unittest.TestCase):
     def setUp(self):
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {

@@ -4,7 +4,7 @@ Functions to convolve events
 
 import pandas as pd
 
-from syntheticstellarpopconvolve.convolution_general_functions import (
+from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     handle_custom_scaling_or_conversion,
     handle_extra_weights_function,

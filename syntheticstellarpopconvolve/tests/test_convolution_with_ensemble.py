@@ -16,8 +16,8 @@ import h5py
 import numpy as np
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolution_options_defaults, convolve
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve import convolve, default_convolution_config
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_convolution_with_ensemble", clean_path=True
@@ -30,7 +30,7 @@ class test_convolution_with_ensemble(unittest.TestCase):
     def test_convolution_with_events_with_lookback_time(self):
 
         #
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["logger"].setLevel(logging.CRITICAL)
 
         #

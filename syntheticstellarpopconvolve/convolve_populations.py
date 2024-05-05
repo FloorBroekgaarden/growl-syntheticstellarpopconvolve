@@ -12,12 +12,6 @@ import pickle
 import h5py
 import setproctitle
 
-from syntheticstellarpopconvolve.convolution_general_functions import (
-    JsonCustomEncoder,
-    generate_group_name,
-    get_tmp_dir,
-    pad_function,
-)
 from syntheticstellarpopconvolve.convolve_custom_data import (
     custom_convolution_function,
     extract_custom_data,
@@ -29,6 +23,12 @@ from syntheticstellarpopconvolve.convolve_ensembles import (
 from syntheticstellarpopconvolve.convolve_events import (
     event_convolution_function,
     extract_event_data,
+)
+from syntheticstellarpopconvolve.general_functions import (
+    JsonCustomEncoder,
+    generate_group_name,
+    get_tmp_dir,
+    pad_function,
 )
 from syntheticstellarpopconvolve.store_redshift_shell_info import (
     store_redshift_shell_info,

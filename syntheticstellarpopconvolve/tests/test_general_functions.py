@@ -1,5 +1,5 @@
 """
-Testcases for convolution_general_functions file
+Testcases for general_functions file
 """
 
 import copy
@@ -14,8 +14,9 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_general_functions import (
+from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
+from syntheticstellarpopconvolve.general_functions import (
     calculate_bincenters,
     calculate_digitized_sfr_rates,
     calculate_edge_values,
@@ -28,14 +29,13 @@ from syntheticstellarpopconvolve.convolution_general_functions import (
     pad_function,
     temp_dir,
 )
-from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     prepare_redshift_interpolator,
 )
 
 TMP_DIR = temp_dir(
-    "tests", "tests_convolution", "tests_convolution_general_functions", clean_path=True
+    "tests", "tests_convolution", "tests_general_functions", clean_path=True
 )
 
 
@@ -86,7 +86,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -179,7 +179,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
 
 class test_calculate_origin_time_array(unittest.TestCase):
     def test_calculate_origin_time_array_lookback(self):
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
             TMP_DIR, "interpolator_dict.p"
         )
@@ -197,7 +197,7 @@ class test_calculate_origin_time_array(unittest.TestCase):
         )
 
     def test_calculate_origin_time_array_redshift(self):
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
             TMP_DIR, "interpolator_dict.p"
         )
@@ -264,7 +264,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
         dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {

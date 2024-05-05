@@ -7,7 +7,7 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
     check_convolution_instruction,
@@ -15,7 +15,7 @@ from syntheticstellarpopconvolve.check_convolution_config import (
     check_required,
     check_sfr_dict,
 )
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_check_convolution_config", clean_path=True
@@ -26,7 +26,7 @@ class test_check_convolution_config(unittest.TestCase):
     def test_check_convolution_config_with_valid_input(self):
         config_with_valid_convolution = {
             "check_convolution_config": True,
-            "logger": convolution_options_defaults["logger"],
+            "logger": default_convolution_config["logger"],
             "time_type": "lookback_time",
             "convolution_lookback_time_bin_edges": np.array([1, 2]) * u.yr,
             "convolution_instructions": [
@@ -70,7 +70,7 @@ class test_check_convolution_config(unittest.TestCase):
 
         config_with_missing_convolution_instruction = {
             "check_convolution_config": True,
-            "logger": convolution_options_defaults["logger"],
+            "logger": default_convolution_config["logger"],
             "time_type": "redshift",
             "convolution_instructions": [],  # Missing convolution instruction
             "SFR_info": [
@@ -90,7 +90,7 @@ class test_check_convolution_config(unittest.TestCase):
         #
         config_with_missing_SFR_info = {
             "check_convolution_config": True,
-            "logger": convolution_options_defaults["logger"],
+            "logger": default_convolution_config["logger"],
             "time_type": "redshift",
             "convolution_instructions": [
                 {

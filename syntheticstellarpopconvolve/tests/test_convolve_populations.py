@@ -15,16 +15,16 @@ import pandas as pd
 import pkg_resources
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
-from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
 )
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 from syntheticstellarpopconvolve.convolve_populations import (
     generate_data_dict,
     pad_sfr_dict,
     update_sfr_dict,
 )
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
@@ -122,7 +122,7 @@ class test_generate_data_dict(unittest.TestCase):
         dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -245,7 +245,7 @@ class test_generate_data_dict(unittest.TestCase):
             )
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -353,7 +353,7 @@ class test_generate_data_dict(unittest.TestCase):
             )
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {

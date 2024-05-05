@@ -2,7 +2,7 @@
 Functionality to plot a starformation distribution
 """
 
-# from syntheticstellarpopconvolve.convolution_general_functions import (
+# from syntheticstellarpopconvolve.general_functions import (
 #     calculate_bincenters,
 # )
 

@@ -8,8 +8,8 @@ import unittest
 
 import h5py
 
-from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
@@ -25,7 +25,7 @@ class test_prepare_output_file(unittest.TestCase):
         create input files
         """
 
-        self.config_working = copy.copy(convolution_options_defaults)
+        self.config_working = copy.copy(default_convolution_config)
         self.config_working["input_filename"] = os.path.join(
             TMP_DIR, "working_file.hdf5"
         )

@@ -4,11 +4,11 @@ Testcases for convolve_custom_data file
 
 import unittest
 
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 from syntheticstellarpopconvolve.convolve_custom_data import (
     custom_convolution_function,
     extract_custom_data,
 )
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_convolve_custom_data", clean_path=True

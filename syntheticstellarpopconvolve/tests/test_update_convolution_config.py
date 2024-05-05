@@ -9,11 +9,11 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
 )
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.update_convolution_config import (
     update_convolution_config,
 )
@@ -28,7 +28,7 @@ class test_update_convolution_config(unittest.TestCase):
 
     def test_update_convolution_config(self):
 
-        config = copy.copy(convolution_options_defaults)
+        config = copy.copy(default_convolution_config)
         config["redshift_interpolator_data_output_filename"] = os.path.join(
             TMP_DIR, "interpolator_dict.p"
         )

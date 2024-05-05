@@ -9,7 +9,6 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 from syntheticstellarpopconvolve.default_convolution_config import (
     array_validation,
     callable_or_none_validation,
@@ -18,6 +17,7 @@ from syntheticstellarpopconvolve.default_convolution_config import (
     logger_validation,
     unit_validation,
 )
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_default_convolution_config", clean_path=True

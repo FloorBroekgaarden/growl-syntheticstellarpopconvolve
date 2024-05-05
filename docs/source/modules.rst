@@ -11,7 +11,7 @@ This section contains the (auto)documentation for all the functions and modules 
    modules/default_convolution_config
    modules/convolution_general_functions
    modules/convolution_metallicity_distributions
-   modules/convolution_sfr_distributions
+   modules/starformation_rate_distributions
    modules/convolve_custom_data
    modules/convolve_ensembles
    modules/convolve_events

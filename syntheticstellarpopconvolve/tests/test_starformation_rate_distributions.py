@@ -1,5 +1,5 @@
 """
-Testcases for convolution_metallicity_distributions file
+Testcases for convolution_sfr_distributions file
 """
 
 import unittest
@@ -9,7 +9,7 @@ from syntheticstellarpopconvolve.general_functions import temp_dir
 TMP_DIR = temp_dir(
     "tests",
     "tests_convolution",
-    "tests_convolution_metallicity_distributions",
+    "tests_starformation_rate_distributions",
     clean_path=True,
 )
 

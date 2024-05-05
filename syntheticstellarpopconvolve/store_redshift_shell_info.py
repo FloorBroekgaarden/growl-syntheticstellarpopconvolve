@@ -5,10 +5,8 @@ Functions to calculate redshift shell info
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve.convolution_general_functions import (
-    calculate_bincenters,
-)
 from syntheticstellarpopconvolve.cosmology_utils import redshift_to_lookback_time
+from syntheticstellarpopconvolve.general_functions import calculate_bincenters
 
 
 def create_shell_volume_dict(redshift_bin_edges, config):

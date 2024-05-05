@@ -19,18 +19,6 @@ from syntheticstellarpopconvolve.tests.test_check_convolution_config import (
 from syntheticstellarpopconvolve.tests.test_check_input_file import (
     test_check_input_file,
 )
-from syntheticstellarpopconvolve.tests.test_convolution_general_functions import (
-    test_calculate_bincenters,
-    test_calculate_digitized_sfr_rates,
-    test_calculate_edge_values,
-    test_calculate_origin_time_array,
-    test_extract_arguments,
-    test_generate_group_name,
-    test_get_tmp_dir,
-    test_handle_custom_scaling_or_conversion,
-    test_handle_extra_weights_function,
-    test_pad_function,
-)
 from syntheticstellarpopconvolve.tests.test_convolution_with_ensemble import (
     test_convolution_with_ensemble,
 )
@@ -94,6 +82,18 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
 )
 from syntheticstellarpopconvolve.tests.test_extract_population_settings import (
     test_extract_population_settings,
+)
+from syntheticstellarpopconvolve.tests.test_general_functions import (
+    test_calculate_bincenters,
+    test_calculate_digitized_sfr_rates,
+    test_calculate_edge_values,
+    test_calculate_origin_time_array,
+    test_extract_arguments,
+    test_generate_group_name,
+    test_get_tmp_dir,
+    test_handle_custom_scaling_or_conversion,
+    test_handle_extra_weights_function,
+    test_pad_function,
 )
 from syntheticstellarpopconvolve.tests.test_prepare_output_file import (
     test_prepare_output_file,

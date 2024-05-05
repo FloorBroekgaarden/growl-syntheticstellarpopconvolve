@@ -8,8 +8,8 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.store_redshift_shell_info import (
     create_shell_volume_dict,
     store_redshift_shell_info,
@@ -24,7 +24,7 @@ class test_store_redshift_shell_info(unittest.TestCase):
     def test_store_redshift_shell_info_redshift(self):
 
         #
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["time_type"] = "redshift"
 
         # Set up SFR
@@ -76,7 +76,7 @@ class test_store_redshift_shell_info(unittest.TestCase):
     def test_store_redshift_shell_info_no_redshift(self):
 
         #
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["time_type"] = "lookback_time"
 
         # Set up SFR
@@ -97,7 +97,7 @@ class test_create_shell_volume_dict(unittest.TestCase):
     def test_create_shell_volume_dict(self):
 
         #
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["time_type"] = "redshift"
 
         #

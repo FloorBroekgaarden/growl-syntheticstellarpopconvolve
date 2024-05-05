@@ -13,11 +13,11 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.extract_population_settings import (
     extract_population_settings,
 )
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
@@ -74,7 +74,7 @@ class test_extract_population_settings(unittest.TestCase):
         dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
 
         #
-        self.convolution_config = copy.copy(convolution_options_defaults)
+        self.convolution_config = copy.copy(default_convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {

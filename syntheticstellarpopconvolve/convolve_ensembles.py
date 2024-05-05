@@ -23,14 +23,14 @@ import numpy as np
 import simplejson
 from halo import Halo
 
-from syntheticstellarpopconvolve.convolution_general_functions import (
+from syntheticstellarpopconvolve.default_convolution_config import (
+    ALLOWED_NUMERICAL_TYPES,
+)
+from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     calculate_edge_values,
     handle_custom_scaling_or_conversion,
     handle_extra_weights_function,
-)
-from syntheticstellarpopconvolve.default_convolution_config import (
-    ALLOWED_NUMERICAL_TYPES,
 )
 
 

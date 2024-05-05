@@ -9,11 +9,11 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve import convolution_options_defaults
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
     calculate_origin_redshift_array,
 )
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     prepare_redshift_interpolator,
 )
@@ -29,7 +29,7 @@ TMP_DIR = temp_dir(
 class test_calculate_origin_redshift_array(unittest.TestCase):
     def test_calculate_origin_redshift_array_all_good(self):
         #
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
             TMP_DIR, "interpolator_dict.p"
         )
@@ -49,7 +49,7 @@ class test_calculate_origin_redshift_array(unittest.TestCase):
 
     def test_calculate_origin_redshift_array_one_too_far(self):
         #
-        convolution_config = copy.copy(convolution_options_defaults)
+        convolution_config = copy.copy(default_convolution_config)
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
             TMP_DIR, "interpolator_dict.p"
         )

@@ -7,7 +7,7 @@ Main convolution test script
 import unittest
 
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
-    test_calculate_origin_redshift_arrazy,
+    test_calculate_origin_redshift_array,
 )
 from syntheticstellarpopconvolve.tests.test_check_input_file import (
     test_check_input_file,

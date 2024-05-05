@@ -9,15 +9,15 @@ import unittest
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
 )
-from syntheticstellarpopconvolve.tests.test_check_input_file import (
-    test_check_input_file,
-)
-from syntheticstellarpopconvolve.tests.test_convolution_check_config import (
+from syntheticstellarpopconvolve.tests.test_check_convolution_config import (
     test_check_convolution_config,
     test_check_convolution_instruction,
     test_check_metallicity,
     test_check_required,
     test_check_sfr_dict,
+)
+from syntheticstellarpopconvolve.tests.test_check_input_file import (
+    test_check_input_file,
 )
 from syntheticstellarpopconvolve.tests.test_convolution_default_settings import (
     test_array_validation,

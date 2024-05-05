@@ -16,7 +16,7 @@ import pkg_resources
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
 from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_check_config import (
+from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
 )
 from syntheticstellarpopconvolve.convolution_general_functions import temp_dir

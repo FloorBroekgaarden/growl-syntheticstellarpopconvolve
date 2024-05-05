@@ -10,7 +10,7 @@ import astropy.units as u
 import numpy as np
 
 from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_check_config import (
+from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
 )
 from syntheticstellarpopconvolve.convolution_general_functions import temp_dir

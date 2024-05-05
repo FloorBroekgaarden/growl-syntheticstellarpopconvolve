@@ -1,11 +1,5 @@
 """
-Testcases for convolution_check_config file
-
-functions to cover:
-
-TODO: check_required
-TODO: check_convolution_instruction
-TODO: check_convolution_config
+Testcases for check_convolution_config file
 """
 
 import unittest
@@ -14,7 +8,7 @@ import astropy.units as u
 import numpy as np
 
 from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.convolution_check_config import (
+from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
     check_convolution_instruction,
     check_metallicity,
@@ -24,7 +18,7 @@ from syntheticstellarpopconvolve.convolution_check_config import (
 from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 
 TMP_DIR = temp_dir(
-    "tests", "tests_convolution", "tests_convolution_check_config", clean_path=True
+    "tests", "tests_convolution", "tests_check_convolution_config", clean_path=True
 )
 
 

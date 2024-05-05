@@ -5,10 +5,10 @@ TODO: make wrappers to handle timing logging to debug.
 TODO: allow usage of astropy units
 """
 
-from syntheticstellarpopconvolve.check_input_file import check_input_file
-from syntheticstellarpopconvolve.convolution_check_config import (
+from syntheticstellarpopconvolve.check_convolution_config import (
     check_convolution_config,
 )
+from syntheticstellarpopconvolve.check_input_file import check_input_file
 from syntheticstellarpopconvolve.convolve_populations import convolve_populations
 from syntheticstellarpopconvolve.extract_population_settings import (
     extract_population_settings,

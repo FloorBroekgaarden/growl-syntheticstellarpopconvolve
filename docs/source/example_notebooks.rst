@@ -7,3 +7,7 @@ We have a set of notebooks that explain and show the usage of the SSPC features.
     :caption: Contents:
 
     examples/notebook_convolution_tutorial.ipynb
+    examples/notebook_convolution_advanced.ipynb
+    examples/notebook_convolution_star_formation_functions.ipynb
+
+    examples/notebook_convolution_use_cases.ipynb

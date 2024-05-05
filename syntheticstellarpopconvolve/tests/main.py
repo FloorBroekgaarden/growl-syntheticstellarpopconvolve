@@ -6,8 +6,8 @@ Main convolution test script
 # flake8: noqa
 import unittest
 
-from syntheticstellarpopconvolve.tests.test_check_convolution_input_file import (
-    test_check_convolution_input_file,
+from syntheticstellarpopconvolve.tests.test_check_input_file import (
+    test_check_input_file,
 )
 from syntheticstellarpopconvolve.tests.test_convolution_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,

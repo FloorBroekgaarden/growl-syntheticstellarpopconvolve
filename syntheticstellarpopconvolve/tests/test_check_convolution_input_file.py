@@ -1,5 +1,5 @@
 """
-Testcases for check_convolution_input_file
+Testcases for check_input_file
 """
 
 import copy
@@ -10,13 +10,11 @@ import unittest
 import h5py
 
 from syntheticstellarpopconvolve import convolution_options_defaults
-from syntheticstellarpopconvolve.check_convolution_input_file import (
-    check_convolution_input_file,
-)
+from syntheticstellarpopconvolve.check_input_file import check_input_file
 from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 
 TMP_DIR = temp_dir(
-    "tests", "tests_convolution", "tests_check_convolution_input_file", clean_path=True
+    "tests", "tests_convolution", "tests_check_input_file", clean_path=True
 )
 
 
@@ -34,7 +32,7 @@ def assertMayRaise(self, exception, expr, **kwargs):
 unittest.TestCase.assertMayRaise = assertMayRaise
 
 
-class test_check_convolution_input_file(unittest.TestCase):
+class test_check_input_file(unittest.TestCase):
     """ """
 
     def setUp(self):
@@ -65,13 +63,11 @@ class test_check_convolution_input_file(unittest.TestCase):
         )
         self.not_working_hdf5_file.close()
 
-    def test_check_convolution_input_file_not_working(self):
-        self.assertRaises(
-            ValueError, check_convolution_input_file, self.config_not_working
-        )
+    def test_check_input_file_not_working(self):
+        self.assertRaises(ValueError, check_input_file, self.config_not_working)
 
-    def test_check_convolution_input_file_working(self):
-        check_convolution_input_file(self.config_working)
+    def test_check_input_file_working(self):
+        check_input_file(self.config_working)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-Population options
-==================
+Convolution options
+===================
 
 The following chapter contains all Population code options, along with their descriptions.
 
@@ -22,7 +22,7 @@ In this section we list the public options for the population code. These are me
           True
 
        Validation:
-          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7f83e9cf61f0>, msg=None)
+          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7efc81f5e3a0>, msg=None)
    * - convolution_instructions
      - Description:
           List of instructions for the convolution.
@@ -37,7 +37,7 @@ In this section we list the public options for the population code. These are me
           None
 
        Validation:
-          <function array_validation at 0x7f83e9d7ef70>
+          <function array_validation at 0x7efc81f5e160>
    * - convolution_redshift_bin_edges
      - Description:
           Redshift bin-edges used in convolution.
@@ -46,7 +46,7 @@ In this section we list the public options for the population code. These are me
           None
 
        Validation:
-          <function array_validation at 0x7f83e9d7ef70>
+          <function array_validation at 0x7efc81f5e160>
    * - cosmology
      - Description:
           Astropy cosmology used throughout the code.
@@ -61,7 +61,7 @@ In this section we list the public options for the population code. These are me
           None
 
        Validation:
-          <function callable_or_none_validation at 0x7f83e9d7eee0>
+          <function callable_or_none_validation at 0x7efc81f5e0d0>
    * - custom_data_extraction_function
      - Description:
 
@@ -70,7 +70,7 @@ In this section we list the public options for the population code. These are me
           None
 
        Validation:
-          <function callable_or_none_validation at 0x7f83e9d7eee0>
+          <function callable_or_none_validation at 0x7efc81f5e0d0>
    * - custom_rates_function
      - Description:
           Custom rate function used in the convolution.
@@ -79,7 +79,7 @@ In this section we list the public options for the population code. These are me
           None
 
        Validation:
-          <function callable_or_none_validation at 0x7f83e9d7eee0>
+          <function callable_or_none_validation at 0x7efc81f5e0d0>
    * - delay_time_default_unit
      - Description:
           Default unit used for the delay-time data. NOTE: this can be overridden in data_dict column or layer entries.
@@ -88,7 +88,7 @@ In this section we list the public options for the population code. These are me
           yr
 
        Validation:
-          <function unit_validation at 0x7f842be7f310>
+          <function unit_validation at 0x7efcc404a430>
    * - extra_weights_function
      - Description:
           Function that calculates extra weights for each system or sub-ensemble. This functions should return a numpy array. The arguments of this function should be chosen from: 'config', 'time_value', 'convolution_instruction', 'data_dict' and the contents of 'extra_weights_function_additional_parameters'. For more explanation about this function see the convolution notebook.
@@ -97,7 +97,7 @@ In this section we list the public options for the population code. These are me
           None
 
        Validation:
-          <function callable_or_none_validation at 0x7f83e9d7eee0>
+          <function callable_or_none_validation at 0x7efc81f5e0d0>
    * - extra_weights_function_additional_parameters
      - Description:
           Additional arguments that can be accessed by the extra_weights_function.
@@ -115,7 +115,7 @@ In this section we list the public options for the population code. These are me
           False
 
        Validation:
-          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7f83e9cf61f0>, msg=None)
+          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7efc81f5e3a0>, msg=None)
    * - input_filename
      - Description:
           Full path to input hdf5 filename.
@@ -124,7 +124,7 @@ In this section we list the public options for the population code. These are me
 
 
        Validation:
-          <function existing_path_validation at 0x7f83e9cf6280>
+          <function existing_path_validation at 0x7efc81f5e430>
    * - logger
      - Description:
           Logger object.
@@ -133,7 +133,7 @@ In this section we list the public options for the population code. These are me
           <Logger syntheticstellarpopconvolve.convolution_default_settings (INFO)>
 
        Validation:
-          <function logger_validation at 0x7f83e9d7ec10>
+          <function logger_validation at 0x7efc81f45dc0>
    * - max_job_queue_size
      - Description:
           Max number of jobs in the multiprocessing queue for the convolution.
@@ -178,7 +178,7 @@ In this section we list the public options for the population code. These are me
           False
 
        Validation:
-          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7f83e9cf61f0>, msg=None)
+          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7efc81f5e3a0>, msg=None)
    * - redshift_interpolator_max_redshift
      - Description:
           Minimum redshift for the redshift interpolator.
@@ -214,7 +214,7 @@ In this section we list the public options for the population code. These are me
           True
 
        Validation:
-          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7f83e9cf61f0>, msg=None)
+          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7efc81f5e3a0>, msg=None)
    * - redshift_interpolator_stepsize
      - Description:
           Stepsize for the redshift interpolation.
@@ -232,7 +232,7 @@ In this section we list the public options for the population code. These are me
           True
 
        Validation:
-          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7f83e9cf61f0>, msg=None)
+          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7efc81f5e3a0>, msg=None)
    * - remove_pickle_files
      - Description:
           Flag whether to remove all the pickle files after writing them to the main hdf5 file.
@@ -241,7 +241,7 @@ In this section we list the public options for the population code. These are me
           True
 
        Validation:
-          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7f83e9cf61f0>, msg=None)
+          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7efc81f5e3a0>, msg=None)
    * - time_type
      - Description:
           Time-type used in convolution. Can be either 'redshift' or 'lookback_time'.
@@ -268,7 +268,7 @@ In this section we list the public options for the population code. These are me
           True
 
        Validation:
-          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7f83e9cf61f0>, msg=None)
+          All(Range(min=None, max=1, min_included=True, max_included=True, msg=None), <function Boolean at 0x7efc81f5e3a0>, msg=None)
    * - yield_rate_unit
      - Description:
           Unit used for the yield-rate data. NOTE: currently it is not possible to override this thoruh the data_dict column or layer entries.
@@ -277,4 +277,4 @@ In this section we list the public options for the population code. These are me
           1.0 1 / solMass
 
        Validation:
-          <function unit_validation at 0x7f842be7f310>
+          <function unit_validation at 0x7efcc404a430>

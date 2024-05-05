@@ -472,7 +472,7 @@ def write_default_settings_to_rst_file(options_defaults_dict, output_file: str) 
 
     # Set up intro
     description_page_text = ""
-    title = "Population options"
+    title = "Convolution options"
     description_page_text += title + "\n"
     description_page_text += "=" * len(title) + "\n\n"
     description_page_text += "The following chapter contains all Population code options, along with their descriptions."

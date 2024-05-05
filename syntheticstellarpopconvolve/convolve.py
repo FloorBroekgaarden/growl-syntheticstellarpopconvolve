@@ -5,9 +5,7 @@ TODO: make wrappers to handle timing logging to debug.
 TODO: allow usage of astropy units
 """
 
-from syntheticstellarpopconvolve.check_convolution_input_file import (
-    check_convolution_input_file,
-)
+from syntheticstellarpopconvolve.check_input_file import check_input_file
 from syntheticstellarpopconvolve.convolution_check_config import (
     check_convolution_config,
 )
@@ -47,7 +45,7 @@ def convolve(config):  # DH0001
 
     ###########
     # Check the input file
-    check_convolution_input_file(config=config)
+    check_input_file(config=config)
 
     ###########
     # Copy the input file and

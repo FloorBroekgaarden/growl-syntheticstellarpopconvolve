@@ -5,7 +5,7 @@ Function to check the input file
 import h5py
 
 
-def check_convolution_input_file(config):
+def check_input_file(config):
     """
     TODO aa
     """

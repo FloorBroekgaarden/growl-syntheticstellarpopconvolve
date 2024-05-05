@@ -40,7 +40,7 @@ def write_custom_footer():
 
     #
     branch_infix = "/-/tree/"
-    commit_infix = "/-/commit/"
+    # commit_infix = "/-/commit/"
 
     ############
     # Construct binary_c-python git information
@@ -50,14 +50,14 @@ def write_custom_footer():
     local_repo = Repo(path=base_dir)
 
     sspc_git_branch_name = str(local_repo.active_branch.name)
-    sspc_git_revision = str(local_repo.active_branch.commit)
+    # sspc_git_revision = str(local_repo.active_branch.commit)
 
     #
     sspc_git_root = "https://gitlab.com/dhendriks/syntheticstellarpopconvolve"
     sspc_branch_url = sspc_git_root + branch_infix + sspc_git_branch_name
-    sspc_commit_url = (
-        sspc_git_root + commit_infix + sspc_git_revision.replace('"', "").split(":")[-1]
-    )
+    # sspc_commit_url = (
+    #     sspc_git_root + commit_infix + sspc_git_revision.replace('"', "").split(":")[-1]
+    # )
 
     ############
     # Construct footer text
@@ -70,10 +70,10 @@ Generated on Synthetic Stellar Pop Convolve branch {sspc_git_branch_name}: <a hr
         sspc_branch_url=sspc_branch_url,
     )
 
-    if not os.getenv("READTHEDOCS", False):
-        string += ' and <a href="{sspc_commit_url}">git commit url</a>'.format(
-            sspc_commit_url=sspc_commit_url,
-        )
+    # if not os.getenv("READTHEDOCS", False):
+    #     string += ' and <a href="{sspc_commit_url}">git commit url</a>'.format(
+    #         sspc_commit_url=sspc_commit_url,
+    #     )
 
     # Set up template
     output_text = """

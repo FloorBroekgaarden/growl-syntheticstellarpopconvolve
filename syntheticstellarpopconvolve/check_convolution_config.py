@@ -44,6 +44,7 @@ def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type
                 "lookback_time_bin_edges is required in the sfr dictionary"
             )
 
+        # TODO: allow any time-type unit
         # check if has units
         if not sfr_dict["lookback_time_bin_edges"].unit == u.yr:
             raise ValueError(
@@ -54,10 +55,18 @@ def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type
         if "redshift_bin_edges" not in sfr_dict:
             raise ValueError("redshift_bin_edges is required in the sfr dictionary")
 
+        # TODO: check if
+
     ##########
     # Check if the correct time bins are present
     if "starformation_array" not in sfr_dict:
         raise ValueError("starformation_array is required in the sfr dictionary")
+
+    # check if starformation array has any unit
+    try:
+        sfr_dict["starformation_array"].unit
+    except AttributeError:
+        raise AttributeError("starformation_array requires an astropy unit")
 
     ##########
     # Check if the shape of the time_bin_edges is 1 smaller than the starformation array

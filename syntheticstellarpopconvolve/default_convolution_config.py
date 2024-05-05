@@ -84,6 +84,10 @@ default_convolution_config_dict = {
     },
     # ###################
     # # Starformation related
+    "SFR_info": {
+        "value": {},
+        "description": "dictionary containing the starformation rate info. Can also be a list of dictionaries.",
+    },
     # # Global starformation rate config
     # "star_formation_rate_distribution_function": {
     #     "value": madau_dickinson_sfr,

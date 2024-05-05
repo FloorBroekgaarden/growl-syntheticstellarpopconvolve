@@ -1,8 +1,8 @@
 import copy
 
-from syntheticstellarpopconvolve.convolution_default_settings import (
-    convolution_options_defaults,
-)
 from syntheticstellarpopconvolve.convolve import convolve  # noqa: F401
+from syntheticstellarpopconvolve.default_convolution_config import (
+    default_convolution_config,
+)
 
-convolution_config = copy.copy(convolution_options_defaults)
+convolution_config = copy.copy(default_convolution_config)

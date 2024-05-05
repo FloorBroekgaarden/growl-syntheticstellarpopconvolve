@@ -8,7 +8,7 @@ This section contains the (auto)documentation for all the functions and modules 
    modules/check_input_file
    modules/calculate_birth_redshift_array
    modules/check_convolution_config
-   modules/convolution_default_settings
+   modules/default_convolution_config
    modules/convolution_general_functions
    modules/convolution_metallicity_distributions
    modules/convolution_sfr_distributions

@@ -19,14 +19,6 @@ from syntheticstellarpopconvolve.tests.test_check_convolution_config import (
 from syntheticstellarpopconvolve.tests.test_check_input_file import (
     test_check_input_file,
 )
-from syntheticstellarpopconvolve.tests.test_convolution_default_settings import (
-    test_array_validation,
-    test_callable_or_none_validation,
-    test_callable_validation,
-    test_existing_path_validation,
-    test_logger_validation,
-    test_unit_validation,
-)
 from syntheticstellarpopconvolve.tests.test_convolution_general_functions import (
     test_calculate_bincenters,
     test_calculate_digitized_sfr_rates,
@@ -91,6 +83,14 @@ from syntheticstellarpopconvolve.tests.test_cosmology_utils import (
     test_lookback_time_to_redshift,
     test_redshift_to_age_of_universe,
     test_redshift_to_lookback_time,
+)
+from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
+    test_array_validation,
+    test_callable_or_none_validation,
+    test_callable_validation,
+    test_existing_path_validation,
+    test_logger_validation,
+    test_unit_validation,
 )
 from syntheticstellarpopconvolve.tests.test_extract_population_settings import (
     test_extract_population_settings,

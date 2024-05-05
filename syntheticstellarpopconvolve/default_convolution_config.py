@@ -71,7 +71,7 @@ float_or_int = vol.Or(float, int)
 
 ############################
 #
-convolution_options_defaults_dict = {
+default_convolution_config_dict = {
     ###################
     # Convolution configuration
     "time_type": {
@@ -329,14 +329,13 @@ convolution_options_defaults_dict = {
 }
 
 # extract only values
-convolution_options_defaults = {
-    key: value["value"] for key, value in convolution_options_defaults_dict.items()
+default_convolution_config = {
+    key: value["value"] for key, value in default_convolution_config_dict.items()
 }
 
 # extract only descriptions
-convolution_options_descriptions = {
-    key: value["description"]
-    for key, value in convolution_options_defaults_dict.items()
+default_convolution_config_descriptions = {
+    key: value["description"] for key, value in default_convolution_config_dict.items()
 }
 
 #############

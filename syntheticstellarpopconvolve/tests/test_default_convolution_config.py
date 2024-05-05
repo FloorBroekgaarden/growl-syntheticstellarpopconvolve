@@ -1,5 +1,5 @@
 """
-Testcases for convolution_default_settings.
+Testcases for default_convolution_config.
 """
 
 import logging
@@ -9,7 +9,8 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve.convolution_default_settings import (
+from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
+from syntheticstellarpopconvolve.default_convolution_config import (
     array_validation,
     callable_or_none_validation,
     callable_validation,
@@ -17,10 +18,9 @@ from syntheticstellarpopconvolve.convolution_default_settings import (
     logger_validation,
     unit_validation,
 )
-from syntheticstellarpopconvolve.convolution_general_functions import temp_dir
 
 TMP_DIR = temp_dir(
-    "tests", "tests_convolution", "tests_convolution_default_settings", clean_path=True
+    "tests", "tests_convolution", "tests_default_convolution_config", clean_path=True
 )
 
 

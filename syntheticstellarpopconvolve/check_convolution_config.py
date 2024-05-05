@@ -7,8 +7,8 @@ TODO: handle logic of SFR
 import astropy.units as u
 import voluptuous as vol
 
-from syntheticstellarpopconvolve.convolution_default_settings import (
-    convolution_options_defaults_dict,
+from syntheticstellarpopconvolve.default_convolution_config import (
+    default_convolution_config_dict,
 )
 
 
@@ -178,7 +178,7 @@ def check_convolution_config(config):
     # from the main dictionary, create a validation scheme
     validation_dict = {
         key: value["validation"]
-        for key, value in convolution_options_defaults_dict.items()
+        for key, value in default_convolution_config_dict.items()
         if "validation" in value
     }
     validation_schema = vol.Schema(validation_dict, extra=vol.ALLOW_EXTRA)

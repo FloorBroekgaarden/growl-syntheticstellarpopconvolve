@@ -84,7 +84,7 @@ setup(
         "syntheticstellarpopconvolve.tests",
     ],
     package_data={
-        "": [
+        "syntheticstellarpopconvolve": [
             "example_data/*.dat",
             "example_data/*.json",
         ],
@@ -93,8 +93,8 @@ setup(
         #     "example_data",
         # ],
     },
-    install_requires=requirements(this_file_dir),
     include_package_data=True,
+    install_requires=requirements(this_file_dir),
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",

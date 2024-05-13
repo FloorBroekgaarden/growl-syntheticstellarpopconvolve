@@ -1,5 +1,5 @@
 include README.md
-include VERSION
 include requirements.txt
-global-exclude */__pycache__/*
-include syntheticstellarpopconvolve/example_data/*
+include syntheticstellarpopconvolve/example_data/*.json
+include syntheticstellarpopconvolve/example_data/*.dat
+prune */__pycache__

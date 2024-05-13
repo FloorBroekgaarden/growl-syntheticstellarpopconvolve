@@ -6,8 +6,9 @@ NAME_CURRENT_FILE="`realpath \"$0\"`"
 DIRNAME_CURRENT_FILE=$(dirname $NAME_CURRENT_FILE)
 DIRNAME_PROJECT_ROOT=$(dirname $DIRNAME_CURRENT_FILE)
 cd $DIRNAME_PROJECT_ROOT
+
 # Get current version
-VERSION_NUMBER=$(cat "VERSION")
+VERSION_NUMBER=$(grep -oP '__version__ = "\K[^"]+' syntheticstellarpopconvolve/_version.py | awk '{print $1}')
 
 # Create dist
 echo "Creating source distribution for syntheticstellarpopconvolve-$VERSION_NUMBER"

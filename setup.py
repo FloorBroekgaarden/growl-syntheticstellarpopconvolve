@@ -20,8 +20,14 @@ def version():
     opens VERSION and returns version number
     """
 
-    with open("VERSION") as file:
-        return file.read().strip()
+    # with open("VERSION") as file:
+    #     return file.read().strip()
+
+    about = {}
+    with open("syntheticstellarpopconvolve/_version.py") as f:
+        exec(f.read(), about)
+
+    return about["__version__"]
 
 
 def readme():
@@ -82,18 +88,21 @@ setup(
     packages=[
         "syntheticstellarpopconvolve",
         "syntheticstellarpopconvolve.tests",
+        "syntheticstellarpopconvolve.example_data",
     ],
-    package_data={
-        "syntheticstellarpopconvolve": [
-            "example_data/*.dat",
-            "example_data/*.json",
-        ],
-        # "convolution": [
-        #     "example_data",
-        #     "example_data",
-        # ],
-    },
-    include_package_data=False,
+    # package_data={
+    #     "syntheticstellarpopconvolve": [
+    #         "example_data/*.dat",
+    #         "example_data/*.json",
+    #     ],
+    #     # "convolution": [
+    #     #     "example_data",
+    #     #     "example_data",
+    #     # ],
+    # },
+    # setup_requires=['pbr'],
+    # pbr=True,
+    include_package_data=True,
     install_requires=requirements(this_file_dir),
     classifiers=[
         "Development Status :: 4 - Beta",

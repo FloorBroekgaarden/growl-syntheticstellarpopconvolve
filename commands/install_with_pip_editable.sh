@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script to install syntheticstellarpopconvolve in the current venv with editable flags. with this any change in this repo will be available in the venv
 
-VERSION_NUMBER=$(cat "../VERSION")
+VERSION_NUMBER=$(grep -oP '__version__ = "\K[^"]+' ../syntheticstellarpopconvolve/_version.py | awk '{print $1}')
 echo "installing syntheticstellarpopconvolve version $VERSION_NUMBER"
 
 # we can only use python3 and python3, but allow

@@ -93,7 +93,7 @@ setup(
         #     "example_data",
         # ],
     },
-    include_package_data=True,
+    include_package_data=False,
     install_requires=requirements(this_file_dir),
     classifiers=[
         "Development Status :: 4 - Beta",

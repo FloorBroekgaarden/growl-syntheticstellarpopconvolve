@@ -81,22 +81,7 @@ As I said the code is not fully stable yet but I do invite people to start
 having a look at the code-base and try out installing.
 
 If anyone has questions, hit me up on the LISA-UCB slack channel or send me an
-email on [mail@davidhendriks.com](mailto:mail@davidhendri).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+email on [mail@davidhendriks.com](mailto:mail@davidhendriks.com).
 
 
 ## Installation

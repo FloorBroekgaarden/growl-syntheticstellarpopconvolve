@@ -6,3 +6,6 @@ https://keepachangelog.com/en/0.3.0/
 
 	* 0.2:
 	Configuring MANIFEST and setup.py to ship the appropriate files and added __version__ info through syntheticstellarpopconvolve.__version__
+
+	* 0.3:
+	Updated notebooks, made time units more flexible, allow usage of sfr_dict in extra_weights_function so that we can pass spatial information along in it.

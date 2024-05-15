@@ -110,6 +110,7 @@ def event_convolution_function(
         config=config,
         convolution_time_bin_center=convolution_time_bin_center,
         convolution_instruction=convolution_instruction,
+        sfr_dict=job_dict["sfr_dict"],
         data_dict=data_dict,
         output_shape=convolved_rate_array.shape,
     )

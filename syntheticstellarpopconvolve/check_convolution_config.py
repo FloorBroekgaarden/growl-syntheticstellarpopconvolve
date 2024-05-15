@@ -12,6 +12,19 @@ from syntheticstellarpopconvolve.default_convolution_config import (
 )
 
 
+def is_time_unit(parameter):
+    """
+    Function to check if a parameter has time-units
+    """
+
+    try:
+        parameter.to(u.yr)
+        return True
+
+    except u.core.UnitConversionError:
+        return False
+
+
 def check_metallicity(convolution_instruction, data_key):
     """
     Function to check the metallicity
@@ -44,11 +57,10 @@ def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type
                 "lookback_time_bin_edges is required in the sfr dictionary"
             )
 
-        # TODO: allow any time-type unit
-        # check if has units
-        if not sfr_dict["lookback_time_bin_edges"].unit == u.yr:
+        # check if has time-units
+        if not is_time_unit(sfr_dict["lookback_time_bin_edges"]):
             raise ValueError(
-                "Please express 'lookback_time_bin_edges' in units of years (u.yr)"
+                "Please express 'lookback_time_bin_edges' in units of time"
             )
 
     elif time_type == "redshift":
@@ -69,7 +81,7 @@ def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type
         raise AttributeError("starformation_array requires an astropy unit")
 
     ##########
-    # Check if the shape of the time_bin_edges is 1 smaller than the starformation array
+    # TODO: Check if the shape of the time_bin_edges is 1 smaller than the starformation array
 
     ##########
     # check if metallicity information is present
@@ -254,9 +266,10 @@ def check_convolution_config(config):
                 "Please provide 'convolution_lookback_time_bin_edges' when using 'lookback-time' as 'time-type'"
             )
 
-        if not config["convolution_lookback_time_bin_edges"].unit == u.yr:
+        if not is_time_unit(config["convolution_lookback_time_bin_edges"]):
+            # if not config["convolution_lookback_time_bin_edges"].unit == u.yr:
             raise ValueError(
-                "Please express 'convolution_lookback_time_bin_edges' in units of years (u.yr)"
+                "Please express 'convolution_lookback_time_bin_edges' in units of time"
             )
 
         config["convolution_time_bin_edges"] = config[

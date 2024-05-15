@@ -321,6 +321,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
             config=self.convolution_config,
             convolution_time_bin_center=0.2,
             convolution_instruction=convolution_instruction,
+            sfr_dict={},
             data_dict=self.dummy_data,
             output_shape=self.dummy_data["yield_rate"].shape,
         )
@@ -346,6 +347,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
                 config=self.convolution_config,
                 convolution_time_bin_center=0.2,
                 convolution_instruction=convolution_instruction,
+                sfr_dict={},
                 data_dict=self.dummy_data,
                 output_shape=self.dummy_data["yield_rate"].shape,
             )
@@ -370,6 +372,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
                 config=self.convolution_config,
                 convolution_time_bin_center=0.2,
                 convolution_instruction=convolution_instruction,
+                sfr_dict={},
                 data_dict=self.dummy_data,
                 output_shape=self.dummy_data["yield_rate"].shape,
             )
@@ -393,6 +396,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
             config=self.convolution_config,
             convolution_time_bin_center=0.2,
             convolution_instruction=convolution_instruction,
+            sfr_dict={},
             data_dict=self.dummy_data,
             output_shape=self.dummy_data["yield_rate"].shape,
         )
@@ -421,6 +425,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
                 config=self.convolution_config,
                 convolution_time_bin_center=0.2,
                 convolution_instruction=convolution_instruction,
+                sfr_dict={},
                 data_dict=self.dummy_data,
                 output_shape=np.shape([1]),
             )
@@ -436,6 +441,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
             config=self.convolution_config,
             convolution_time_bin_center=0.2,
             convolution_instruction=convolution_instruction,
+            sfr_dict={},
             data_dict=self.dummy_data,
             output_shape=np.shape([1]),
         )

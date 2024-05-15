@@ -173,6 +173,7 @@ def handle_extra_weights_function(
     config,
     convolution_time_bin_center,
     convolution_instruction,
+    sfr_dict,
     data_dict,
     output_shape,
 ):
@@ -192,6 +193,7 @@ def handle_extra_weights_function(
             "config": config,
             "time_value": convolution_time_bin_center,
             "convolution_instruction": convolution_instruction,
+            "sfr_dict": sfr_dict,
             "data_dict": data_dict,
             **convolution_instruction.get(
                 "extra_weights_function_additional_parameters", {}

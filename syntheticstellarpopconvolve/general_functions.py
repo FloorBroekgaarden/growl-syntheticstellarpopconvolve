@@ -263,6 +263,8 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
                 origin_time_array
             )
         )
+    else:
+        raise ValueError("Choice for time-type unknown")
 
     return origin_time_array
 
@@ -295,7 +297,7 @@ def calculate_digitized_sfr_rates(
         - 1
     )
 
-    #
+    # Handle whether we want to specify metallicity as well
     if "metallicity" in data_dict.keys():
 
         # Get indices for metallicity values
@@ -314,7 +316,6 @@ def calculate_digitized_sfr_rates(
         digitised_sfr_rates = sfr_dict[
             "padded_metallicity_weighted_starformation_array"
         ][metallicity_indices, digitized_time_indices]
-
     else:
         # use JUST the SFR, not the metallicity dependent one
 
@@ -323,6 +324,24 @@ def calculate_digitized_sfr_rates(
         digitised_sfr_rates = sfr_dict["padded_starformation_array"][
             digitized_time_indices
         ]
+
+    # handle multiplication by bin-size
+    # TODO: clean and handle implementation
+    # TODO: make sure that padded_time_binsizes exists.
+    if config["multiply_by_time_binsize"]:
+        # get indices
+        time_binsize_indices = (
+            np.digitize(
+                origin_time_array, bins=sfr_dict["padded_time_bin_edges"], right=False
+            )
+            - 1
+        )
+
+        # get time-binsizes
+        time_binsizes = sfr_dict["padded_time_binsizes"]
+
+        # update sfr_rates
+        digitised_sfr_rates = digitised_sfr_rates * time_binsizes[time_binsize_indices]
 
     return digitised_sfr_rates
 

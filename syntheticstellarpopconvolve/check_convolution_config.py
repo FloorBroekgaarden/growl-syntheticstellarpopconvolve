@@ -5,10 +5,16 @@ TODO: handle logic of SFR
 """
 
 import astropy.units as u
+import numpy as np
 import voluptuous as vol
 
+from syntheticstellarpopconvolve.cosmology_utils import redshift_to_lookback_time
 from syntheticstellarpopconvolve.default_convolution_config import (
     default_convolution_config_dict,
+)
+from syntheticstellarpopconvolve.general_functions import pad_function
+from syntheticstellarpopconvolve.store_redshift_shell_info import (
+    store_redshift_shell_info,
 )
 
 
@@ -38,7 +44,217 @@ def check_metallicity(convolution_instruction, data_key):
                 )
 
 
-def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type):
+def update_sfr_dict(sfr_dict, config):
+    """
+    Function to update the SFR dict
+    - provides padding
+    - adds redshift shell info
+    """
+
+    #
+    config["logger"].debug("Updating SFR dict")
+
+    # Pad the SFR dict with the empty bins around
+    sfr_dict = pad_sfr_dict(config=config, sfr_dict=sfr_dict)
+
+    # Add redshift shell info to dict.
+    sfr_dict = store_redshift_shell_info(config=config, sfr_dict=sfr_dict)
+
+    return sfr_dict
+
+
+def pad_sfr_dict(config, sfr_dict):
+    """
+    Function to pad the entries in the sfr dictionary with empty bins.
+
+    These functions update all the sfr properties and adds new entries that are prepended with 'padded_'
+
+    TODO: add time binsizes
+    """
+
+    #
+    config["logger"].debug("Padding SFR dict")
+
+    max_pad = 1.0e13
+
+    ##########
+    # pad lookback time/redshift array
+    if config["time_type"] == "lookback_time":
+        # pad lookback time bins
+        sfr_dict["padded_lookback_time_bin_edges"] = pad_function(
+            array=sfr_dict["lookback_time_bin_edges"],
+            left_val=-max_pad,
+            right_val=max_pad,
+            relative_to_edge_val=True,
+        )
+
+        #
+        sfr_dict["padded_time_bin_edges"] = sfr_dict["padded_lookback_time_bin_edges"]
+        sfr_dict["time_bin_edges"] = sfr_dict["lookback_time_bin_edges"]
+
+        #
+        config["logger"].debug(
+            "Padded lookback time bin edges {} to {}".format(
+                sfr_dict["lookback_time_bin_edges"],
+                sfr_dict["padded_lookback_time_bin_edges"],
+            )
+        )
+
+        #
+        sfr_dict["lookback_time_bin_sizes"] = np.abs(
+            np.diff(sfr_dict["lookback_time_bin_edges"])
+        )
+        sfr_dict["time_bin_sizes"] = sfr_dict["lookback_time_bin_sizes"]
+
+        # Pad time-bin sizes
+        sfr_dict["padded_redshift_bin_sizeslookback_time_bin_sizes"] = pad_function(
+            array=sfr_dict["lookback_time_bin_sizes"],
+            left_val=0,
+            right_val=0,
+            relative_to_edge_val=False,
+        )
+
+        # log the binsizes
+        config["logger"].debug(
+            "Created lookback time bin sizes {}".format(
+                sfr_dict["lookback_time_bin_sizes"],
+            )
+        )
+
+    elif config["time_type"] == "redshift":
+        #
+        sfr_dict["padded_redshift_bin_edges"] = pad_function(
+            array=sfr_dict["redshift_bin_edges"],
+            left_val=-max_pad,
+            right_val=max_pad,
+            relative_to_edge_val=True,
+        )
+
+        #
+        sfr_dict["padded_time_bin_edges"] = sfr_dict["padded_redshift_bin_edges"]
+        sfr_dict["time_bin_edges"] = sfr_dict["redshift_bin_edges"]
+
+        #
+        config["logger"].debug(
+            "Padded redshift bin edges {} to {}".format(
+                sfr_dict["redshift_bin_edges"],
+                sfr_dict["padded_redshift_bin_edges"],
+            )
+        )
+
+        # create redshift time-bin size
+        sfr_dict["redshift_bin_sizes"] = np.abs(np.diff(sfr_dict["redshift_bin_edges"]))
+
+        # convert into actual time-bin sizes
+        lookback_time_at_redshift_bin_edges = np.array(
+            [
+                redshift_to_lookback_time(
+                    redshift=redshift_bin_edge, cosmology=config["cosmology"]
+                )
+                for redshift_bin_edge in sfr_dict["redshift_bin_edges"]
+            ]
+        )
+        sfr_dict["time_bin_sizes"] = np.abs(
+            np.diff(lookback_time_at_redshift_bin_edges)
+        )
+
+        # Pad time-bin sizes
+        sfr_dict["padded_redshift_bin_sizes"] = pad_function(
+            array=sfr_dict["redshift_bin_sizes"],
+            left_val=0,
+            right_val=0,
+            relative_to_edge_val=False,
+        )
+
+        # log the binsizes
+        config["logger"].debug(
+            "Created redshift bin sizes {} and the corresponding lookback time-bin sizes {} ".format(
+                sfr_dict["redshift_time_bin_sizes"], sfr_dict["time_bin_sizes"]
+            )
+        )
+    else:
+        raise ValueError("Invalid time-type")
+
+    #########
+    # Pad time-bin sizes
+    sfr_dict["padded_time_bin_sizes"] = pad_function(
+        array=sfr_dict["time_bin_sizes"],
+        left_val=0,
+        right_val=0,
+        relative_to_edge_val=False,
+    )
+
+    # log the binsizes
+    config["logger"].debug(
+        "Padded the time bin sizes {}".format(
+            sfr_dict["padded_time_bin_sizes"],
+        )
+    )
+
+    ##########
+    # pad SFR rate array
+    if "starformation_array" in sfr_dict:  # it should be present always
+        #
+        sfr_dict["padded_starformation_array"] = pad_function(
+            array=sfr_dict["starformation_array"],
+            left_val=0,
+            right_val=0,
+            relative_to_edge_val=False,
+        )
+
+        #
+        config["logger"].debug(
+            "Padded starformation array {} to {}".format(
+                sfr_dict["starformation_array"],
+                sfr_dict["padded_starformation_array"],
+            )
+        )
+
+    ##########
+    # pad metallicity bins
+    if "metallicity_bin_edges" in sfr_dict:
+        #
+        sfr_dict["padded_metallicity_bin_edges"] = pad_function(
+            array=sfr_dict["metallicity_bin_edges"],
+            left_val=1e-20,
+            right_val=1,
+            relative_to_edge_val=False,
+        )
+
+        #
+        config["logger"].debug(
+            "Padded metallicity bin edges {} to {}".format(
+                sfr_dict["metallicity_bin_edges"],
+                sfr_dict["padded_metallicity_bin_edges"],
+            )
+        )
+
+    ##########
+    # pad metallicity weighted SFR rate bins
+    if "metallicity_weighted_starformation_array" in sfr_dict:
+        #
+        sfr_dict["padded_metallicity_weighted_starformation_array"] = pad_function(
+            array=sfr_dict["metallicity_weighted_starformation_array"],
+            left_val=0,
+            right_val=0,
+            relative_to_edge_val=False,
+        )
+
+        #
+        sfr_dict["padded_metallicity_weighted_starformation_array"] = pad_function(
+            array=sfr_dict["padded_metallicity_weighted_starformation_array"],
+            left_val=0,
+            right_val=0,
+            relative_to_edge_val=False,
+            axis=1,
+        )
+
+    return sfr_dict
+
+
+def check_sfr_dict(
+    sfr_dict, config, requires_name, requires_metallicity_info, time_type
+):
     """
     Function to check the sfr dictionary
     """
@@ -66,8 +282,6 @@ def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type
     elif time_type == "redshift":
         if "redshift_bin_edges" not in sfr_dict:
             raise ValueError("redshift_bin_edges is required in the sfr dictionary")
-
-        # TODO: check if
 
     ##########
     # Check if the correct time bins are present
@@ -103,6 +317,12 @@ def check_sfr_dict(sfr_dict, requires_name, requires_metallicity_info, time_type
             raise AttributeError(
                 "metallicity_weighted_starformation_array requires an astropy unit"
             )
+
+    ##########
+    # update the SFR dict with extra things
+    sfr_dict = update_sfr_dict(sfr_dict=sfr_dict, config=config)
+
+    return sfr_dict
 
 
 def check_required(config, required_list):
@@ -288,20 +508,22 @@ def check_convolution_config(config):
     # check the SFR information
     if "SFR_info" in config:
         if isinstance(config["SFR_info"], dict):
-            check_sfr_dict(
+            config["SFR_info"] = check_sfr_dict(
                 sfr_dict=config["SFR_info"],
                 requires_name=False,
                 requires_metallicity_info=requires_metallicity_info,
                 time_type=time_type,
+                config=config,
             )
         elif isinstance(config["SFR_info"], list):
             # check all sfr dicts
             for sfr_dict in config["SFR_info"]:
-                check_sfr_dict(
+                sfr_dict = check_sfr_dict(
                     sfr_dict=sfr_dict,
                     requires_name=True,
                     requires_metallicity_info=requires_metallicity_info,
                     time_type=time_type,
+                    config=config,
                 )
     else:
         raise ValueError("No SFR info has been provided. Aborting")

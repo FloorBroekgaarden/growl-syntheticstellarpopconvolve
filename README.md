@@ -16,17 +16,18 @@ as supernova events from both binary systems and single stars with a
 cosmological star-formation rate.
 
 SSPC can be used to convolve the output of stellar
-population-synthesis codes with (cosmological) starformation
-rates. It can convolve both event-based (line by line) data, as
-well as ensemble-based (nested histogram) data. The user must provide
+population-synthesis codes with (cosmological) starformation rates. It
+can convolve both event-based (line by line) data, as well as
+ensemble-based (nested histogram) data. The user must provide
 information about the column/layer that contains the necessary data to
 perform the convolution, which is at minimum the delay-time and the
 normalized yield. The latter quantity gets multiplied directly with
 the appropriate SFR, and as such should already be weighted by
 e.g. binary fractions, importance-sampling weights and others.
 
-It is possible to provide additional weights *during* convolution, which can
-include things like detection probability that depend on redshift.
+It is possible to provide additional weights *during* convolution,
+which can include things like detection probability that depend on
+redshift.
 
 list of some current features:
 
@@ -70,22 +71,25 @@ Future features I aim to add in the foreseeable future:
     extra information to be passed along which can be used in
     e.g. selection functions.
 -   ??? (please let me know about desired features)
+-   Optimisation of ensemble calculation (turn into flat structure and
+    fall back on the event-based convolution)
 
-The code is in late-beta stage, and is largely covered in unit-tests, but its
-not entirely finished just yet and likely still contains some bugs that I have
-not been able to pick up. Thats where this community can come in! I think this
-code could become useful for many pop-synth groups, especially when people
-submit git issues for bugs and feature requests!
+The code is in late-beta stage, and is largely covered in unit-tests,
+but its not entirely finished just yet and likely still contains some
+bugs that I have not been able to pick up. Thats where this community
+can come in! I think this code could become useful for many pop-synth
+groups, especially when people submit git issues for bugs and feature
+requests!
 
-As I said the code is not fully stable yet but I do invite people to start
-having a look at the code-base and try out installing.
+As I said the code is not fully stable yet but I do invite people to
+start having a look at the code-base and try out installing.
 
-If anyone has questions, hit me up on the LISA-UCB slack channel or send me an
-email on [mail@davidhendriks.com](mailto:mail@davidhendriks.com).
+If anyone has questions, hit me up on the LISA-UCB slack channel or
+send me an email on
+[mail@davidhendriks.com](mailto:mail@davidhendriks.com).
 
 
 ## Installation
-
 
 ### Requirements
 The Python packages that are required for this code to run are listed in the `requirements.txt`, which automatically gets read out by `setup.py`.

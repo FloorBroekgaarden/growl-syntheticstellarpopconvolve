@@ -10,3 +10,6 @@ https://keepachangelog.com/en/0.3.0/
 	* 0.3:
 	- Updated notebooks, made time units more flexible, allow usage of sfr_dict in extra_weights_function so that we can pass spatial information along in it.
 	- Added option to multiple the SFR by the time relevant time bin (using
+
+	* 0.4:
+	- added basic support for Monte-Carlo sampling-based convolution

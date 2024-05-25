@@ -37,38 +37,38 @@ assign radnom position
 
 Notes:
 - this method does not turn things around like the others do. We start
-at a given lookback time bin for all systems. We sample a set of systems based on the total starformation within that lookback time bin, and the normalized yields of the systems. We then assign a birth lookback time to the systems (taken randomly between the bin edges)
+at a given lookback time bin for all systems. We sample a set of
+systems based on the total starformation within that lookback time
+bin, and the normalized yields of the systems. We then assign a birth
+lookback time to the systems (taken randomly between the bin edges)
 """
+
+import time
+import uuid
 
 import astropy.units as u
 import numpy as np
 
-#
-lookback_time_index = 5
-scale_factor = 1e-8
-size = 10
 
-# have some starformation array
-lookback_time_bin_edges = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
-starformation_array = (
-    0.25 * np.ones(lookback_time_bin_edges.shape[0] - 1) * u.Msun / u.yr
-)  # example of a constant star-formation rate. this could be anything of course.
-print(starformation_array)
+def combine_dicts_with_numpy_array_entries(dict1, dict2):
+    """
+    Function to combine dicts that contain numpy-array entries. Loops over the keys in dict2 and stores in or appends to the same entry in dict1
 
-bin_sizes = np.diff(lookback_time_bin_edges)
-print(bin_sizes)
+    TODO: merge with convolve_ensembles.merge_dicts
+    """
 
-#
-total_star_formation_at_lookback_times = starformation_array * bin_sizes
-print(total_star_formation_at_lookback_times)
+    # print("dict1, dict2", dict1, dict2)
+    # print("pre: len dict1, len dict2", len(dict1.get('IDs', [])), len(dict2.get('IDs', [])))
+    for key in dict2.keys():
+        if key not in dict1.keys():
+            dict1[key] = dict2[key]
+        else:
+            dict1[key] = np.concatenate([dict1[key], dict2[key]])
 
-#
-normalized_yield_array = scale_factor * np.random.random(size=size) * (1 / u.Msun)
-print("normalized_yield_array", normalized_yield_array)
+    # print("dict1, dict2", dict1, dict2)
+    # print("post: len dict1, len dict2", len(dict1.get('IDs', [])), len(dict2.get('IDs', [])))
 
-data_dict = {}
-data_dict["normalized_yield_array"] = normalized_yield_array
-data_dict["IDs"] = np.arange(len(normalized_yield_array))
+    return dict1
 
 
 def sample_systems(
@@ -85,42 +85,62 @@ def sample_systems(
     # TODO: or we should make sure the indices map back to IDs
     """
 
+    ############
     # calculate the formation yield of all the systems
     formation_yield = total_star_formation_in_bin * data_dict["normalized_yield_array"]
-    print("formation_yield", formation_yield)
+    # print("formation_yield", formation_yield)
 
+    #
+    all_indices = np.arange(len(data_dict["normalized_yield_array"]))
+
+    ############
     # select those that have > 1:
     integer_formations = np.array(np.floor(formation_yield), dtype=int)
-    print("integer_formations", integer_formations)
+    # print("integer_formations", integer_formations)
 
     # select the remainder
     fractional_formations = formation_yield - integer_formations
-    print("fractional_formations", fractional_formations)
+    # print("fractional_formations", fractional_formations)
 
     # take a random set to sample the fractional formations
     random_chance = np.random.random(fractional_formations.shape)
-    print("random_chance", random_chance)
+    # print("random_chance", random_chance)
 
     fractional_formations_sampled = random_chance < fractional_formations
-    print("fractional_formations_sampled", fractional_formations_sampled)
+    # print("fractional_formations_sampled", fractional_formations_sampled)
 
-    #
-    integer_formation_IDs = np.repeat(data_dict["IDs"], integer_formations)
-    print("integer_formation_indices", integer_formation_IDs)
+    # Sample the indices
+    integer_formation_indices = np.repeat(all_indices, integer_formations)
+    # print("integer_formation_indices", integer_formation_indices)
 
-    fractional_formation_IDs = data_dict["IDs"][fractional_formations_sampled]
-    print("fractional_formation_indices", fractional_formation_IDs)
+    fractional_formation_indices = all_indices[fractional_formations_sampled]
+    # print("fractional_formation_indices", fractional_formation_indices)
 
-    combined_IDs = np.concatenate([integer_formation_IDs, fractional_formation_IDs])
-    print("combined_indices", combined_IDs)
+    combined_indices = np.concatenate(
+        [integer_formation_indices, fractional_formation_indices]
+    )
+    # print("combined_indices", combined_indices)
+
+    # print("data_dict", data_dict)
+
+    ############
+    # Make a copy of the data dict and select everything using the combined indices
+    data_dict_sampled_systems = {
+        data_key: data_dict[data_key][combined_indices] for data_key in data_dict.keys()
+    }
 
     # Assign random formation times (of system)
     sampled_formation_lookback_times = (
-        np.random.random(size=size) * lookback_time_bin_size
+        np.random.random(size=len(combined_indices)) * lookback_time_bin_size
     ) + lookback_time_bin_lower_edge
-    print("sampled_formation_lookback_times", sampled_formation_lookback_times)
+    # print("sampled_formation_lookback_times", sampled_formation_lookback_times)
 
-    return combined_IDs, sampled_formation_lookback_times
+    # add to data_dict
+    data_dict_sampled_systems["formation_lookback_times"] = (
+        sampled_formation_lookback_times
+    )
+
+    return data_dict_sampled_systems
 
 
 def sample_systems_main(
@@ -132,11 +152,10 @@ def sample_systems_main(
     metallicity_bins=None,
 ):
     """
-    Function that handles sampling systems.
+    Function that handles sampling systems at a particular lookback time.
 
-    Currently only supports sampling without metallicity dependence
+    Optionally, we handle sampling in metallicity. `metallicity_distribution_at_lookback_time` is expected to contain (dP/dz)*dz
 
-    TODO: add support for metallicity specific sampling
     NOTE: data_dict should contain IDs of some sort
     """
 
@@ -144,35 +163,176 @@ def sample_systems_main(
     # Method 1: no metallicity dependence
     if metallicity_distribution_at_lookback_time is None:
 
-        combined_IDs, sampled_formation_lookback_times = sample_systems(
+        sampled_data_dict = sample_systems(
             total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
             data_dict=data_dict,
             lookback_time_bin_size=lookback_time_bin_size,
             lookback_time_bin_lower_edge=lookback_time_bin_lower_edge,
         )
 
-        print(combined_IDs, sampled_formation_lookback_times)
     ############
     # Method 2: metallicity dependence
     else:
+        if metallicity_bins is None:
+            raise ValueError("Please provide metallicity bins")
 
-        # TODO: loop over the metallicity bins
-        # TODO: calculate the total mass formed in that metallicity bin
-        # TODO: query the data dict for all systems in the current metallicity bin
-        # TODO: create a data dict for this particular metallicity
-        # TODO: store/append to combined array
-        # TODO: we work with indices now, which might not work when we slice and dice.
-        # TODO: or we should make sure the indices map back to IDs
-        raise ValueError("Sampling with metallicity distribution is not supported yet")
+        #
+        sampled_data_dict = {}
+
+        # loop over the metallicities
+        for metallicity_i, metallicity_weight in enumerate(
+            metallicity_distribution_at_lookback_time
+        ):
+            # print("metallicity_i, metallicity_weight", metallicity_i, metallicity_weight)
+            print("data_dict['metallicity']", data_dict["metallicity"])
+            total_star_formation_in_lookback_time_bin_in_metallicity_bin = (
+                total_star_formation_in_lookback_time_bin * metallicity_weight
+            )
+            # print("total_star_formation_in_lookback_time_bin_in_metallicity_bin", total_star_formation_in_lookback_time_bin_in_metallicity_bin)
+
+            #
+            lower_edge_metallicity_bin, upper_edge_metallicity_bin = (
+                metallicity_bins[metallicity_i],
+                metallicity_bins[metallicity_i + 1],
+            )
+            print(
+                "lower_edge_metallicity_bin, upper_edge_metallicity_bin",
+                lower_edge_metallicity_bin,
+                upper_edge_metallicity_bin,
+            )
+
+            # Select those systems that match the current metallicity bin
+            matching_metallicity_indices = np.where(
+                (data_dict["metallicity"] > lower_edge_metallicity_bin)
+                & (data_dict["metallicity"] <= upper_edge_metallicity_bin)
+            )
+            print("matching_metallicity_indices", matching_metallicity_indices)
+
+            # Create data dict for those that match this metallicity
+            metallicity_matching_data_dict = {
+                data_key: data_dict[data_key][matching_metallicity_indices]
+                for data_key in data_dict.keys()
+            }
+            # print("metallicity_matching_data_dict", metallicity_matching_data_dict)
+
+            #
+            metallicity_sampled_data_dict = sample_systems(
+                total_star_formation_in_bin=total_star_formation_in_lookback_time_bin_in_metallicity_bin,
+                data_dict=metallicity_matching_data_dict,
+                lookback_time_bin_size=lookback_time_bin_size,
+                lookback_time_bin_lower_edge=lookback_time_bin_lower_edge,
+            )
+            # print("metallicity_sampled_data_dict", metallicity_sampled_data_dict)
+
+            # combine this with the previous dict
+            sampled_data_dict = combine_dicts_with_numpy_array_entries(
+                sampled_data_dict, metallicity_sampled_data_dict
+            )
+            # print("combined sampled_data_dict", sampled_data_dict)
+            print("\n")
+
+    ###########
+    # TODO: add position sampling if so required
+
+    ###########
+    # Sort the results on the IDs
+    # print("sampled_data_dict", sampled_data_dict)
+
+    # Sort on uuid
+    sorted_indices = sampled_data_dict["IDs"].argsort()
+
+    sampled_data_dict = {
+        data_key: sampled_data_dict[data_key][sorted_indices]
+        for data_key in sampled_data_dict.keys()
+    }
+    # print("sorted sampled_data_dict", sampled_data_dict)
+
+    return sampled_data_dict
 
 
-sample_systems_main(
-    total_star_formation_in_lookback_time_bin=total_star_formation_at_lookback_times[
-        lookback_time_index
-    ],
-    data_dict=data_dict,
-    lookback_time_bin_lower_edge=lookback_time_bin_edges[lookback_time_index],
-    lookback_time_bin_size=bin_sizes[lookback_time_index],
-    metallicity_distribution_at_lookback_time=None,
-    metallicity_bins=None,
-)
+if __name__ == "__main__":
+
+    ##################
+    # Testing method without metallicity distribution
+
+    time_start = time.time()
+    #
+    lookback_time_index = 5
+    scale_factor = 1e-8
+    size = 10
+
+    # have some starformation array
+    lookback_time_bin_edges = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
+    starformation_array = (
+        0.25 * np.ones(lookback_time_bin_edges.shape[0] - 1) * u.Msun / u.yr
+    )  # example of a constant star-formation rate. this could be anything of course.
+    # print(starformation_array)
+
+    bin_sizes = np.diff(lookback_time_bin_edges)
+    # print(bin_sizes)
+
+    #
+    total_star_formation_at_lookback_times = starformation_array * bin_sizes
+    # print(total_star_formation_at_lookback_times)
+
+    #
+    normalized_yield_array = scale_factor * np.random.random(size=size) * (1 / u.Msun)
+    # print("normalized_yield_array", normalized_yield_array)
+
+    #
+    data_dict = {}
+    data_dict["normalized_yield_array"] = normalized_yield_array
+    data_dict["IDs"] = np.array([uuid.uuid4().hex for _ in range(size)])
+    # print(data_dict)
+
+    # #
+    # sample_systems_main(
+    #     total_star_formation_in_lookback_time_bin=total_star_formation_at_lookback_times[
+    #         lookback_time_index
+    #     ],
+    #     data_dict=data_dict,
+    #     lookback_time_bin_lower_edge=lookback_time_bin_edges[lookback_time_index],
+    #     lookback_time_bin_size=bin_sizes[lookback_time_index],
+    #     metallicity_distribution_at_lookback_time=None,
+    #     metallicity_bins=None,
+    # )
+
+    ##################
+    # Testing method with metallicity distribution
+
+    #
+    data_dict["metallicity"] = np.random.random(size=size)
+
+    # print("data_dict['metallicity']", data_dict['metallicity'])
+
+    metallicity_distribution_at_lookback_time = np.array([0.25, 0.25, 0.25, 0.25])
+    metallicity_bins = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+
+    time_start_convolution = time.time()
+
+    #
+    sample_systems_main(
+        total_star_formation_in_lookback_time_bin=total_star_formation_at_lookback_times[
+            lookback_time_index
+        ],
+        data_dict=data_dict,
+        lookback_time_bin_lower_edge=lookback_time_bin_edges[lookback_time_index],
+        lookback_time_bin_size=bin_sizes[lookback_time_index],
+        metallicity_distribution_at_lookback_time=metallicity_distribution_at_lookback_time,
+        metallicity_bins=metallicity_bins,
+    )
+
+    time_end_convolution = time.time()
+
+    print("Total time: {:.2E}".format(time_end_convolution - time_start))
+    print(
+        "Total time convolution: {:.2E}".format(
+            time_end_convolution - time_start_convolution
+        )
+    )
+    print(
+        "Fractional time convolution: {:.2E}".format(
+            (time_end_convolution - time_start_convolution)
+            / (time_end_convolution - time_start)
+        )
+    )

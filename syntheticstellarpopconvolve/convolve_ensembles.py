@@ -1385,59 +1385,70 @@ def ensemble_convolution_function(
     Moreover, the end-point nodes are expected to contain the
     quantity-per-unit-mass. In that way we do not have to rely on extracting
     that from the meta-data and stuff
+
+    Note: ensemble convolution only supports convolution by integration at this point.
     """
 
-    #
-    config["logger"].debug(
-        "Convolving ensemble-based data {} for bin_center {}".format(
-            convolution_instruction["input_data_name"], convolution_time_bin_center
+    if config["convolution_type"] == "integration":
+
+        #
+        config["logger"].debug(
+            "Convolving ensemble-based data {} for bin_center {}".format(
+                convolution_instruction["input_data_name"], convolution_time_bin_center
+            )
         )
-    )
 
-    # pre-convolution preparation
-    ensemble = data_dict["ensemble_data"]
-    data_layer_dict = convolution_instruction["data_layer_dict"]
+        # pre-convolution preparation
+        ensemble = data_dict["ensemble_data"]
+        data_layer_dict = convolution_instruction["data_layer_dict"]
 
-    # check if we want to supply a fixed metallicity
-    data_dict = {}
-    if "metallicity_value" in convolution_instruction:
-        data_dict["metallicity"] = convolution_instruction["metallicity_value"]
+        # check if we want to supply a fixed metallicity
+        data_dict = {}
+        if "metallicity_value" in convolution_instruction:
+            data_dict["metallicity"] = convolution_instruction["metallicity_value"]
 
-    # add some extra things to the convolution instruction TODO this can be placed elsewhere? TODO: what the difference between max_depth and deepest_data_layer_depth?
-    convolution_instruction["deepest_data_layer_depth"] = get_deepest_data_layer_depth(
-        data_layer_dict=data_layer_dict
-    )
-    convolution_instruction["inverted_data_layer_dict"] = invert_data_layer_dict(
-        data_layer_dict=data_layer_dict
-    )
-    convolution_instruction["data_layer_values"] = get_data_layer_dict_values(
-        data_layer_dict=data_layer_dict
-    )
+        # add some extra things to the convolution instruction TODO this can be placed elsewhere? TODO: what the difference between max_depth and deepest_data_layer_depth?
+        convolution_instruction["deepest_data_layer_depth"] = (
+            get_deepest_data_layer_depth(data_layer_dict=data_layer_dict)
+        )
+        convolution_instruction["inverted_data_layer_dict"] = invert_data_layer_dict(
+            data_layer_dict=data_layer_dict
+        )
+        convolution_instruction["data_layer_values"] = get_data_layer_dict_values(
+            data_layer_dict=data_layer_dict
+        )
 
-    # convolution
-    ensemble = ensemble_convolve_ensemble(
-        ensemble=ensemble,
-        convolution_instruction=convolution_instruction,
-        config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
-        job_dict=job_dict,
-        data_dict=data_dict,
-    )
+        # convolution
+        ensemble = ensemble_convolve_ensemble(
+            ensemble=ensemble,
+            convolution_instruction=convolution_instruction,
+            config=config,
+            convolution_time_bin_center=convolution_time_bin_center,
+            job_dict=job_dict,
+            data_dict=data_dict,
+        )
 
-    # marginalisation
-    config, ensemble, convolution_instruction = ensemble_handle_marginalisation(
-        config=config,
-        ensemble=ensemble,
-        convolution_instruction=convolution_instruction,
-        is_pre_conv=False,
-    )
+        # marginalisation
+        config, ensemble, convolution_instruction = ensemble_handle_marginalisation(
+            config=config,
+            ensemble=ensemble,
+            convolution_instruction=convolution_instruction,
+            is_pre_conv=False,
+        )
 
-    # detach endpoints from ensemble
-    stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(ensemble=ensemble)
+        # detach endpoints from ensemble
+        stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(
+            ensemble=ensemble
+        )
 
-    # return endpoints and ensemble if first job
-    result_dict = {"convolution_result": stripped_endpoints}
-    if job_dict["job_number"] == 0:
-        result_dict["stripped_ensemble"] = stripped_ensemble
+        # return endpoints and ensemble if first job
+        result_dict = {"convolution_result": stripped_endpoints}
+        if job_dict["job_number"] == 0:
+            result_dict["stripped_ensemble"] = stripped_ensemble
 
-    return result_dict
+        return result_dict
+
+    else:
+        raise ValueError(
+            "Convolution type '{}' not supported".format(config["convolution_type"])
+        )

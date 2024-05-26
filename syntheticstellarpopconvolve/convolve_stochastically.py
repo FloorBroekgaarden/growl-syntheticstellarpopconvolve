@@ -49,6 +49,8 @@ import uuid
 import astropy.units as u
 import numpy as np
 
+from syntheticstellarpopconvolve.general_functions import extract_arguments
+
 
 def combine_dicts_with_numpy_array_entries(dict1, dict2):
     """
@@ -144,12 +146,17 @@ def sample_systems(
 
 
 def sample_systems_main(
+    config,
+    sfr_dict,
+    job_dict,
+    convolution_instruction,
+    data_dict,
     total_star_formation_in_lookback_time_bin,
     lookback_time_bin_size,
     lookback_time_bin_lower_edge,
-    data_dict,
     metallicity_distribution_at_lookback_time=None,
     metallicity_bins=None,
+    position_sampling_function=None,
 ):
     """
     Function that handles sampling systems at a particular lookback time.
@@ -232,13 +239,55 @@ def sample_systems_main(
             print("\n")
 
     ###########
-    # TODO: add position sampling if so required
+    # TODO: move to separate function
+    if position_sampling_function is not None:
+
+        # Construct what parameters are available for the extra function
+        available_parameters = {
+            "config": config,
+            "job_dict": job_dict,
+            "sfr_dict": sfr_dict,
+            "sfr_dict": sfr_dict,
+            "data_dict": data_dict,
+            "time_value": convolution_time_bin_center,
+            "convolution_instruction": convolution_instruction,
+            **convolution_instruction.get(
+                "position_sampling_function_extra_parameters", {}
+            ),  #
+        }
+
+        # TODO: abstract this and the extra weights calculation into a general function that selects and calls a function
+
+        # Make sure we extract the correct things from the available parameters
+        position_sampling_function_args = extract_arguments(
+            func=position_sampling_function,
+            arg_dict=available_parameters,
+        )
+
+        #
+        config["logger"].debug(
+            "Calculating positions using function {} and arguments {}".format(
+                convolution_instruction["position_sampling_function"].__name__,
+                position_sampling_function_args,
+            )
+        )
+
+        # Call extra function and calculate extra weights (with something like detection probability)
+        positions = position_sampling_function(**position_sampling_function_args)
+        if positions is None:
+            raise ValueError(
+                "The position sampling function did not return a correct set of positions"
+            )
+
+        # add to dict
+        # TODO: perhaps unpack into separate columns
+        sampled_data_dict["positions"] = positions
 
     ###########
     # Sort the results on the IDs
     # print("sampled_data_dict", sampled_data_dict)
 
-    # Sort on uuid
+    # Sort on ID
     sorted_indices = sampled_data_dict["IDs"].argsort()
 
     sampled_data_dict = {
@@ -246,6 +295,12 @@ def sample_systems_main(
         for data_key in sampled_data_dict.keys()
     }
     # print("sorted sampled_data_dict", sampled_data_dict)
+
+    ###########
+    # wrap up
+
+    # delete the normalized yield
+    del sampled_data_dict["normalized_yield_array"]
 
     return sampled_data_dict
 
@@ -311,7 +366,7 @@ if __name__ == "__main__":
     time_start_convolution = time.time()
 
     #
-    sample_systems_main(
+    sampled_data_dict = sample_systems_main(
         total_star_formation_in_lookback_time_bin=total_star_formation_at_lookback_times[
             lookback_time_index
         ],
@@ -336,3 +391,5 @@ if __name__ == "__main__":
             / (time_end_convolution - time_start)
         )
     )
+
+    print(sampled_data_dict)

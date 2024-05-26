@@ -133,6 +133,10 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
                 with open(full_path, "rb") as picklefile:
                     data = pickle.load(picklefile)
 
+                ##########
+                # TODO: distinguish integration and sampling results. Sampling stores more info
+                # TODO: store the unit of the results in the meta data
+
                 # Store payload in grp
                 config["logger"].debug(
                     "Storing convolution results of bin-center {}".format(

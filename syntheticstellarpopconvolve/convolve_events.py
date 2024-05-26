@@ -92,7 +92,7 @@ def event_convolution_function(
 
         #
         config["logger"].debug(
-            "Convolving event-based data {} for bin_center {}".format(
+            "Convolving event-based data {} for bin_center {} using integration-based convolution".format(
                 convolution_instruction["input_data_name"], convolution_time_bin_center
             )
         )
@@ -130,24 +130,43 @@ def event_convolution_function(
         return {"convolution_result": convolved_rate_array}
 
     elif config["convolution_type"] == "sampling":
-        # TODO: get lookback_time index
+        #
+        config["logger"].debug(
+            "Convolving event-based data {} for bin_center {} using sampling-based convolution".format(
+                convolution_instruction["input_data_name"], convolution_time_bin_center
+            )
+        )
+
+        # unpack
+        sfr_dict = job_dict["sfr_dict"]
+        lookback_time_index = job_dict["convolution_time_bin_number"]
+        metallicity_distribution_at_lookback_time = (
+            sfr_dict["metallicity_weighted_starformation_array"]
+            / sfr_dict["starformation_array"][lookback_time_index]
+        )
 
         #
         sampled_data_dict = sample_systems_main(
-            total_star_formation_in_lookback_time_bin=job_dict["sfr_dict"][
-                "starformation_array"
-            ][lookback_time_index],
+            config=config,
+            sfr_dict=sfr_dict,
+            job_dict=job_dict,
             data_dict=data_dict,
-            lookback_time_bin_lower_edge=job_dict["sfr_dict"][
-                "lookback_time_bin_edges"
-            ][lookback_time_index],
-            lookback_time_bin_size=job_dict["sfr_dict"]["lookback_time_bin_sizes"][
+            convolution_instruction=convolution_instruction,
+            total_star_formation_in_lookback_time_bin=sfr_dict["starformation_array"][
+                lookback_time_index
+            ],
+            lookback_time_bin_lower_edge=sfr_dict["lookback_time_bin_edges"][
+                lookback_time_index
+            ],
+            lookback_time_bin_size=sfr_dict["lookback_time_bin_sizes"][
                 lookback_time_index
             ],
             metallicity_distribution_at_lookback_time=metallicity_distribution_at_lookback_time,
-            metallicity_bins=job_dict["sfr_dict"]["metallicity_bin_edges"],
+            metallicity_bins=sfr_dict["metallicity_bin_edges"],
         )
 
         return sampled_data_dict
     else:
-        raise ValueError("Convolution type not supported")
+        raise ValueError(
+            "Convolution type '{}' not supported".format(config["convolution_type"])
+        )

@@ -4,6 +4,7 @@ Functions to convolve events
 
 import pandas as pd
 
+from syntheticstellarpopconvolve.convolve_stochastically import sample_systems_main
 from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     handle_custom_scaling_or_conversion,
@@ -83,43 +84,70 @@ def event_convolution_function(
 ):
     """
     Function for the multiprocessing worker to convolve event-based data.
+
+    TODO: implement here the call to sampling-based convolution method with event-based data
     """
 
-    #
-    config["logger"].debug(
-        "Convolving event-based data {} for bin_center {}".format(
-            convolution_instruction["input_data_name"], convolution_time_bin_center
+    if config["convolution_type"] == "integration":
+
+        #
+        config["logger"].debug(
+            "Convolving event-based data {} for bin_center {}".format(
+                convolution_instruction["input_data_name"], convolution_time_bin_center
+            )
         )
-    )
 
-    #############
-    # Calculate array-based convolution (i.e. yield/rate times SFR)
-    digitized_sfr_rates = calculate_digitized_sfr_rates(
-        config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
-        data_dict=data_dict,
-        sfr_dict=job_dict["sfr_dict"],
-    )
-    convolved_rate_array = (
-        digitized_sfr_rates * data_dict["yield_rate"] * config["yield_rate_unit"]
-    )
+        #############
+        # Calculate array-based convolution (i.e. yield/rate times SFR)
+        digitized_sfr_rates = calculate_digitized_sfr_rates(
+            config=config,
+            convolution_time_bin_center=convolution_time_bin_center,
+            data_dict=data_dict,
+            sfr_dict=job_dict["sfr_dict"],
+        )
+        convolved_rate_array = (
+            digitized_sfr_rates * data_dict["yield_rate"] * config["yield_rate_unit"]
+        )
 
-    ################
-    # run custom function afterwards
-    extra_weights = handle_extra_weights_function(
-        config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
-        convolution_instruction=convolution_instruction,
-        sfr_dict=job_dict["sfr_dict"],
-        data_dict=data_dict,
-        output_shape=convolved_rate_array.shape,
-    )
+        ################
+        # run custom function afterwards
+        extra_weights = handle_extra_weights_function(
+            config=config,
+            convolution_time_bin_center=convolution_time_bin_center,
+            convolution_instruction=convolution_instruction,
+            sfr_dict=job_dict["sfr_dict"],
+            data_dict=data_dict,
+            output_shape=convolved_rate_array.shape,
+        )
 
-    # re-weight
-    convolved_rate_array = convolved_rate_array * extra_weights
+        # re-weight
+        convolved_rate_array = convolved_rate_array * extra_weights
 
-    # TODO: do something with the units
-    # convolved_rate_array_unit = convolved_rate_array.unit
-    convolved_rate_array = convolved_rate_array.value
+        # TODO: do something with the units
+        # convolved_rate_array_unit = convolved_rate_array.unit
+        convolved_rate_array = convolved_rate_array.value
 
-    return {"convolution_result": convolved_rate_array}
+        return {"convolution_result": convolved_rate_array}
+
+    elif config["convolution_type"] == "sampling":
+        # TODO: get lookback_time index
+
+        #
+        sampled_data_dict = sample_systems_main(
+            total_star_formation_in_lookback_time_bin=job_dict["sfr_dict"][
+                "starformation_array"
+            ][lookback_time_index],
+            data_dict=data_dict,
+            lookback_time_bin_lower_edge=job_dict["sfr_dict"][
+                "lookback_time_bin_edges"
+            ][lookback_time_index],
+            lookback_time_bin_size=job_dict["sfr_dict"]["lookback_time_bin_sizes"][
+                lookback_time_index
+            ],
+            metallicity_distribution_at_lookback_time=metallicity_distribution_at_lookback_time,
+            metallicity_bins=job_dict["sfr_dict"]["metallicity_bin_edges"],
+        )
+
+        return sampled_data_dict
+    else:
+        raise ValueError("Convolution type not supported")

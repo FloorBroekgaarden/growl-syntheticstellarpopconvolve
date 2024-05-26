@@ -34,6 +34,7 @@ CONVOLUTION_FUNCTION_DICT = {
     "event": event_convolution_function,
     "ensemble": ensemble_convolution_function,
     "custom": custom_convolution_function,
+    #  "event_sample",
 }
 
 

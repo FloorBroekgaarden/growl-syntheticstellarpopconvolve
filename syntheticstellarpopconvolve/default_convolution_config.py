@@ -79,14 +79,14 @@ default_convolution_config_dict = {
         "description": "Flag to multiply the SFR value by the time-bin size. When time-type='redshift' we use the associated lookback times and the width between those to calcualte the bi",
         "validation": boolean_int_validation,
     },
-    "convolution_type": {
-        "value": "integrate",
-        "description": "Method used for the convolution of the input. 'integrate': integration based convolution where the normalized yield is multiplied by the starformation rate and that result is stored. 'sample': the input systems get sampled according to their normalized yield, and each of them get appointed a birth-time. Currently only works with 'time_type'=='lookback_time' and 'input_data_type'=='events'",
-        "validation": vol.All(
-            str,
-            vol.In(["integrate", "sample"]),
-        ),
-    },
+    # "convolution_type": {
+    #     "value": "integrate",
+    #     "description": "Method used for the convolution of the input. 'integrate': integration based convolution where the normalized yield is multiplied by the starformation rate and that result is stored. 'sample': the input systems get sampled according to their normalized yield, and each of them get appointed a birth-time. Currently only works with 'time_type'=='lookback_time' and 'input_data_type'=='events'",
+    #     "validation": vol.All(
+    #         str,
+    #         vol.In(["integrate", "sample"]),
+    #     ),
+    # },
     ###################
     # Convolution configuration
     "time_type": {

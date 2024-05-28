@@ -88,7 +88,7 @@ def event_convolution_function(
     TODO: implement here the call to sampling-based convolution method with event-based data
     """
 
-    if config["convolution_type"] == "integration":
+    if convolution_instruction["convolution_type"] == "integrate":
 
         #
         config["logger"].debug(
@@ -123,13 +123,12 @@ def event_convolution_function(
         # re-weight
         convolved_rate_array = convolved_rate_array * extra_weights
 
-        # TODO: do something with the units
-        # convolved_rate_array_unit = convolved_rate_array.unit
-        convolved_rate_array = convolved_rate_array.value
+        #
+        convolution_result = {"yield": convolved_rate_array}
 
-        return {"convolution_result": convolved_rate_array}
+        return {"convolution_result": convolution_result}
 
-    elif config["convolution_type"] == "sampling":
+    elif convolution_instruction["convolution_type"] == "sample":
         #
         config["logger"].debug(
             "Convolving event-based data {} for bin_center {} using sampling-based convolution".format(
@@ -140,10 +139,18 @@ def event_convolution_function(
         # unpack
         sfr_dict = job_dict["sfr_dict"]
         lookback_time_index = job_dict["convolution_time_bin_number"]
-        metallicity_distribution_at_lookback_time = (
-            sfr_dict["metallicity_weighted_starformation_array"]
-            / sfr_dict["starformation_array"][lookback_time_index]
-        )
+
+        # TODO: make sure that this is all checked better at the start
+        if "metallicity_weighted_starformation_array" in sfr_dict:
+
+            metallicity_distribution_at_lookback_time = (
+                sfr_dict["metallicity_weighted_starformation_array"]
+                / sfr_dict["starformation_array"][lookback_time_index]
+            )
+            metallicity_bins = sfr_dict["metallicity_bin_edges"]
+        else:
+            metallicity_distribution_at_lookback_time = None
+            metallicity_bins = None
 
         #
         sampled_data_dict = sample_systems_main(
@@ -152,7 +159,7 @@ def event_convolution_function(
             job_dict=job_dict,
             data_dict=data_dict,
             convolution_instruction=convolution_instruction,
-            total_star_formation_in_lookback_time_bin=sfr_dict["starformation_array"][
+            star_formation_rate_in_lookback_time_bin=sfr_dict["starformation_array"][
                 lookback_time_index
             ],
             lookback_time_bin_lower_edge=sfr_dict["lookback_time_bin_edges"][
@@ -162,11 +169,13 @@ def event_convolution_function(
                 lookback_time_index
             ],
             metallicity_distribution_at_lookback_time=metallicity_distribution_at_lookback_time,
-            metallicity_bins=sfr_dict["metallicity_bin_edges"],
+            metallicity_bins=metallicity_bins,
         )
 
         return sampled_data_dict
     else:
         raise ValueError(
-            "Convolution type '{}' not supported".format(config["convolution_type"])
+            "Convolution type '{}' not supported".format(
+                convolution_instruction["convolution_type"]
+            )
         )

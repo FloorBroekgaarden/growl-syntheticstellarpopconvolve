@@ -10,6 +10,7 @@ import os
 import pickle
 
 import h5py
+import numpy as np
 import setproctitle
 
 from syntheticstellarpopconvolve.convolve_custom_data import (
@@ -92,7 +93,19 @@ def pre_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
 
 def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
     """
-    TODO
+    TODO write each array as a sub group in the convolution
+    results. instead of dumping the data blindly within
+    convolved_array/ lets rename it to convolution_results and under
+    that umbrella we throw different kinds of data
+
+    data types:
+    - yield (integration, events and ensemble): SFR weighted probabilities of each system
+    - stripped_ensemble (integration, ensembe): Ensemble with its endpoints stripped off. Will only be stored in the first one and should be used to re-construct the other results
+    - sampled_IDs: (sampling, events): IDs of sampled systems
+    - sampled_birth_times: (sampling, events): Assigned birth-times of sampled systems.
+    - sampled_positions: (sampling, events): sampled positions. Can be multi-d.
+
+    We can automatically store these and update some of the meta-data
     """
 
     #################
@@ -105,62 +118,125 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
 
     ########
     # Write results to output file
-    if config["write_to_hdf5"]:
-        # Get groupname
-        groupname, _ = generate_group_name(
-            convolution_instruction=convolution_instruction, sfr_dict=sfr_dict
+    if not config["write_to_hdf5"]:
+        return
+
+    # Get groupname
+    groupname, _ = generate_group_name(
+        convolution_instruction=convolution_instruction, sfr_dict=sfr_dict
+    )
+    full_groupname = "output_data/" + groupname
+
+    with h5py.File(config["output_filename"], "a") as output_hdf5file:
+        config["logger"].debug("Writing results to {}".format(full_groupname))
+
+        # Readout group
+        grp = output_hdf5file[full_groupname]
+
+        ###########
+        # loop over all files in the pickle
+        content_dir = os.listdir(tmp_dir)
+
+        sorted_content_dir = sorted(
+            content_dir,
+            key=lambda x: float(".".join(x.split(".")[:-1]).split(" ")[0]),
         )
-        full_groupname = "output_data/" + groupname
+        for pickle_file in sorted_content_dir:
 
-        with h5py.File(config["output_filename"], "a") as output_hdf5file:
-            config["logger"].debug("Writing results to {}".format(full_groupname))
+            # Load pickled data
+            full_path = os.path.join(tmp_dir, pickle_file)
+            with open(full_path, "rb") as picklefile:
+                data = pickle.load(picklefile)
 
-            # Readout group
-            grp = output_hdf5file[full_groupname]
+            ##########
+            # Unpack
+            if "convolution_result" in data.keys():
+                convolution_result = data["convolution_result"]
+            else:
+                raise ValueError("No convolution result present in the data")
 
-            ###########
-            # loop over all files in the pickle
-            content_dir = os.listdir(tmp_dir)
-
-            sorted_content_dir = sorted(
-                content_dir,
-                key=lambda x: float(".".join(x.split(".")[:-1]).split(" ")[0]),
+            # Create group
+            current_time_bin_grp = grp.create_group(
+                "convolved_array/{}".format(str(data["convolution_time_bin_center"]))
             )
-            for file in sorted_content_dir:
 
-                # Load pickled data
-                full_path = os.path.join(tmp_dir, file)
-                with open(full_path, "rb") as picklefile:
-                    data = pickle.load(picklefile)
-
-                ##########
-                # TODO: distinguish integration and sampling results. Sampling stores more info
-                # TODO: store the unit of the results in the meta data
-
-                # Store payload in grp
-                config["logger"].debug(
-                    "Storing convolution results of bin-center {}".format(
-                        str(data["convolution_time_bin_center"])
-                    )
+            # Store payload in grp
+            config["logger"].debug(
+                "Storing convolution results of bin-center {}".format(
+                    str(data["convolution_time_bin_center"])
                 )
-                grp.create_dataset(
-                    "convolved_array/{}".format(
-                        str(data["convolution_time_bin_center"])
-                    ),
-                    data=data["convolution_result"],
+            )
+
+            ############
+            # Store different kinds of output
+
+            # yield output. From integration-based event and ensemble convolution
+            if "yield" in convolution_result.keys():
+                config["logger"].debug("Storing yield")
+
+                #
+                yield_value = convolution_result["yield"].value
+                yield_unit = convolution_result["yield"].unit
+
+                current_time_bin_grp.create_dataset("yield", data=yield_value)
+
+                # TODO: store unit and description in meta-data
+
+            # stripped ensemble output. From integration-based ensemble convolution
+            if "stripped_ensemble" in convolution_result.keys():
+                config["logger"].debug("Storing stripped ensemble")
+
+                #
+                stripped_ensemble = convolution_result["stripped_ensemble"]
+
+                current_time_bin_grp.create_dataset(
+                    "stripped_ensemble", data=stripped_ensemble
                 )
 
-                # if cleaned ensemble is included, add that too
-                if "stripped_ensemble" in data.keys():
-                    config["logger"].debug("Storing stripped ensemble")
+                # TODO: store description
 
-                    grp.create_dataset(
-                        "stripped_ensemble", data=json.dumps(data["stripped_ensemble"])
-                    )
+            # ID output. From sampling-based event convolution
+            if "IDs" in convolution_result.keys():
+                config["logger"].debug("Storing IDs")
 
-                # remove the pickled file
-                if config["remove_pickle_files"]:
-                    os.remove(full_path)
+                #
+                IDs = convolution_result["IDs"]
+                IDs = IDs.astype("S")
+
+                current_time_bin_grp.create_dataset("IDs", data=IDs)
+
+                # TODO: store description
+
+            # formation lookback-times output. From sampling-based event convolution
+            if "formation_lookback_times" in convolution_result.keys():
+                config["logger"].debug("Storing formation lookback-times")
+
+                #
+                formation_lookback_times = convolution_result[
+                    "formation_lookback_times"
+                ]
+                formation_lookback_times_value = formation_lookback_times.value
+                formation_lookback_times_unit = formation_lookback_times.unit
+
+                current_time_bin_grp.create_dataset(
+                    "formation_lookback_times", data=formation_lookback_times_value
+                )
+
+                # TODO: store unit and description
+
+            # positions output. From sampling-based event convolution
+            if "positions" in convolution_result.keys():
+                config["logger"].debug("Storing positions")
+
+                current_time_bin_grp.create_dataset(
+                    "positions", data=convolution_result["positions"]
+                )
+
+                # TODO: store description
+
+            # remove the pickled file
+            if config["remove_pickle_files"]:
+                os.remove(full_path)
 
 
 def convolution_job_worker(job_queue, worker_ID, config):  # DH0001

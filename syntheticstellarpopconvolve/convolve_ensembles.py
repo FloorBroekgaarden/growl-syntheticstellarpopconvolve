@@ -1389,7 +1389,7 @@ def ensemble_convolution_function(
     Note: ensemble convolution only supports convolution by integration at this point.
     """
 
-    if config["convolution_type"] == "integration":
+    if convolution_instruction["convolution_type"] == "integration":
 
         #
         config["logger"].debug(
@@ -1441,14 +1441,17 @@ def ensemble_convolution_function(
             ensemble=ensemble
         )
 
-        # return endpoints and ensemble if first job
-        result_dict = {"convolution_result": stripped_endpoints}
-        if job_dict["job_number"] == 0:
-            result_dict["stripped_ensemble"] = stripped_ensemble
+        #
+        convolution_result = {"yield": stripped_endpoints}
 
-        return result_dict
+        if job_dict["job_number"] == 0:
+            convolution_result["stripped_ensemble"] = stripped_ensemble
+
+        return {"convolution_result": convolution_result}
 
     else:
         raise ValueError(
-            "Convolution type '{}' not supported".format(config["convolution_type"])
+            "Convolution type '{}' not supported".format(
+                convolution_instruction["convolution_type"]
+            )
         )

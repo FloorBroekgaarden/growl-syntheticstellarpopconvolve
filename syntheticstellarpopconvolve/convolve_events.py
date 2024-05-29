@@ -144,7 +144,9 @@ def event_convolution_function(
         if "metallicity_weighted_starformation_array" in sfr_dict:
 
             metallicity_distribution_at_lookback_time = (
-                sfr_dict["metallicity_weighted_starformation_array"]
+                sfr_dict["metallicity_weighted_starformation_array"][
+                    lookback_time_index
+                ]
                 / sfr_dict["starformation_array"][lookback_time_index]
             )
             metallicity_bins = sfr_dict["metallicity_bin_edges"]

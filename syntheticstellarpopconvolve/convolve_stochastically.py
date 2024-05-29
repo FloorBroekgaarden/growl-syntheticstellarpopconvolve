@@ -352,13 +352,28 @@ def sample_systems_main(
 
 if __name__ == "__main__":
 
+    import copy
+    import json
+    import os
+
+    import astropy.units as u
+    import numpy as np
+
+    from syntheticstellarpopconvolve import convolve, default_convolution_config
+    from syntheticstellarpopconvolve.general_functions import temp_dir
+
+    TMP_DIR = temp_dir("code", "convolve_stochastically", clean_path=True)
+
+    import h5py
+    import pandas as pd
+
     ##################
     # Testing method without metallicity distribution
 
     time_start = time.time()
     #
     lookback_time_index = 5
-    scale_factor = 5e-9
+    scale_factor = 5e-8
     size = 10
 
     # have some starformation array
@@ -397,23 +412,162 @@ if __name__ == "__main__":
     #     metallicity_bins=None,
     # )
 
-    ########################
-    # use proper setup for convolution
-    import copy
-    import json
-    import os
+    # ########################
+    # # use proper setup for convolution
 
-    import astropy.units as u
-    import numpy as np
+    # # create file
+    # input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5.h5")
+    # output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5.h5")
+    # input_hdf5_file = h5py.File(input_hdf5_filename, "w")
 
-    from syntheticstellarpopconvolve import convolve, default_convolution_config
-    from syntheticstellarpopconvolve.general_functions import temp_dir
+    # # Create groups main
+    # input_hdf5_file.create_group("input_data")
+    # input_hdf5_file.create_group("config")
 
-    TMP_DIR = temp_dir("code", "convolve_stochastically", clean_path=True)
+    # # add group for events
+    # input_hdf5_file.create_group("input_data/events")
 
-    import h5py
-    import pandas as pd
-    import pkg_resources
+    # # Write population config to file
+    # input_hdf5_file.create_dataset("config/population", data=json.dumps({}))
+
+    # # close
+    # input_hdf5_file.close()
+
+    # # load into pd
+    # df = pd.DataFrame.from_dict(data_dict)
+
+    # # store the data frame in the hdf5file
+    # df.to_hdf(input_hdf5_filename, key="input_data/events/stochastic_example")
+
+    # #
+    # convolution_config = copy.copy(default_convolution_config)
+    # convolution_config["input_filename"] = input_hdf5_filename
+    # convolution_config["output_filename"] = output_hdf5_filename
+    # convolution_config["tmp_dir"] = TMP_DIR
+    # convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
+    #     TMP_DIR, "interpolator_dict.p"
+    # )
+    # convolution_config["multiply_by_time_binsize"] = False
+
+    # ###
+    # # convolution instructions
+    # convolution_config["convolution_instructions"] = [
+    #     {
+    #         "input_data_type": "event",
+    #         "convolution_type": "sample",
+    #         "input_data_name": "stochastic_example",
+    #         "output_data_name": "stochastic_example",
+    #         "ignore_metallicity": True,
+    #         "data_column_dict": {
+    #             # required
+    #             "IDs": "IDs",
+    #             "yield_rate": "normalized_yield_array",
+    #             # # optional*
+    #             # 'metallicity': 'metallicity',
+    #         },
+    #     },
+    # ]
+
+    # #
+    # convolution_config["time_type"] = "lookback_time"
+    # convolution_config["convolution_lookback_time_bin_edges"] = (
+    #     np.arange(2, 4, 0.5) * u.Gyr
+    # )
+
+    # # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
+    # sfr_dict = {}
+    # sfr_dict["lookback_time_bin_edges"] = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
+    # sfr_dict["starformation_array"] = (
+    #     0.25 * np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
+    # )  # example of a constant star-formation rate. this could be anything of course.
+
+    # # store
+    # convolution_config["SFR_info"] = sfr_dict
+
+    # input_hdf5_file = h5py.File(input_hdf5_filename, "r")
+
+    # # convolve
+    # convolve(config=convolution_config)
+
+    # print("finished convolution")
+    # # Show some of the content
+    # with h5py.File(convolution_config["output_filename"], "r") as output_hdf5_file:
+    #     print(output_hdf5_file["output_data/"].keys())
+    #     print(output_hdf5_file["output_data/event/"].keys())
+    #     print(output_hdf5_file["output_data/event/stochastic_example/"].keys())
+    #     print(
+    #         output_hdf5_file[
+    #             "output_data/event/stochastic_example/stochastic_example"
+    #         ].keys()
+    #     )
+    #     print(
+    #         output_hdf5_file[
+    #             "output_data/event/stochastic_example/stochastic_example/convolved_array"
+    #         ].keys()
+    #     )
+
+    #     print(
+    #         output_hdf5_file[
+    #             "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+    #         ].keys()
+    #     )
+
+    #     print(
+    #         output_hdf5_file[
+    #             "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+    #         ]["IDs"][()]
+    #     )
+
+    #     print(
+    #         output_hdf5_file[
+    #             "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+    #         ]["formation_lookback_times"][()]
+    #     )
+
+    ##################
+    # Testing method with metallicity distribution
+
+    #
+    data_dict["metallicity"] = np.random.random(size=size)
+
+    # print("data_dict['metallicity']", data_dict['metallicity'])
+
+    metallicity_distribution_at_lookback_time = np.array([0.25, 0.25, 0.25, 0.25])
+    metallicity_bins = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+
+    # time_start_convolution = time.time()
+
+    # #
+    # sampled_data_dict = sample_systems_main(
+    #     total_star_formation_in_lookback_time_bin=total_star_formation_at_lookback_times[
+    #         lookback_time_index
+    #     ],
+    #     data_dict=data_dict,
+    #     lookback_time_bin_lower_edge=lookback_time_bin_edges[lookback_time_index],
+    #     lookback_time_bin_size=bin_sizes[lookback_time_index],
+    #     metallicity_distribution_at_lookback_time=metallicity_distribution_at_lookback_time,
+    #     metallicity_bins=metallicity_bins,
+    # )
+
+    # time_end_convolution = time.time()
+
+    # print("Total time: {:.2E}".format(time_end_convolution - time_start))
+    # print(
+    #     "Total time convolution: {:.2E}".format(
+    #         time_end_convolution - time_start_convolution
+    #     )
+    # )
+    # print(
+    #     "Fractional time convolution: {:.2E}".format(
+    #         (time_end_convolution - time_start_convolution)
+    #         / (time_end_convolution - time_start)
+    #     )
+    # )
+
+    # print(sampled_data_dict)
+
+    #################
+    # formal convolve with metallicity
 
     # create file
     input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5.h5")
@@ -462,6 +616,7 @@ if __name__ == "__main__":
                 # required
                 "IDs": "IDs",
                 "yield_rate": "normalized_yield_array",
+                "metallicity": "metallicity",
                 # # optional*
                 # 'metallicity': 'metallicity',
             },
@@ -480,6 +635,12 @@ if __name__ == "__main__":
     sfr_dict["starformation_array"] = (
         0.25 * np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
     )  # example of a constant star-formation rate. this could be anything of course.
+
+    sfr_dict["metallicity_weighted_starformation_array"] = (
+        sfr_dict["starformation_array"][:, np.newaxis]
+        * metallicity_distribution_at_lookback_time[np.newaxis, :]
+    )
+    sfr_dict["metallicity_bin_edges"] = metallicity_bins
 
     # store
     convolution_config["SFR_info"] = sfr_dict
@@ -523,47 +684,3 @@ if __name__ == "__main__":
                 "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
             ]["formation_lookback_times"][()]
         )
-
-        quit()
-
-    ##################
-    # Testing method with metallicity distribution
-
-    #
-    data_dict["metallicity"] = np.random.random(size=size)
-
-    # print("data_dict['metallicity']", data_dict['metallicity'])
-
-    metallicity_distribution_at_lookback_time = np.array([0.25, 0.25, 0.25, 0.25])
-    metallicity_bins = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
-
-    time_start_convolution = time.time()
-
-    #
-    sampled_data_dict = sample_systems_main(
-        total_star_formation_in_lookback_time_bin=total_star_formation_at_lookback_times[
-            lookback_time_index
-        ],
-        data_dict=data_dict,
-        lookback_time_bin_lower_edge=lookback_time_bin_edges[lookback_time_index],
-        lookback_time_bin_size=bin_sizes[lookback_time_index],
-        metallicity_distribution_at_lookback_time=metallicity_distribution_at_lookback_time,
-        metallicity_bins=metallicity_bins,
-    )
-
-    time_end_convolution = time.time()
-
-    print("Total time: {:.2E}".format(time_end_convolution - time_start))
-    print(
-        "Total time convolution: {:.2E}".format(
-            time_end_convolution - time_start_convolution
-        )
-    )
-    print(
-        "Fractional time convolution: {:.2E}".format(
-            (time_end_convolution - time_start_convolution)
-            / (time_end_convolution - time_start)
-        )
-    )
-
-    print(sampled_data_dict)

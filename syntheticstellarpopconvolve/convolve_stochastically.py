@@ -90,6 +90,12 @@ def sample_systems(
     # TODO: or we should make sure the indices map back to IDs
     """
 
+    config["logger"].warning(
+        "Convolving through sampling. Using a total of {}".format(
+            total_star_formation_in_bin
+        )
+    )
+
     ############
     # calculate the formation yield of all the systems
     formation_yield = (
@@ -149,6 +155,9 @@ def sample_systems(
         sampled_formation_lookback_times
     )
 
+    #
+    config["logger"].warning("Sampled {} systems.".format(len(combined_indices)))
+
     return data_dict_sampled_systems
 
 
@@ -177,9 +186,24 @@ def sample_systems_main(
         star_formation_rate_in_lookback_time_bin * lookback_time_bin_size
     )
 
+    #
+    config["logger"].warning(
+        "Main sampling through convolution. Will sample systems according to their normalized yield and the total mass formed in stars."
+    )
+    config["logger"].warning(
+        "Lower time bin {} upper time bin {} total mass formed {}".format(
+            lookback_time_bin_lower_edge,
+            lookback_time_bin_lower_edge + lookback_time_bin_size,
+            total_star_formation_in_lookback_time_bin,
+        )
+    )
+
     ############
     # Method 1: no metallicity dependence
     if metallicity_distribution_at_lookback_time is None:
+        config["logger"].warning(
+            "Convolution sampling with absolute rate only (not using metallicity)"
+        )
 
         sampled_data_dict = sample_systems(
             total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
@@ -192,8 +216,10 @@ def sample_systems_main(
     ############
     # Method 2: metallicity dependence
     else:
+
         if metallicity_bins is None:
             raise ValueError("Please provide metallicity bins")
+        config["logger"].warning("Convolution sampling using metallicity distributions")
 
         #
         sampled_data_dict = {}
@@ -203,21 +229,27 @@ def sample_systems_main(
             metallicity_distribution_at_lookback_time
         ):
             # print("metallicity_i, metallicity_weight", metallicity_i, metallicity_weight)
-            print("data_dict['metallicity']", data_dict["metallicity"])
             total_star_formation_in_lookback_time_bin_in_metallicity_bin = (
                 total_star_formation_in_lookback_time_bin * metallicity_weight
             )
-            # print("total_star_formation_in_lookback_time_bin_in_metallicity_bin", total_star_formation_in_lookback_time_bin_in_metallicity_bin)
 
             #
             lower_edge_metallicity_bin, upper_edge_metallicity_bin = (
                 metallicity_bins[metallicity_i],
                 metallicity_bins[metallicity_i + 1],
             )
-            print(
-                "lower_edge_metallicity_bin, upper_edge_metallicity_bin",
-                lower_edge_metallicity_bin,
-                upper_edge_metallicity_bin,
+
+            config["logger"].warning(
+                "Metallicity {} lower bin edge {} upper bin edge {}".format(
+                    metallicity_i,
+                    lower_edge_metallicity_bin,
+                    upper_edge_metallicity_bin,
+                )
+            )
+            config["logger"].warning(
+                "Total mass formed in current metallicity bin {}".format(
+                    total_star_formation_in_lookback_time_bin_in_metallicity_bin
+                )
             )
 
             # Select those systems that match the current metallicity bin
@@ -225,7 +257,7 @@ def sample_systems_main(
                 (data_dict["metallicity"] > lower_edge_metallicity_bin)
                 & (data_dict["metallicity"] <= upper_edge_metallicity_bin)
             )
-            print("matching_metallicity_indices", matching_metallicity_indices)
+            # print("matching_metallicity_indices", matching_metallicity_indices)
 
             # Create data dict for those that match this metallicity
             metallicity_matching_data_dict = {

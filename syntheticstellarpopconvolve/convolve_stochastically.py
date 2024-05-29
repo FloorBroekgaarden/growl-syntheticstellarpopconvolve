@@ -373,7 +373,7 @@ if __name__ == "__main__":
     time_start = time.time()
     #
     lookback_time_index = 5
-    scale_factor = 5e-8
+    scale_factor = 5e-9
     size = 10
 
     # have some starformation array
@@ -412,117 +412,119 @@ if __name__ == "__main__":
     #     metallicity_bins=None,
     # )
 
-    # ########################
-    # # use proper setup for convolution
+    ########################
+    # use proper setup for convolution
 
-    # # create file
-    # input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5.h5")
-    # output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5.h5")
-    # input_hdf5_file = h5py.File(input_hdf5_filename, "w")
+    # create file
+    input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5.h5")
+    output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5.h5")
+    input_hdf5_file = h5py.File(input_hdf5_filename, "w")
 
-    # # Create groups main
-    # input_hdf5_file.create_group("input_data")
-    # input_hdf5_file.create_group("config")
+    # Create groups main
+    input_hdf5_file.create_group("input_data")
+    input_hdf5_file.create_group("config")
 
-    # # add group for events
-    # input_hdf5_file.create_group("input_data/events")
+    # add group for events
+    input_hdf5_file.create_group("input_data/events")
 
-    # # Write population config to file
-    # input_hdf5_file.create_dataset("config/population", data=json.dumps({}))
+    # Write population config to file
+    input_hdf5_file.create_dataset("config/population", data=json.dumps({}))
 
-    # # close
-    # input_hdf5_file.close()
+    # close
+    input_hdf5_file.close()
 
-    # # load into pd
-    # df = pd.DataFrame.from_dict(data_dict)
+    # load into pd
+    df = pd.DataFrame.from_dict(data_dict)
 
-    # # store the data frame in the hdf5file
-    # df.to_hdf(input_hdf5_filename, key="input_data/events/stochastic_example")
+    # store the data frame in the hdf5file
+    df.to_hdf(input_hdf5_filename, key="input_data/events/stochastic_example")
 
-    # #
-    # convolution_config = copy.copy(default_convolution_config)
-    # convolution_config["input_filename"] = input_hdf5_filename
-    # convolution_config["output_filename"] = output_hdf5_filename
-    # convolution_config["tmp_dir"] = TMP_DIR
-    # convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
-    #     TMP_DIR, "interpolator_dict.p"
-    # )
-    # convolution_config["multiply_by_time_binsize"] = False
+    #
+    convolution_config = copy.copy(default_convolution_config)
+    convolution_config["input_filename"] = input_hdf5_filename
+    convolution_config["output_filename"] = output_hdf5_filename
+    convolution_config["tmp_dir"] = TMP_DIR
+    convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
+        TMP_DIR, "interpolator_dict.p"
+    )
+    convolution_config["multiply_by_time_binsize"] = False
 
-    # ###
-    # # convolution instructions
-    # convolution_config["convolution_instructions"] = [
-    #     {
-    #         "input_data_type": "event",
-    #         "convolution_type": "sample",
-    #         "input_data_name": "stochastic_example",
-    #         "output_data_name": "stochastic_example",
-    #         "ignore_metallicity": True,
-    #         "data_column_dict": {
-    #             # required
-    #             "IDs": "IDs",
-    #             "yield_rate": "normalized_yield_array",
-    #             # # optional*
-    #             # 'metallicity': 'metallicity',
-    #         },
-    #     },
-    # ]
+    ###
+    # convolution instructions
+    convolution_config["convolution_instructions"] = [
+        {
+            "input_data_type": "event",
+            "convolution_type": "sample",
+            "input_data_name": "stochastic_example",
+            "output_data_name": "stochastic_example",
+            "ignore_metallicity": True,
+            "data_column_dict": {
+                # required
+                "IDs": "IDs",
+                "yield_rate": "normalized_yield_array",
+                # # optional*
+                # 'metallicity': 'metallicity',
+            },
+        },
+    ]
 
-    # #
-    # convolution_config["time_type"] = "lookback_time"
-    # convolution_config["convolution_lookback_time_bin_edges"] = (
-    #     np.arange(2, 4, 0.5) * u.Gyr
-    # )
+    #
+    convolution_config["time_type"] = "lookback_time"
+    convolution_config["convolution_lookback_time_bin_edges"] = (
+        np.arange(2, 4, 0.5) * u.Gyr
+    )
 
-    # # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
-    # sfr_dict = {}
-    # sfr_dict["lookback_time_bin_edges"] = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
-    # sfr_dict["starformation_array"] = (
-    #     0.25 * np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
-    # )  # example of a constant star-formation rate. this could be anything of course.
+    # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
+    sfr_dict = {}
+    sfr_dict["lookback_time_bin_edges"] = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
+    sfr_dict["starformation_array"] = (
+        0.25 * np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
+    )  # example of a constant star-formation rate. this could be anything of course.
 
-    # # store
-    # convolution_config["SFR_info"] = sfr_dict
+    # store
+    convolution_config["SFR_info"] = sfr_dict
 
-    # input_hdf5_file = h5py.File(input_hdf5_filename, "r")
+    input_hdf5_file = h5py.File(input_hdf5_filename, "r")
 
-    # # convolve
-    # convolve(config=convolution_config)
+    # convolve
+    convolve(config=convolution_config)
 
-    # print("finished convolution")
-    # # Show some of the content
-    # with h5py.File(convolution_config["output_filename"], "r") as output_hdf5_file:
-    #     print(output_hdf5_file["output_data/"].keys())
-    #     print(output_hdf5_file["output_data/event/"].keys())
-    #     print(output_hdf5_file["output_data/event/stochastic_example/"].keys())
-    #     print(
-    #         output_hdf5_file[
-    #             "output_data/event/stochastic_example/stochastic_example"
-    #         ].keys()
-    #     )
-    #     print(
-    #         output_hdf5_file[
-    #             "output_data/event/stochastic_example/stochastic_example/convolved_array"
-    #         ].keys()
-    #     )
+    print("finished convolution")
+    # Show some of the content
+    with h5py.File(convolution_config["output_filename"], "r") as output_hdf5_file:
+        print(output_hdf5_file["output_data/"].keys())
+        print(output_hdf5_file["output_data/event/"].keys())
+        print(output_hdf5_file["output_data/event/stochastic_example/"].keys())
+        print(
+            output_hdf5_file[
+                "output_data/event/stochastic_example/stochastic_example"
+            ].keys()
+        )
+        print(
+            output_hdf5_file[
+                "output_data/event/stochastic_example/stochastic_example/convolved_array"
+            ].keys()
+        )
 
-    #     print(
-    #         output_hdf5_file[
-    #             "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
-    #         ].keys()
-    #     )
+        print(
+            output_hdf5_file[
+                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+            ].keys()
+        )
 
-    #     print(
-    #         output_hdf5_file[
-    #             "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
-    #         ]["IDs"][()]
-    #     )
+        print(
+            output_hdf5_file[
+                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+            ]["IDs"][()]
+        )
 
-    #     print(
-    #         output_hdf5_file[
-    #             "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
-    #         ]["formation_lookback_times"][()]
-    #     )
+        print(
+            output_hdf5_file[
+                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+            ]["formation_lookback_times"][()]
+        )
+
+    quit()
 
     ##################
     # Testing method with metallicity distribution

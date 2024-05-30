@@ -44,7 +44,6 @@ from syntheticstellarpopconvolve.convolve_ensembles import (
     shift_layers_list,
     strip_ensemble_endpoints,
 )
-from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
 from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
@@ -260,10 +259,12 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         #
         data_dict = {"delay_time": 0}
 
-        #
-        sfr_dict = update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        )
+        # #
+        # sfr_dict = update_sfr_dict(
+        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
+        # )
+
+        sfr_dict = self.convolution_config["SFR_info"]
 
         ensemble = ensemble_handle_SFR_multiplication(
             convolution_time_bin_center=0.5,
@@ -290,10 +291,12 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         data_dict = {"delay_time": 0}
         extra_value_dict = {"time_bin": 3, "metallicity_bin": 4}
 
-        #
-        sfr_dict = update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        )
+        # #
+        # sfr_dict = update_sfr_dict(
+        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
+        # )
+
+        sfr_dict = self.convolution_config["SFR_info"]
 
         ensemble = ensemble_handle_SFR_multiplication(
             convolution_time_bin_center=0.5,
@@ -421,10 +424,12 @@ class test_ensemble_convolution_function(unittest.TestCase):
             ],
         )
 
-        #
-        sfr_dict = update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        )
+        # #
+        # sfr_dict = update_sfr_dict(
+        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
+        # )
+
+        sfr_dict = self.convolution_config["SFR_info"]
 
         #
         result_dict = ensemble_convolution_function(

@@ -15,6 +15,7 @@ from syntheticstellarpopconvolve.tests.test_check_convolution_config import (
     test_check_metallicity,
     test_check_required,
     test_check_sfr_dict,
+    test_pad_sfr_dict,
 )
 from syntheticstellarpopconvolve.tests.test_check_input_file import (
     test_check_input_file,
@@ -63,8 +64,6 @@ from syntheticstellarpopconvolve.tests.test_convolve_events import (
 )
 from syntheticstellarpopconvolve.tests.test_convolve_populations import (
     test_generate_data_dict,
-    test_pad_sfr_dict,
-    test_update_sfr_dict,
 )
 from syntheticstellarpopconvolve.tests.test_cosmology_utils import (
     test_age_of_universe_to_redshift,

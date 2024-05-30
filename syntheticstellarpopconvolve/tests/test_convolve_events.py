@@ -21,7 +21,8 @@ from syntheticstellarpopconvolve.convolve_events import (
     event_convolution_function,
     extract_event_data,
 )
-from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
+
+# from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
 from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
@@ -339,10 +340,12 @@ class test_event_convolution_function(unittest.TestCase):
             convolution_instruction=normal_convolution_instructions,
         )
 
-        #
-        sfr_dict = update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        )
+        # #
+        # sfr_dict = update_sfr_dict(
+        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
+        # )
+
+        sfr_dict = self.convolution_config["SFR_info"]
 
         #
         convolution_result = event_convolution_function(
@@ -381,10 +384,12 @@ class test_event_convolution_function(unittest.TestCase):
             convolution_instruction=normal_convolution_instructions,
         )
 
-        #
-        sfr_dict = update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        )
+        # #
+        # sfr_dict = update_sfr_dict(
+        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
+        # )
+
+        sfr_dict = self.convolution_config["SFR_info"]
 
         #
         convolution_result = event_convolution_function(

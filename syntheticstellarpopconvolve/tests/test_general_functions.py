@@ -15,7 +15,6 @@ import pandas as pd
 import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
 from syntheticstellarpopconvolve.general_functions import (
     calculate_bincenters,
     calculate_digitized_sfr_rates,
@@ -132,10 +131,12 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
 
     def test_calculate_digitized_sfr_rates_sfr_only(self):
 
-        #
-        sfr_dict = update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        )
+        # #
+        # sfr_dict = update_sfr_dict(
+        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
+        # )
+
+        sfr_dict = self.convolution_config["SFR_info"]
 
         digitized_sfr_rates = calculate_digitized_sfr_rates(
             config=self.convolution_config,

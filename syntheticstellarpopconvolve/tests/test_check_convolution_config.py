@@ -7,6 +7,7 @@ import unittest
 
 import astropy.units as u
 import numpy as np
+from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
 from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_convolution_config import (
@@ -32,7 +33,11 @@ class test_pad_sfr_dict(unittest.TestCase):
         logging.basicConfig(format=FORMAT)
         logger.setLevel(logging.INFO)
 
-        self.config = {"logger": logger, "time_type": "lookback_time"}  # Example config
+        self.config = {
+            "logger": logger,
+            "time_type": "lookback_time",
+            "cosmology": cosmo,
+        }  # Example config
         self.sfr_dict = {
             "lookback_time_bin_edges": np.array([1, 2, 3]),
             "redshift_bin_edges": np.array([0.1, 0.2, 0.3]),
@@ -113,6 +118,7 @@ class test_check_convolution_config(unittest.TestCase):
                     "input_data_type": "event",
                     "input_data_name": "event_data",
                     "output_data_name": "output_event_data",
+                    "convolution_type": "integrate",
                     "data_column_dict": {
                         "delay_time": "delay",
                         "yield_rate": "rate",
@@ -123,6 +129,7 @@ class test_check_convolution_config(unittest.TestCase):
                     "input_data_type": "ensemble",
                     "input_data_name": "ensemble_data",
                     "output_data_name": "output_ensemble_data",
+                    "convolution_type": "integrate",
                     "data_layer_dict": {
                         "delay_time": "delay",
                         "metallicity": "metallicity",
@@ -178,6 +185,7 @@ class test_check_convolution_config(unittest.TestCase):
             "convolution_instructions": [
                 {
                     "input_data_type": "event",
+                    "convolution_type": "integrate",
                     "input_data_name": "event_data",
                     "output_data_name": "output_event_data",
                     "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
@@ -196,6 +204,7 @@ class test_check_convolution_instruction(unittest.TestCase):
             "input_data_type": "event",
             "input_data_name": "event_data",
             "output_data_name": "output_event_data",
+            "convolution_type": "integrate",
             "ignore_metallicity": True,
             "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
         }
@@ -204,6 +213,7 @@ class test_check_convolution_instruction(unittest.TestCase):
             "input_data_type": "ensemble",
             "input_data_name": "ensemble_data",
             "output_data_name": "output_ensemble_data",
+            "convolution_type": "integrate",
             "ignore_metallicity": True,
             "data_layer_dict": {"delay_time": "delay"},
         }
@@ -228,6 +238,7 @@ class test_check_convolution_instruction(unittest.TestCase):
     def test_check_convolution_instruction_missing_ensemble_required_key(self):
         ensemble_convolution_instruction_missing_key = {
             "input_data_type": "ensemble",
+            "convolution_type": "integrate",
             "input_data_name": "ensemble_data",
             "data_layer_dict": {"delay_time": "delay"},
         }
@@ -239,6 +250,7 @@ class test_check_convolution_instruction(unittest.TestCase):
             "input_data_type": "event",
             "input_data_name": "event_data",
             "output_data_name": "output_event_data",
+            "convolution_type": "integrate",
             "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
         }
         with self.assertRaises(ValueError):
@@ -249,6 +261,7 @@ class test_check_convolution_instruction(unittest.TestCase):
             "input_data_type": "ensemble",
             "input_data_name": "ensemble_data",
             "output_data_name": "output_ensemble_data",
+            "convolution_type": "integrate",
             "data_layer_dict": {"delay_time": "delay"},
         }
 
@@ -332,69 +345,104 @@ class test_check_sfr_dict(unittest.TestCase):
             / u.yr,
         }
 
+        self.config = default_convolution_config
+
     def test_check_sfr_dict_with_name(self):
         requires_name = True
         requires_metallicity_info = True
         time_type = "lookback_time"
-        check_sfr_dict(
-            self.sfr_dict, requires_name, requires_metallicity_info, time_type
-        )
+
         # No exception should be raised
+        check_sfr_dict(
+            sfr_dict=self.sfr_dict,
+            requires_name=requires_name,
+            requires_metallicity_info=requires_metallicity_info,
+            time_type=time_type,
+            config=self.config,
+        )
 
     def test_check_sfr_dict_without_name(self):
         requires_name = True
         requires_metallicity_info = True
         time_type = "lookback_time"
+
         del self.sfr_dict["name"]  # Removing the name key
+
         with self.assertRaises(ValueError):
             check_sfr_dict(
-                self.sfr_dict, requires_name, requires_metallicity_info, time_type
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
             )
 
     def test_check_sfr_dict_without_metallicity_info(self):
         requires_name = True
         requires_metallicity_info = True
         time_type = "lookback_time"
+
         del self.sfr_dict[
             "metallicity_bin_edges"
         ]  # Removing the metallicity_bin_edges key
+
         with self.assertRaises(ValueError):
             check_sfr_dict(
-                self.sfr_dict, requires_name, requires_metallicity_info, time_type
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
             )
 
     def test_check_sfr_dict_without_time_type_info(self):
         requires_name = True
         requires_metallicity_info = True
         time_type = "lookback_time"
+
         del self.sfr_dict[
             "lookback_time_bin_edges"
         ]  # Removing the lookback_time_bin_edges key
+
         with self.assertRaises(ValueError):
             check_sfr_dict(
-                self.sfr_dict, requires_name, requires_metallicity_info, time_type
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
             )
 
     def test_check_sfr_dict_without_lookback_time_unit(self):
         requires_name = True
         requires_metallicity_info = True
         time_type = "lookback_time"
+
         self.sfr_dict["lookback_time_bin_edges"] = np.array([1, 2, 3]) * 1e9
 
         with self.assertRaises(AttributeError):
             check_sfr_dict(
-                self.sfr_dict, requires_name, requires_metallicity_info, time_type
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
             )
 
     def test_check_sfr_dict_wrong_lookback_time_unit(self):
         requires_name = True
         requires_metallicity_info = True
         time_type = "lookback_time"
+
         self.sfr_dict["lookback_time_bin_edges"] = np.array([1, 2, 3]) * 1e9 * u.ms
 
         with self.assertRaises(ValueError):
             check_sfr_dict(
-                self.sfr_dict, requires_name, requires_metallicity_info, time_type
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
             )
 
     def test_check_sfr_dict_redshift_wrong_bin_edges(self):
@@ -416,7 +464,11 @@ class test_check_sfr_dict(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             check_sfr_dict(
-                self.sfr_dict, requires_name, requires_metallicity_info, time_type
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
             )
 
     def test_check_sfr_dict_redshift_correct_bin_edges(self):
@@ -427,7 +479,11 @@ class test_check_sfr_dict(unittest.TestCase):
         time_type = "redshift"
 
         check_sfr_dict(
-            self.sfr_dict, requires_name, requires_metallicity_info, time_type
+            sfr_dict=self.sfr_dict,
+            requires_name=requires_name,
+            requires_metallicity_info=requires_metallicity_info,
+            time_type=time_type,
+            config=self.config,
         )
 
 

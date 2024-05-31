@@ -304,6 +304,7 @@ class test_event_convolution_function(unittest.TestCase):
                 "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "yield_rate": "probability",
@@ -327,6 +328,7 @@ class test_event_convolution_function(unittest.TestCase):
             "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
+            "convolution_type": "integrate",
             "data_column_dict": {
                 "delay_time": "delay_time",
                 "yield_rate": "probability",

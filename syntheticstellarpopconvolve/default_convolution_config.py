@@ -75,7 +75,7 @@ default_convolution_config_dict = {
     ###################
     # Unsorted
     "multiply_by_time_binsize": {
-        "value": "False",
+        "value": False,
         "description": "Flag to multiply the SFR value by the time-bin size. When time-type='redshift' we use the associated lookback times and the width between those to calcualte the bi",
         "validation": boolean_int_validation,
     },

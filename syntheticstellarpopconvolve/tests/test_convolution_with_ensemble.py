@@ -112,6 +112,7 @@ class test_convolution_with_ensemble(unittest.TestCase):
             {
                 "input_data_type": "ensemble",
                 "input_data_name": "dummy",
+                "convolution_type": "integrate",
                 "output_data_name": "dummy",
                 "ignore_metallicity": True,
                 "data_layer_dict": {

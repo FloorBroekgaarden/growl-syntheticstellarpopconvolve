@@ -105,6 +105,7 @@ class test_convolution_with_events(unittest.TestCase):
                 "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "yield_rate": "probability",
@@ -125,25 +126,25 @@ class test_convolution_with_events(unittest.TestCase):
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/0.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/0.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/1.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/1.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/2.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/2.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 0])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/3.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/3.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 0, 0])))
 

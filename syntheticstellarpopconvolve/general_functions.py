@@ -251,8 +251,7 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
                 origin_time_array
             )
         )
-
-    if config["time_type"] == "redshift":
+    elif config["time_type"] == "redshift":
         origin_time_array = calculate_origin_redshift_array(
             config=config,
             convolution_redshift_value=convolution_time_bin_center,
@@ -264,7 +263,7 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
             )
         )
     else:
-        raise ValueError("Choice for time-type unknown")
+        raise ValueError("Choice for time-type unknown. {}".format(config["time_type"]))
 
     return origin_time_array
 

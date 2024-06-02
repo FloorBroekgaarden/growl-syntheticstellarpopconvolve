@@ -15,6 +15,9 @@ import pandas as pd
 import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve.check_convolution_config import (
+    check_convolution_config,
+)
 from syntheticstellarpopconvolve.general_functions import (
     calculate_bincenters,
     calculate_digitized_sfr_rates,
@@ -115,6 +118,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
                 "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "yield_rate": "probability",
@@ -127,22 +131,18 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
+        check_convolution_config(self.convolution_config)
+
+        #
         prepare_output_file(config=self.convolution_config)
 
     def test_calculate_digitized_sfr_rates_sfr_only(self):
-
-        # #
-        # sfr_dict = update_sfr_dict(
-        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        # )
-
-        sfr_dict = self.convolution_config["SFR_info"]
 
         digitized_sfr_rates = calculate_digitized_sfr_rates(
             config=self.convolution_config,
             convolution_time_bin_center=0.5 * 1e9 * u.yr,
             data_dict={"delay_time": np.array([-1, 1, 2, 3, 100]) * 1e9 * u.yr},
-            sfr_dict=sfr_dict,
+            sfr_dict=self.convolution_config["SFR_info"],
         )
         output_unit = u.Msun / u.yr / u.Gpc**3
 

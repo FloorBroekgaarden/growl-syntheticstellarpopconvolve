@@ -44,25 +44,6 @@ def check_metallicity(convolution_instruction, data_key):
                 )
 
 
-def update_sfr_dict(sfr_dict, config):
-    """
-    Function to update the SFR dict
-    - provides padding
-    - adds redshift shell info
-    """
-
-    #
-    config["logger"].debug("Updating SFR dict")
-
-    # Pad the SFR dict with the empty bins around
-    sfr_dict = pad_sfr_dict(config=config, sfr_dict=sfr_dict)
-
-    # Add redshift shell info to dict.
-    sfr_dict = store_redshift_shell_info(config=config, sfr_dict=sfr_dict)
-
-    return sfr_dict
-
-
 def pad_sfr_dict(config, sfr_dict):
     """
     Function to pad the entries in the sfr dictionary with empty bins.
@@ -145,15 +126,24 @@ def pad_sfr_dict(config, sfr_dict):
         # create redshift time-bin size
         sfr_dict["redshift_bin_sizes"] = np.abs(np.diff(sfr_dict["redshift_bin_edges"]))
 
-        # convert into actual time-bin sizes
-        lookback_time_at_redshift_bin_edges = np.array(
-            [
-                redshift_to_lookback_time(
-                    redshift=redshift_bin_edge, cosmology=config["cosmology"]
-                )
-                for redshift_bin_edge in sfr_dict["redshift_bin_edges"]
-            ]
+        # TODO: put these steps in a dedicated function that makes an array of a list of astropy-united values
+        lookback_time_at_redshift_bin_edges = [
+            redshift_to_lookback_time(
+                redshift=redshift_bin_edge, cosmology=config["cosmology"]
+            )
+            for redshift_bin_edge in sfr_dict["redshift_bin_edges"]
+        ]
+        lookback_time_at_redshift_bin_edges_unit = lookback_time_at_redshift_bin_edges[
+            0
+        ].unit
+        lookback_time_at_redshift_bin_edges = [
+            el.value for el in lookback_time_at_redshift_bin_edges
+        ]
+        lookback_time_at_redshift_bin_edges = (
+            np.array(lookback_time_at_redshift_bin_edges)
+            * lookback_time_at_redshift_bin_edges_unit
         )
+
         sfr_dict["time_bin_sizes"] = np.abs(
             np.diff(lookback_time_at_redshift_bin_edges)
         )
@@ -252,6 +242,25 @@ def pad_sfr_dict(config, sfr_dict):
     return sfr_dict
 
 
+def update_sfr_dict(sfr_dict, config):
+    """
+    Function to update the SFR dict
+    - provides padding
+    - adds redshift shell info
+    """
+
+    #
+    config["logger"].debug("Updating SFR dict")
+
+    # Pad the SFR dict with the empty bins around
+    sfr_dict = pad_sfr_dict(config=config, sfr_dict=sfr_dict)
+
+    # Add redshift shell info to dict.
+    sfr_dict = store_redshift_shell_info(config=config, sfr_dict=sfr_dict)
+
+    return sfr_dict
+
+
 def check_sfr_dict(
     sfr_dict, config, requires_name, requires_metallicity_info, time_type
 ):
@@ -318,8 +327,24 @@ def check_sfr_dict(
                 "metallicity_weighted_starformation_array requires an astropy unit"
             )
 
-    ##########
-    # update the SFR dict with extra things
+
+def check_and_update_sfr_dict(
+    sfr_dict, config, requires_name, requires_metallicity_info, time_type
+):
+    """
+    Function to check the SFR dict for the appropriate content and update
+    """
+
+    # check sfr dict
+    check_sfr_dict(
+        sfr_dict=sfr_dict,
+        config=config,
+        requires_name=requires_name,
+        requires_metallicity_info=requires_metallicity_info,
+        time_type=time_type,
+    )
+
+    # update sfr dict
     sfr_dict = update_sfr_dict(sfr_dict=sfr_dict, config=config)
 
     return sfr_dict
@@ -463,10 +488,6 @@ def check_convolution_config(config):
     ##########
     # do the validation: some parameters require others to be set,
     for parameter, parameter_dict in config.items():
-        # #
-        # if parameter == "SFR_file":
-        #     if not config["use_SFR_file"]:
-        #         continue
 
         #
         if parameter == "redshift_interpolator_data_output_filename":
@@ -536,7 +557,7 @@ def check_convolution_config(config):
     # check the SFR information
     if "SFR_info" in config:
         if isinstance(config["SFR_info"], dict):
-            config["SFR_info"] = check_sfr_dict(
+            config["SFR_info"] = check_and_update_sfr_dict(
                 sfr_dict=config["SFR_info"],
                 requires_name=False,
                 requires_metallicity_info=requires_metallicity_info,
@@ -546,7 +567,7 @@ def check_convolution_config(config):
         elif isinstance(config["SFR_info"], list):
             # check all sfr dicts
             for sfr_dict in config["SFR_info"]:
-                sfr_dict = check_sfr_dict(
+                sfr_dict = check_and_update_sfr_dict(
                     sfr_dict=sfr_dict,
                     requires_name=True,
                     requires_metallicity_info=requires_metallicity_info,

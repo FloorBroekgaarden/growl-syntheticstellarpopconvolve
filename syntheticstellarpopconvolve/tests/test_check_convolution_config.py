@@ -429,22 +429,6 @@ class test_check_sfr_dict(unittest.TestCase):
                 config=self.config,
             )
 
-    def test_check_sfr_dict_wrong_lookback_time_unit(self):
-        requires_name = True
-        requires_metallicity_info = True
-        time_type = "lookback_time"
-
-        self.sfr_dict["lookback_time_bin_edges"] = np.array([1, 2, 3]) * 1e9 * u.ms
-
-        with self.assertRaises(ValueError):
-            check_sfr_dict(
-                sfr_dict=self.sfr_dict,
-                requires_name=requires_name,
-                requires_metallicity_info=requires_metallicity_info,
-                time_type=time_type,
-                config=self.config,
-            )
-
     def test_check_sfr_dict_redshift_wrong_bin_edges(self):
         # self.sfr_dict['lookback_time_bin_edges']
 

@@ -360,7 +360,8 @@ class test_event_convolution_function(unittest.TestCase):
 
         #
         np.testing.assert_array_equal(
-            convolution_result["convolution_result"], np.array([1, 2, 3, 4.0])
+            convolution_result["convolution_result"]["yield"],
+            np.array([1, 2, 3, 4.0]) * (1.0 / u.yr / u.Gpc**3),
         )
 
     def test_event_convolution_function_extra_weights(self):
@@ -372,6 +373,7 @@ class test_event_convolution_function(unittest.TestCase):
             "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
+            "convolution_type": "integrate",
             "data_column_dict": {
                 "delay_time": "delay_time",
                 "yield_rate": "probability",
@@ -404,8 +406,8 @@ class test_event_convolution_function(unittest.TestCase):
 
         #
         np.testing.assert_array_equal(
-            convolution_result["convolution_result"],
-            np.zeros(self.dummy_data["probability"].shape),
+            convolution_result["convolution_result"]["yield"],
+            np.zeros(self.dummy_data["probability"].shape) * (1.0 / u.yr / u.Gpc**3),
         )
 
 

@@ -14,6 +14,7 @@ import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_convolution_config import (
+    check_and_update_sfr_dict,
     check_convolution_config,
 )
 from syntheticstellarpopconvolve.convolve_ensembles import (
@@ -249,6 +250,15 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
+        self.convolution_config["SFR_info"] = check_and_update_sfr_dict(
+            sfr_dict=self.convolution_config["SFR_info"],
+            requires_name=False,
+            requires_metallicity_info=False,
+            time_type=self.convolution_config["time_type"],
+            config=self.convolution_config,
+        )
+
+        #
         prepare_output_file(config=self.convolution_config)
 
     def test_ensemble_handle_SFR_multiplication_normal(self):
@@ -258,11 +268,6 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
 
         #
         data_dict = {"delay_time": 0}
-
-        # #
-        # sfr_dict = update_sfr_dict(
-        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        # )
 
         sfr_dict = self.convolution_config["SFR_info"]
 
@@ -400,6 +405,7 @@ class test_ensemble_convolution_function(unittest.TestCase):
                 "input_data_type": "ensemble",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_layer_dict": {
                     "delay_time": 3,
                 },
@@ -423,11 +429,6 @@ class test_ensemble_convolution_function(unittest.TestCase):
                 0
             ],
         )
-
-        # #
-        # sfr_dict = update_sfr_dict(
-        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        # )
 
         sfr_dict = self.convolution_config["SFR_info"]
 
@@ -459,13 +460,15 @@ class test_ensemble_convolution_function(unittest.TestCase):
         #
         self.assertTrue("convolution_result" in result_dict)
         np.testing.assert_array_equal(
-            result_dict["convolution_result"], [1, 1, 2, 2, 3, 3, 4, 4]
+            result_dict["convolution_result"]["yield"],
+            np.array([1, 1, 2, 2, 3, 3, 4, 4]) * (1.0 / u.yr / u.Gpc**3),
         )
 
         #
-        self.assertTrue("stripped_ensemble" in result_dict)
+        self.assertTrue("stripped_ensemble" in result_dict["convolution_result"])
         self.assertTrue(
-            result_dict["stripped_ensemble"] == {"dummy": expected_stripped_ensemble}
+            result_dict["convolution_result"]["stripped_ensemble"]
+            == {"dummy": expected_stripped_ensemble}
         )
 
 

@@ -1389,7 +1389,7 @@ def ensemble_convolution_function(
     Note: ensemble convolution only supports convolution by integration at this point.
     """
 
-    if convolution_instruction["convolution_type"] == "integration":
+    if convolution_instruction["convolution_type"] == "integrate":
 
         #
         config["logger"].debug(

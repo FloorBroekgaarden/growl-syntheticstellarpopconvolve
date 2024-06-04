@@ -1181,7 +1181,7 @@ def ensemble_handle_SFR_multiplication(
         convolution_time_bin_center=convolution_time_bin_center,
         data_dict=data_dict,
         sfr_dict=job_dict["sfr_dict"],
-    ).value
+    )
 
     ################
     # Run custom function afterwards
@@ -1195,7 +1195,7 @@ def ensemble_handle_SFR_multiplication(
     )
 
     # Combine SFR, extra weight and possibly time-duration (time bin-width) to turn rates into numbers
-    combined = digitized_sfr_rates[0] * extra_weights[0] * extra_value
+    combined = (digitized_sfr_rates[0] * extra_weights[0] * extra_value).value
 
     # Multiply ensemble with that number
     multiply_ensemble(ensemble=ensemble, factor=combined)
@@ -1439,6 +1439,13 @@ def ensemble_convolution_function(
         # detach endpoints from ensemble
         stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(
             ensemble=ensemble
+        )
+
+        # put back the units
+        stripped_endpoints = (
+            stripped_endpoints
+            * config["yield_rate_unit"]
+            * job_dict["sfr_dict"]["starformation_rate_array"][0].unit
         )
 
         #

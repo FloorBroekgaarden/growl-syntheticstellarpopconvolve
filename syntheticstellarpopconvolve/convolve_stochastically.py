@@ -371,10 +371,11 @@ if __name__ == "__main__":
     # Testing method without metallicity distribution
 
     time_start = time.time()
+
     #
     lookback_time_index = 5
     scale_factor = 5e-9
-    size = 10
+    size = 100
 
     # have some starformation array
     lookback_time_bin_edges = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
@@ -492,25 +493,25 @@ if __name__ == "__main__":
     print("finished convolution")
     # Show some of the content
     with h5py.File(convolution_config["output_filename"], "r") as output_hdf5_file:
-        print(output_hdf5_file["output_data/"].keys())
-        print(output_hdf5_file["output_data/event/"].keys())
-        print(output_hdf5_file["output_data/event/stochastic_example/"].keys())
-        print(
-            output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example"
-            ].keys()
-        )
-        print(
-            output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array"
-            ].keys()
-        )
+        # print(output_hdf5_file["output_data/"].keys())
+        # print(output_hdf5_file["output_data/event/"].keys())
+        # print(output_hdf5_file["output_data/event/stochastic_example/"].keys())
+        # print(
+        #     output_hdf5_file[
+        #         "output_data/event/stochastic_example/stochastic_example"
+        #     ].keys()
+        # )
+        # print(
+        #     output_hdf5_file[
+        #         "output_data/event/stochastic_example/stochastic_example/convolved_array"
+        #     ].keys()
+        # )
 
-        print(
-            output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
-            ].keys()
-        )
+        # print(
+        #     output_hdf5_file[
+        #         "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+        #     ].keys()
+        # )
 
         print(
             output_hdf5_file[
@@ -523,6 +524,28 @@ if __name__ == "__main__":
                 "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
             ]["formation_lookback_times"][()]
         )
+
+
+import astropy.units as u
+import legwork as lw
+import numpy as np
+
+N = 100
+m_1 = np.random.uniform(1, 10, N) * u.Msun
+m_2 = np.random.rand(N) * m_1
+dist = np.random.uniform(1, 30, N) * u.kpc
+f_orb_i = 10**(np.random.uniform(-5, -2, N)) * u.Hz
+ecc_i = np.random.rand(N)
+
+sources = lw.source.Source(m_1=m_1, m_2=m_2, ecc=ecc_i, f_orb=f_orb_i, dist=dist,
+                           interpolate_g=N > 1000)
+
+t_evol = np.random.uniform(0.1, 1, N) * u.Myr
+
+sources.evolve_sources(t_evol)
+
+print(sources.f_orb, sources.ecc)
+
 
     quit()
 

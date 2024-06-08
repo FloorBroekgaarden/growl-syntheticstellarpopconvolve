@@ -15,8 +15,8 @@ import pandas as pd
 import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.check_convolution_config import (
-    check_convolution_config,
+from syntheticstellarpopconvolve.check_and_update_convolution_config import (
+    check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.general_functions import (
     calculate_bincenters,
@@ -93,11 +93,14 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * 1e9 * u.yr,
-            "starformation_array": np.array([1, 2, 3, 4, 5]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 2, 3, 4, 5])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
-        self.convolution_config["convolution_time_bin_edges"] = (
+        self.convolution_config["convolution_lookback_time_bin_edges"] = (
             np.array([0, 1, 2, 3, 4]) * 1e9 * u.yr
         )
 
@@ -131,7 +134,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
-        check_convolution_config(self.convolution_config)
+        check_and_update_convolution_config(self.convolution_config)
 
         #
         prepare_output_file(config=self.convolution_config)
@@ -270,7 +273,10 @@ class test_handle_extra_weights_function(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -320,7 +326,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
 
         extra_weights = handle_extra_weights_function(
             config=self.convolution_config,
-            convolution_time_bin_center=0.2,
+            bin_center=0.2,
             convolution_instruction=convolution_instruction,
             sfr_dict={},
             data_dict=self.dummy_data,
@@ -346,7 +352,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
         with self.assertRaises(KeyError):
             _ = handle_extra_weights_function(
                 config=self.convolution_config,
-                convolution_time_bin_center=0.2,
+                bin_center=0.2,
                 convolution_instruction=convolution_instruction,
                 sfr_dict={},
                 data_dict=self.dummy_data,
@@ -371,7 +377,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = handle_extra_weights_function(
                 config=self.convolution_config,
-                convolution_time_bin_center=0.2,
+                bin_center=0.2,
                 convolution_instruction=convolution_instruction,
                 sfr_dict={},
                 data_dict=self.dummy_data,
@@ -395,7 +401,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
 
         extra_weights = handle_extra_weights_function(
             config=self.convolution_config,
-            convolution_time_bin_center=0.2,
+            bin_center=0.2,
             convolution_instruction=convolution_instruction,
             sfr_dict={},
             data_dict=self.dummy_data,
@@ -424,7 +430,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = handle_extra_weights_function(
                 config=self.convolution_config,
-                convolution_time_bin_center=0.2,
+                bin_center=0.2,
                 convolution_instruction=convolution_instruction,
                 sfr_dict={},
                 data_dict=self.dummy_data,
@@ -440,7 +446,7 @@ class test_handle_extra_weights_function(unittest.TestCase):
 
         extra_weights = handle_extra_weights_function(
             config=self.convolution_config,
-            convolution_time_bin_center=0.2,
+            bin_center=0.2,
             convolution_instruction=convolution_instruction,
             sfr_dict={},
             data_dict=self.dummy_data,

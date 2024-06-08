@@ -1,7 +1,5 @@
 """
 Main file to handle the convolution of populations
-
-TODO: when units are passed back to we need to store them in the meta-data
 """
 
 import json
@@ -10,7 +8,6 @@ import os
 import pickle
 
 import h5py
-import numpy as np
 import setproctitle
 
 from syntheticstellarpopconvolve.convolve_custom_data import (
@@ -157,18 +154,20 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
 
             # Create group
             current_time_bin_grp = grp.create_group(
-                "convolved_array/{}".format(str(data["convolution_time_bin_center"]))
+                "convolved_array/{}".format(str(data["bin_center"]))
             )
 
             # Store payload in grp
             config["logger"].debug(
                 "Storing convolution results of bin-center {}".format(
-                    str(data["convolution_time_bin_center"])
+                    str(data["bin_center"])
                 )
             )
 
             ############
             # Store different kinds of output
+
+            units_to_store = {}
 
             # yield output. From integration-based event and ensemble convolution
             if "yield" in convolution_result.keys():
@@ -180,7 +179,8 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
 
                 current_time_bin_grp.create_dataset("yield", data=yield_value)
 
-                # TODO: store unit and description in meta-data
+                # store unit and description in meta-data
+                units_to_store["yield"] = yield_unit
 
             # stripped ensemble output. From integration-based ensemble convolution
             if "stripped_ensemble" in convolution_result.keys():
@@ -190,7 +190,7 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
                 stripped_ensemble = convolution_result["stripped_ensemble"]
 
                 current_time_bin_grp.create_dataset(
-                    "stripped_ensemble", data=stripped_ensemble
+                    "stripped_ensemble", data=json.dumps(stripped_ensemble)
                 )
 
                 # TODO: store description
@@ -223,6 +223,10 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
                 )
 
                 # TODO: store unit and description
+                # store unit and description in meta-data
+                units_to_store["formation_lookback_times"] = (
+                    formation_lookback_times_unit
+                )
 
             # positions output. From sampling-based event convolution
             if "positions" in convolution_result.keys():
@@ -233,6 +237,11 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
                 )
 
                 # TODO: store description
+
+            # store attributes
+            current_time_bin_grp.attrs["units"] = json.dumps(
+                units_to_store, cls=JsonCustomEncoder
+            )
 
             # remove the pickled file
             if config["remove_pickle_files"]:
@@ -256,8 +265,9 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
             return None
 
         # Unpack info
-        convolution_time_bin_center = job_dict["convolution_time_bin_center"]
+        bin_center = job_dict["bin_center"]
         convolution_instruction = job_dict["convolution_instruction"]
+
         data_dict = job_dict["data_dict"]
 
         ##########
@@ -267,9 +277,14 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
         ##########
         #
         config["logger"].debug(
-            "Worker {}: convolution_time_bin_center: {}: Calculating {} {} rates".format(
+            "Worker {}: {} bin center: {}: Calculating {} {} rates".format(
                 worker_ID,
-                convolution_time_bin_center,
+                (
+                    "convolution time"
+                    if convolution_instruction["convolution_type"] == "integrate"
+                    else "starformation time"
+                ),
+                bin_center,
                 convolution_instruction["input_data_type"],
                 convolution_instruction["input_data_name"],
             )
@@ -290,7 +305,7 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
         convolution_result_dict = CONVOLUTION_FUNCTION_DICT[
             convolution_instruction["input_data_type"]
         ](
-            convolution_time_bin_center=convolution_time_bin_center,
+            bin_center=bin_center,
             job_dict=job_dict,
             config=config,
             convolution_instruction=convolution_instruction,
@@ -298,15 +313,13 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
         )
 
         # Construct dictionary that is stored in the pickle files
-        output_dict["convolution_time_bin_center"] = convolution_time_bin_center
+        output_dict["bin_center"] = bin_center
         output_dict["convolution_instruction"] = convolution_instruction
         output_dict = {**output_dict, **convolution_result_dict}
 
         #
         with open(
-            os.path.join(
-                job_dict["output_dir"], "{}.p".format(convolution_time_bin_center)
-            ),
+            os.path.join(job_dict["output_dir"], "{}.p".format(bin_center)),
             "wb",
         ) as f:
             pickle.dump(output_dict, f)
@@ -322,23 +335,35 @@ def convolution_queue_filler(  # DH0001
 ):
     """
     Function to handle filling the queue for the multiprocessing
+
+    When the convolution instruction is a sampling-based convolution,
+    we use forward convolution, which loops over starformation bins
+    rather than convolution bins
     """
 
-    # Fill the queue with centres
-    for convolution_bin_number, (
-        convolution_bin_center,
-        convolution_bin_size,
-    ) in enumerate(
-        zip(
+    ######
+    # Determine bins to loop over (integrate = backward conv, sampling = forward conv)
+    if convolution_instruction["convolution_type"] == "integrate":
+        zipped_bin_data = zip(
             config["convolution_time_bin_centers"], config["convolution_time_bin_sizes"]
         )
-    ):
+    elif convolution_instruction["convolution_type"] == "sample":
+        zipped_bin_data = zip(config["time_bin_centers"], config["time_bin_sizes"])
+    else:
+        raise ValueError("convolution type not supported")
+
+    ######
+    # Fill the queue with centres
+    for bin_number, (
+        bin_center,
+        bin_size,
+    ) in enumerate(zipped_bin_data):
         # Set up job dict
         job_dict = {
-            "job_number": convolution_bin_number,
-            "convolution_time_bin_center": convolution_bin_center,
-            "convolution_time_bin_size": convolution_bin_size,
-            "convolution_time_bin_number": convolution_bin_number,
+            "job_number": bin_number,
+            "bin_center": bin_center,
+            "bin_size": bin_size,
+            "bin_number": bin_number,
             "sfr_dict": sfr_dict,
             "convolution_instruction": convolution_instruction,
             "data_dict": data_dict,

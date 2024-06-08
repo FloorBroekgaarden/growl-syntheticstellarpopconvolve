@@ -9,14 +9,15 @@ import unittest
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
 )
-from syntheticstellarpopconvolve.tests.test_check_convolution_config import (
-    test_check_convolution_config,
-    test_check_convolution_instruction,
-    test_check_metallicity,
-    test_check_required,
-    test_check_sfr_dict,
-    test_pad_sfr_dict,
-)
+
+# from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
+#     test_check_convolution_config,
+#     test_check_convolution_instruction,
+#     test_check_metallicity,
+#     test_check_required,
+#     test_check_sfr_dict,
+#     test_pad_sfr_dict,
+# )
 from syntheticstellarpopconvolve.tests.test_check_input_file import (
     test_check_input_file,
 )
@@ -105,9 +106,6 @@ from syntheticstellarpopconvolve.tests.test_prepare_redshift_interpolator import
 from syntheticstellarpopconvolve.tests.test_store_redshift_shell_info import (
     test_create_shell_volume_dict,
     test_store_redshift_shell_info,
-)
-from syntheticstellarpopconvolve.tests.test_update_convolution_config import (
-    test_update_convolution_config,
 )
 
 if __name__ == "__main__":

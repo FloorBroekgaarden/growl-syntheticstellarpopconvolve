@@ -14,8 +14,8 @@ import pandas as pd
 import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.check_convolution_config import (
-    check_convolution_config,
+from syntheticstellarpopconvolve.check_and_update_convolution_config import (
+    check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.convolve_events import (
     event_convolution_function,
@@ -85,7 +85,10 @@ class test_extract_event_data(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -279,7 +282,10 @@ class test_event_convolution_function(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -317,7 +323,7 @@ class test_event_convolution_function(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
-        check_convolution_config(self.convolution_config)
+        check_and_update_convolution_config(self.convolution_config)
 
         #
         prepare_output_file(config=self.convolution_config)
@@ -351,7 +357,7 @@ class test_event_convolution_function(unittest.TestCase):
 
         #
         convolution_result = event_convolution_function(
-            convolution_time_bin_center=0.5 * u.yr,
+            bin_center=0.5 * u.yr,
             job_dict={"sfr_dict": sfr_dict},
             config=self.convolution_config,
             convolution_instruction=normal_convolution_instructions,
@@ -397,7 +403,7 @@ class test_event_convolution_function(unittest.TestCase):
 
         #
         convolution_result = event_convolution_function(
-            convolution_time_bin_center=0.5 * u.yr,
+            bin_center=0.5 * u.yr,
             job_dict={"sfr_dict": sfr_dict},
             config=self.convolution_config,
             convolution_instruction=normal_convolution_instructions,

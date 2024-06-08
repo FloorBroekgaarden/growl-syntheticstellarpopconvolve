@@ -171,7 +171,7 @@ def vb(message, verbosity, minimal_verbosity):  # DH0001
 
 def handle_extra_weights_function(
     config,
-    convolution_time_bin_center,
+    bin_center,
     convolution_instruction,
     sfr_dict,
     data_dict,
@@ -191,7 +191,7 @@ def handle_extra_weights_function(
         # Construct what parameters are available for the extra function
         available_parameters = {
             "config": config,
-            "time_value": convolution_time_bin_center,
+            "time_value": bin_center,
             "convolution_instruction": convolution_instruction,
             "sfr_dict": sfr_dict,
             "data_dict": data_dict,
@@ -313,14 +313,14 @@ def calculate_digitized_sfr_rates(
         # Calculate rates
         config["logger"].debug("Calculating metallicity weighted SFR rates")
         digitised_sfr_rates = sfr_dict[
-            "padded_metallicity_weighted_starformation_array"
+            "padded_metallicity_weighted_starformation_rate_array"
         ][metallicity_indices, digitized_time_indices]
     else:
         # use JUST the SFR, not the metallicity dependent one
 
         # Calculate rates
         config["logger"].debug("Calculating absolute SFR rates")
-        digitised_sfr_rates = sfr_dict["padded_starformation_array"][
+        digitised_sfr_rates = sfr_dict["padded_starformation_rate_array"][
             digitized_time_indices
         ]
 
@@ -354,6 +354,8 @@ def calculate_bincenters(array, convert="linear"):
 
     if convert == "linear":
         bincenters = (array[1:] + array[:-1]) / 2
+    else:
+        raise ValueError(f"convert choice {convert} is unknown")
 
     return bincenters
 
@@ -556,3 +558,29 @@ def temp_dir(*child_dirs: str, clean_path=False) -> str:
     os.makedirs(full_path, exist_ok=True)
 
     return full_path
+
+
+def check_required(config, required_list):
+    """
+    Function to check if the keys in the required_list are present in the convolution_instruction dict
+    """
+
+    for key in required_list:
+        if key not in config.keys():
+            raise ValueError(
+                "{} is required in the convolution_instruction".format(key)
+            )
+
+
+def is_time_unit(parameter):
+    """
+    Function to check if a parameter has time-units
+    """
+
+    try:
+        parameter.to(u.yr)
+        return True
+    except u.core.UnitConversionError:
+        return False
+    except AttributeError:
+        return False

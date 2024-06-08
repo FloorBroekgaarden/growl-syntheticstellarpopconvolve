@@ -16,8 +16,8 @@ import pkg_resources
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.check_convolution_config import (
-    check_convolution_config,
+from syntheticstellarpopconvolve.check_and_update_convolution_config import (
+    check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.convolve_populations import generate_data_dict
 from syntheticstellarpopconvolve.general_functions import temp_dir
@@ -123,7 +123,10 @@ class test_generate_data_dict(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -164,7 +167,7 @@ class test_generate_data_dict(unittest.TestCase):
         prepare_output_file(config=self.convolution_config)
 
         #
-        check_convolution_config(self.convolution_config)
+        check_and_update_convolution_config(self.convolution_config)
 
         #
         normal_convolution_instructions = {
@@ -247,7 +250,10 @@ class test_generate_data_dict(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -356,7 +362,10 @@ class test_generate_data_dict(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins

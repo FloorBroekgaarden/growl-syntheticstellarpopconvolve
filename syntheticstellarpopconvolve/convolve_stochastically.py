@@ -356,9 +356,6 @@ if __name__ == "__main__":
     import json
     import os
 
-    import astropy.units as u
-    import numpy as np
-
     from syntheticstellarpopconvolve import convolve, default_convolution_config
     from syntheticstellarpopconvolve.general_functions import temp_dir
 
@@ -379,7 +376,7 @@ if __name__ == "__main__":
 
     # have some starformation array
     lookback_time_bin_edges = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
-    starformation_array = (
+    starformation_rate_array = (
         0.25 * np.ones(lookback_time_bin_edges.shape[0] - 1) * u.Msun / u.yr
     )  # example of a constant star-formation rate. this could be anything of course.
     # print(starformation_array)
@@ -388,7 +385,7 @@ if __name__ == "__main__":
     # print(bin_sizes)
 
     #
-    total_star_formation_at_lookback_times = starformation_array * bin_sizes
+    total_star_formation_at_lookback_times = starformation_rate_array * bin_sizes
     # print(total_star_formation_at_lookback_times)
 
     #
@@ -478,7 +475,7 @@ if __name__ == "__main__":
     # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
     sfr_dict = {}
     sfr_dict["lookback_time_bin_edges"] = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
-    sfr_dict["starformation_array"] = (
+    sfr_dict["starformation_rate_array"] = (
         0.25 * np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
     )  # example of a constant star-formation rate. this could be anything of course.
 
@@ -525,27 +522,25 @@ if __name__ == "__main__":
             ]["formation_lookback_times"][()]
         )
 
+    # import astropy.units as u
+    # import legwork as lw
+    # import numpy as np
 
-import astropy.units as u
-import legwork as lw
-import numpy as np
+    # N = 100
+    # m_1 = np.random.uniform(1, 10, N) * u.Msun
+    # m_2 = np.random.rand(N) * m_1
+    # dist = np.random.uniform(1, 30, N) * u.kpc
+    # f_orb_i = 10**(np.random.uniform(-5, -2, N)) * u.Hz
+    # ecc_i = np.random.rand(N)
 
-N = 100
-m_1 = np.random.uniform(1, 10, N) * u.Msun
-m_2 = np.random.rand(N) * m_1
-dist = np.random.uniform(1, 30, N) * u.kpc
-f_orb_i = 10**(np.random.uniform(-5, -2, N)) * u.Hz
-ecc_i = np.random.rand(N)
+    # sources = lw.source.Source(m_1=m_1, m_2=m_2, ecc=ecc_i, f_orb=f_orb_i, dist=dist,
+    #                            interpolate_g=N > 1000)
 
-sources = lw.source.Source(m_1=m_1, m_2=m_2, ecc=ecc_i, f_orb=f_orb_i, dist=dist,
-                           interpolate_g=N > 1000)
+    # t_evol = np.random.uniform(0.1, 1, N) * u.Myr
 
-t_evol = np.random.uniform(0.1, 1, N) * u.Myr
+    # sources.evolve_sources(t_evol)
 
-sources.evolve_sources(t_evol)
-
-print(sources.f_orb, sources.ecc)
-
+    # print(sources.f_orb, sources.ecc)
 
     quit()
 
@@ -657,12 +652,12 @@ print(sources.f_orb, sources.ecc)
     # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
     sfr_dict = {}
     sfr_dict["lookback_time_bin_edges"] = (np.arange(0, 10, 1) * u.Gyr).to(u.yr)
-    sfr_dict["starformation_array"] = (
+    sfr_dict["starformation_rate_array"] = (
         0.25 * np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
     )  # example of a constant star-formation rate. this could be anything of course.
 
-    sfr_dict["metallicity_weighted_starformation_array"] = (
-        sfr_dict["starformation_array"][:, np.newaxis]
+    sfr_dict["metallicity_weighted_starformation_rate_array"] = (
+        sfr_dict["starformation_rate_array"][:, np.newaxis]
         * metallicity_distribution_at_lookback_time[np.newaxis, :]
     )
     sfr_dict["metallicity_bin_edges"] = metallicity_bins

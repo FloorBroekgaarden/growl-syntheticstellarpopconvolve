@@ -1141,7 +1141,7 @@ def extract_ensemble_data(config, convolution_instruction):
 
 
 def ensemble_handle_SFR_multiplication(
-    convolution_time_bin_center,
+    bin_center,
     job_dict,
     config,
     convolution_instruction,
@@ -1161,7 +1161,7 @@ def ensemble_handle_SFR_multiplication(
     #
     config["logger"].debug(
         "Convolving ensemble data with SFR rate at convolution bin {} with data_dict: {} and multiplying by {} ({})".format(
-            convolution_time_bin_center, data_dict, extra_value, extra_value_dict
+            bin_center, data_dict, extra_value, extra_value_dict
         )
     )
 
@@ -1178,7 +1178,7 @@ def ensemble_handle_SFR_multiplication(
     #############
     digitized_sfr_rates = calculate_digitized_sfr_rates(
         config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
+        convolution_time_bin_center=bin_center,
         data_dict=data_dict,
         sfr_dict=job_dict["sfr_dict"],
     )
@@ -1187,7 +1187,7 @@ def ensemble_handle_SFR_multiplication(
     # Run custom function afterwards
     extra_weights = handle_extra_weights_function(
         config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
+        bin_center=bin_center,
         convolution_instruction=convolution_instruction,
         sfr_dict=job_dict["sfr_dict"],
         data_dict=data_dict,
@@ -1204,7 +1204,7 @@ def ensemble_handle_SFR_multiplication(
 
 
 def ensemble_convolve_ensemble(
-    convolution_time_bin_center,
+    bin_center,
     job_dict,
     config,
     convolution_instruction,
@@ -1341,7 +1341,7 @@ def ensemble_convolve_ensemble(
             if depth >= deepest_data_layer_depth:
                 # multiplication with SFR-related things here
                 ensemble[key] = ensemble_handle_SFR_multiplication(
-                    convolution_time_bin_center=convolution_time_bin_center,
+                    bin_center=bin_center,
                     job_dict=job_dict,
                     config=config,
                     convolution_instruction=convolution_instruction,
@@ -1352,7 +1352,7 @@ def ensemble_convolve_ensemble(
             else:
                 # call self with increased depth
                 ensemble[key] = ensemble_convolve_ensemble(
-                    convolution_time_bin_center=convolution_time_bin_center,
+                    bin_center=bin_center,
                     job_dict=job_dict,
                     config=config,
                     convolution_instruction=convolution_instruction,
@@ -1373,7 +1373,7 @@ def ensemble_convolve_ensemble(
 
 
 def ensemble_convolution_function(
-    convolution_time_bin_center, job_dict, config, convolution_instruction, data_dict
+    bin_center, job_dict, config, convolution_instruction, data_dict
 ):
     """
     Function for the multiprocessing worker to convolve ensemble-based data.
@@ -1394,7 +1394,7 @@ def ensemble_convolution_function(
         #
         config["logger"].debug(
             "Convolving ensemble-based data {} for bin_center {}".format(
-                convolution_instruction["input_data_name"], convolution_time_bin_center
+                convolution_instruction["input_data_name"], bin_center
             )
         )
 
@@ -1423,7 +1423,7 @@ def ensemble_convolution_function(
             ensemble=ensemble,
             convolution_instruction=convolution_instruction,
             config=config,
-            convolution_time_bin_center=convolution_time_bin_center,
+            bin_center=bin_center,
             job_dict=job_dict,
             data_dict=data_dict,
         )

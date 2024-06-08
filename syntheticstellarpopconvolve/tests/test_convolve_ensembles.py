@@ -13,9 +13,8 @@ import numpy as np
 import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.check_convolution_config import (
-    check_and_update_sfr_dict,
-    check_convolution_config,
+from syntheticstellarpopconvolve.check_and_update_convolution_config import (
+    check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.convolve_ensembles import (
     _get_ensemble_structure,
@@ -213,13 +212,16 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
-            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([2, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.Gyr,
+            "starformation_rate_array": np.array([2, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
-        self.convolution_config["convolution_time_bin_edges"] = np.array(
-            [0, 1, 2, 3, 4]
+        self.convolution_config["convolution_lookback_time_bin_edges"] = (
+            np.array([0, 1, 2, 3, 4]) * u.Gyr
         )
 
         # lookback time convolution only
@@ -236,9 +238,10 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
+                "input_data_type": "ensemble",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_layer_dict": {
                     "delay_time": 3,
                 },
@@ -250,13 +253,7 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
-        self.convolution_config["SFR_info"] = check_and_update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"],
-            requires_name=False,
-            requires_metallicity_info=False,
-            time_type=self.convolution_config["time_type"],
-            config=self.convolution_config,
-        )
+        check_and_update_convolution_config(config=self.convolution_config)
 
         #
         prepare_output_file(config=self.convolution_config)
@@ -272,7 +269,7 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         sfr_dict = self.convolution_config["SFR_info"]
 
         ensemble = ensemble_handle_SFR_multiplication(
-            convolution_time_bin_center=0.5,
+            bin_center=0.5 * u.Gyr,
             job_dict={"sfr_dict": sfr_dict, "job_number": 0},
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
@@ -296,15 +293,10 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         data_dict = {"delay_time": 0}
         extra_value_dict = {"time_bin": 3, "metallicity_bin": 4}
 
-        # #
-        # sfr_dict = update_sfr_dict(
-        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        # )
-
         sfr_dict = self.convolution_config["SFR_info"]
 
         ensemble = ensemble_handle_SFR_multiplication(
-            convolution_time_bin_center=0.5,
+            bin_center=0.5 * u.Gyr,
             job_dict={"sfr_dict": sfr_dict, "job_number": 0},
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
@@ -380,10 +372,13 @@ class test_ensemble_convolution_function(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
-        # set up convolution bins
+        # set up convolution binsqq
         self.convolution_config["convolution_lookback_time_bin_edges"] = (
             np.array([0, 1, 2, 3, 4]) * u.yr
         )
@@ -417,10 +412,10 @@ class test_ensemble_convolution_function(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
-        prepare_output_file(config=self.convolution_config)
+        check_and_update_convolution_config(self.convolution_config)
 
         #
-        check_convolution_config(self.convolution_config)
+        prepare_output_file(config=self.convolution_config)
 
     def test_normal(self):
         _, data_dict, _ = extract_ensemble_data(
@@ -434,7 +429,7 @@ class test_ensemble_convolution_function(unittest.TestCase):
 
         #
         result_dict = ensemble_convolution_function(
-            convolution_time_bin_center=0.5 * u.yr,
+            bin_center=0.5 * u.yr,
             job_dict={"sfr_dict": sfr_dict, "job_number": 0},
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
@@ -566,13 +561,16 @@ class test_ensemble_handle_marginalisation(unittest.TestCase):
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
-            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.Gyr,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
-        self.convolution_config["convolution_time_bin_edges"] = np.array(
-            [0, 1, 2, 3, 4]
+        self.convolution_config["convolution_lookback_time_bin_edges"] = (
+            np.array([0, 1, 2, 3, 4]) * u.Gyr
         )
 
         # lookback time convolution only
@@ -589,9 +587,10 @@ class test_ensemble_handle_marginalisation(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
+                "input_data_type": "ensemble",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_layer_dict": {
                     "delay_time": 3,
                 },
@@ -603,13 +602,16 @@ class test_ensemble_handle_marginalisation(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
+        check_and_update_convolution_config(self.convolution_config)
+
+        #
         prepare_output_file(config=self.convolution_config)
 
     def test_ensemble_handle_marginalisation_pre_conv(self):
 
         #
         convolution_instruction = {
-            "input_data_type": "event",
+            "input_data_type": "ensemble",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_layer_dict": {
@@ -648,7 +650,7 @@ class test_ensemble_handle_marginalisation(unittest.TestCase):
 
         #
         convolution_instruction = {
-            "input_data_type": "event",
+            "input_data_type": "ensemble",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_layer_dict": {
@@ -675,7 +677,7 @@ class test_ensemble_handle_marginalisation(unittest.TestCase):
 
         #
         convolution_instruction = {
-            "input_data_type": "event",
+            "input_data_type": "ensemble",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_layer_dict": {
@@ -713,7 +715,7 @@ class test_ensemble_handle_marginalisation(unittest.TestCase):
 
         #
         convolution_instruction = {
-            "input_data_type": "event",
+            "input_data_type": "ensemble",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_layer_dict": {
@@ -792,13 +794,16 @@ class test_extract_ensemble_data(unittest.TestCase):
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
-            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.Gyr,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
-        self.convolution_config["convolution_time_bin_edges"] = np.array(
-            [0, 1, 2, 3, 4]
+        self.convolution_config["convolution_lookback_time_bin_edges"] = (
+            np.array([0, 1, 2, 3, 4]) * u.Gyr
         )
 
         # lookback time convolution only
@@ -818,6 +823,7 @@ class test_extract_ensemble_data(unittest.TestCase):
                 "input_data_type": "ensemble",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_layer_dict": {
                     "delay_time": 3,
                 },
@@ -827,6 +833,9 @@ class test_extract_ensemble_data(unittest.TestCase):
 
         #
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
+
+        #
+        check_and_update_convolution_config(self.convolution_config)
 
         #
         prepare_output_file(config=self.convolution_config)

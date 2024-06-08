@@ -80,7 +80,7 @@ def extract_event_data(config, convolution_instruction):
 
 
 def event_convolution_function(
-    convolution_time_bin_center, job_dict, config, convolution_instruction, data_dict
+    bin_center, job_dict, config, convolution_instruction, data_dict
 ):
     """
     Function for the multiprocessing worker to convolve event-based data.
@@ -91,9 +91,12 @@ def event_convolution_function(
     if convolution_instruction["convolution_type"] == "integrate":
 
         #
+        convolution_time_bin_center = bin_center
+
+        #
         config["logger"].debug(
             "Convolving event-based data {} for bin_center {} using integration-based convolution".format(
-                convolution_instruction["input_data_name"], convolution_time_bin_center
+                convolution_instruction["input_data_name"], bin_center
             )
         )
 
@@ -113,7 +116,7 @@ def event_convolution_function(
         # run custom function afterwards
         extra_weights = handle_extra_weights_function(
             config=config,
-            convolution_time_bin_center=convolution_time_bin_center,
+            bin_center=convolution_time_bin_center,
             convolution_instruction=convolution_instruction,
             sfr_dict=job_dict["sfr_dict"],
             data_dict=data_dict,
@@ -130,40 +133,43 @@ def event_convolution_function(
 
     elif convolution_instruction["convolution_type"] == "sample":
         #
+        starformation_bin_center = bin_center
+
+        #
         config["logger"].debug(
             "Convolving event-based data {} for bin_center {} using sampling-based convolution".format(
-                convolution_instruction["input_data_name"], convolution_time_bin_center
+                convolution_instruction["input_data_name"], starformation_bin_center
             )
         )
 
         # unpack
         sfr_dict = job_dict["sfr_dict"]
-        lookback_time_index = job_dict["convolution_time_bin_number"]
+        lookback_time_index = job_dict["bin_number"]
 
         # TODO: make sure that this is all checked better at the start
-        if "metallicity_weighted_starformation_array" in sfr_dict:
+        if "metallicity_weighted_starformation_rate_array" in sfr_dict:
 
             metallicity_distribution_at_lookback_time = (
-                sfr_dict["metallicity_weighted_starformation_array"][
+                sfr_dict["metallicity_weighted_starformation_rate_array"][
                     lookback_time_index
                 ]
-                / sfr_dict["starformation_array"][lookback_time_index]
+                / sfr_dict["starformation_rate_array"][lookback_time_index]
             )
             metallicity_bins = sfr_dict["metallicity_bin_edges"]
         else:
             metallicity_distribution_at_lookback_time = None
             metallicity_bins = None
 
-        #
+        # TODO: allow for sampling with redshift as well
         sampled_data_dict = sample_systems_main(
             config=config,
             sfr_dict=sfr_dict,
             job_dict=job_dict,
             data_dict=data_dict,
             convolution_instruction=convolution_instruction,
-            star_formation_rate_in_lookback_time_bin=sfr_dict["starformation_array"][
-                lookback_time_index
-            ],
+            star_formation_rate_in_lookback_time_bin=sfr_dict[
+                "starformation_rate_array"
+            ][lookback_time_index],
             lookback_time_bin_lower_edge=sfr_dict["lookback_time_bin_edges"][
                 lookback_time_index
             ],

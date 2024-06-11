@@ -9,6 +9,18 @@ import unittest
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
 )
+from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
+    test_check_convolution_config,
+    test_check_required,
+)
+from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_instruction import (
+    test_check_convolution_instruction,
+    test_check_metallicity,
+)
+from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
+    test_check_sfr_dict,
+    test_pad_sfr_dict,
+)
 
 # from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
 #     test_check_convolution_config,

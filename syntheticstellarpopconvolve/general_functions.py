@@ -584,3 +584,21 @@ def is_time_unit(parameter):
         return False
     except AttributeError:
         return False
+
+
+def has_unit(parameter, fail_on_dimensionless=True):
+    """
+    Function to check if a parameter has any unit assigned to it
+    """
+
+    dimensionless_unit = u.m / u.m
+
+    try:
+        unit = parameter.unit
+
+        if fail_on_dimensionless:
+            if unit == dimensionless_unit:
+                return False
+        return True
+    except:
+        return False

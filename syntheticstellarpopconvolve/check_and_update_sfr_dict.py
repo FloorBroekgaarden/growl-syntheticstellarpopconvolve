@@ -5,7 +5,11 @@ Functions to check and update the SFR dict
 import numpy as np
 
 from syntheticstellarpopconvolve.cosmology_utils import redshift_to_lookback_time
-from syntheticstellarpopconvolve.general_functions import is_time_unit, pad_function
+from syntheticstellarpopconvolve.general_functions import (
+    has_unit,
+    is_time_unit,
+    pad_function,
+)
 from syntheticstellarpopconvolve.store_redshift_shell_info import (
     store_redshift_shell_info,
 )
@@ -187,6 +191,10 @@ def pad_sfr_dict(config, sfr_dict):
         )
 
     ##########
+    # pad metallicity distribution array
+    # TODO
+
+    ##########
     # pad metallicity weighted SFR rate bins
     if "metallicity_weighted_starformation_rate_array" in sfr_dict:
         #
@@ -220,6 +228,12 @@ def update_sfr_dict(sfr_dict, config):
 
     #
     config["logger"].debug("Updating SFR dict")
+
+    # construct the combined array
+    sfr_dict["metallicity_weighted_starformation_rate_array"] = (
+        sfr_dict["starformation_rate_array"]
+        * sfr_dict["metallicity_distribution_array"]
+    )
 
     # Pad the SFR dict with the empty bins around
     sfr_dict = pad_sfr_dict(config=config, sfr_dict=sfr_dict)
@@ -282,18 +296,19 @@ def check_sfr_dict(
         if "metallicity_bin_edges" not in sfr_dict:
             raise ValueError("metallicity_bin_edges is required in the sfr dictionary")
 
-        # check if the MSSFR is present
-        if "metallicity_weighted_starformation_rate_array" not in sfr_dict:
+        # Check for metallicity distribution
+        # NOTE: from 2024-06-08 I have decided to require only the
+        # "metallicity_distribution_array". "metallicity_weighted_starformation_rate_array"
+        # will be created from this.
+        if "metallicity_distribution_array" not in sfr_dict:
             raise ValueError(
-                "metallicity_weighted_starformation_rate_array is required in the sfr dictionary"
+                "metallicity_distribution_array is required in the sfr dictionary"
             )
 
-        # check if starformation array has any unit
-        try:
-            sfr_dict["metallicity_weighted_starformation_rate_array"].unit
-        except AttributeError:
-            raise AttributeError(
-                "metallicity_weighted_starformation_rate_array requires an astropy unit"
+        # check if the array has units. (not allowed)
+        if has_unit(sfr_dict["metallicity_distribution_array"]):
+            raise ValueError(
+                "metallicity_distribution_array is required in the sfr dictionary"
             )
 
 

@@ -140,7 +140,7 @@ def check_and_update_convolution_instruction(convolution_instruction, config):
 
 def check_and_update_convolution_instructions(config):
     """
-    Main function to check whether convolution
+    Main function to check the convolution instructions.
     """
 
     if config["convolution_instructions"]:

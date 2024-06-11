@@ -1,6 +1,4 @@
-import copy
 import logging
-import os
 import unittest
 
 import astropy.units as u
@@ -8,7 +6,10 @@ import numpy as np
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.check_and_update_sfr_dict import pad_sfr_dict
+from syntheticstellarpopconvolve.check_and_update_sfr_dict import (
+    check_sfr_dict,
+    pad_sfr_dict,
+)
 from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
@@ -97,4 +98,142 @@ class test_pad_sfr_dict(unittest.TestCase):
                 padded_sfr_dict["padded_metallicity_weighted_starformation_array"],
                 expected_array,
             )
+        )
+
+
+class test_check_sfr_dict(unittest.TestCase):
+    def setUp(self):
+        self.sfr_dict = {
+            "name": "test_sfr_dict",
+            "lookback_time_bin_edges": np.array([1, 2, 3]) * 1e9 * u.yr,
+            "starformation_rate_array": np.array([10, 20, 30]) * u.Msun / u.yr,
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
+            "metallicity_weighted_starformation_array": np.array([[1, 2, 3], [4, 5, 6]])
+            * u.Msun
+            / u.yr,
+        }
+
+        self.config = default_convolution_config
+
+    def test_check_sfr_dict_with_name(self):
+        requires_name = True
+        requires_metallicity_info = True
+        time_type = "lookback_time"
+
+        # No exception should be raised
+        check_sfr_dict(
+            sfr_dict=self.sfr_dict,
+            requires_name=requires_name,
+            requires_metallicity_info=requires_metallicity_info,
+            time_type=time_type,
+            config=self.config,
+        )
+
+    def test_check_sfr_dict_without_name(self):
+        requires_name = True
+        requires_metallicity_info = True
+        time_type = "lookback_time"
+
+        del self.sfr_dict["name"]  # Removing the name key
+
+        with self.assertRaises(ValueError):
+            check_sfr_dict(
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
+            )
+
+    def test_check_sfr_dict_without_metallicity_info(self):
+        requires_name = True
+        requires_metallicity_info = True
+        time_type = "lookback_time"
+
+        del self.sfr_dict[
+            "metallicity_bin_edges"
+        ]  # Removing the metallicity_bin_edges key
+
+        with self.assertRaises(ValueError):
+            check_sfr_dict(
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
+            )
+
+    def test_check_sfr_dict_without_time_type_info(self):
+        requires_name = True
+        requires_metallicity_info = True
+        time_type = "lookback_time"
+
+        del self.sfr_dict[
+            "lookback_time_bin_edges"
+        ]  # Removing the lookback_time_bin_edges key
+
+        with self.assertRaises(ValueError):
+            check_sfr_dict(
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
+            )
+
+    def test_check_sfr_dict_without_lookback_time_unit(self):
+        requires_name = True
+        requires_metallicity_info = True
+        time_type = "lookback_time"
+
+        self.sfr_dict["lookback_time_bin_edges"] = np.array([1, 2, 3]) * 1e9 * u.yr
+
+        with self.assertRaises(AttributeError):
+            check_sfr_dict(
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
+            )
+
+    def test_check_sfr_dict_redshift_wrong_bin_edges(self):
+        # self.sfr_dict['lookback_time_bin_edges']
+
+        # self.sfr_dict = {
+        #     "name": "test_sfr_dict",
+        #     "lookback_time_bin_edges": np.array([1, 2, 3]) * 1e9 * u.yr,
+        #     "starformation_array": np.array([10, 20, 30]),
+        #     "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
+        #     "metallicity_weighted_starformation_array": np.array(
+        #         [[1, 2, 3], [4, 5, 6]]
+        #     ),
+        # }
+
+        requires_name = True
+        requires_metallicity_info = True
+        time_type = "redshift"
+
+        with self.assertRaises(ValueError):
+            check_sfr_dict(
+                sfr_dict=self.sfr_dict,
+                requires_name=requires_name,
+                requires_metallicity_info=requires_metallicity_info,
+                time_type=time_type,
+                config=self.config,
+            )
+
+    def test_check_sfr_dict_redshift_correct_bin_edges(self):
+        self.sfr_dict["redshift_bin_edges"] = np.array([0, 1, 2])
+
+        requires_name = True
+        requires_metallicity_info = True
+        time_type = "redshift"
+
+        check_sfr_dict(
+            sfr_dict=self.sfr_dict,
+            requires_name=requires_name,
+            requires_metallicity_info=requires_metallicity_info,
+            time_type=time_type,
+            config=self.config,
         )

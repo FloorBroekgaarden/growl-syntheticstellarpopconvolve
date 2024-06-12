@@ -229,11 +229,13 @@ def update_sfr_dict(sfr_dict, config):
     #
     config["logger"].debug("Updating SFR dict")
 
-    # construct the combined array
-    sfr_dict["metallicity_weighted_starformation_rate_array"] = (
-        sfr_dict["starformation_rate_array"]
-        * sfr_dict["metallicity_distribution_array"]
-    )
+    # TODO: signal this better with some flag
+    if "metallicity_distribution_array" in sfr_dict:
+        # construct the combined array
+        sfr_dict["metallicity_weighted_starformation_rate_array"] = (
+            sfr_dict["starformation_rate_array"]
+            * sfr_dict["metallicity_distribution_array"]
+        )
 
     # Pad the SFR dict with the empty bins around
     sfr_dict = pad_sfr_dict(config=config, sfr_dict=sfr_dict)

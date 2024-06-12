@@ -8,6 +8,7 @@ import os
 import pickle
 
 import h5py
+import numpy as np
 import setproctitle
 
 from syntheticstellarpopconvolve.convolve_custom_data import (
@@ -348,7 +349,15 @@ def convolution_queue_filler(  # DH0001
             config["convolution_time_bin_centers"], config["convolution_time_bin_sizes"]
         )
     elif convolution_instruction["convolution_type"] == "sample":
-        zipped_bin_data = zip(config["time_bin_centers"], config["time_bin_sizes"])
+
+        # TODO: move to sfr dict checking
+        starformation_bin_sizes = np.diff(sfr_dict["starformation_rate_array"])
+        starformation_bin_centers = (
+            sfr_dict["starformation_rate_array"][1:]
+            + sfr_dict["starformation_rate_array"][:-1]
+        ) / 2
+
+        zipped_bin_data = zip(starformation_bin_centers, starformation_bin_sizes)
     else:
         raise ValueError("convolution type not supported")
 

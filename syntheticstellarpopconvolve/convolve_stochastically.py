@@ -100,13 +100,13 @@ def sample_systems(
     # calculate the formation yield of all the systems
     formation_yield = (
         total_star_formation_in_bin
-        * data_dict["yield_rate"]
+        * data_dict["normalized_yield"]
         * config["yield_rate_unit"]
     )
     # print("formation_yield", formation_yield)
 
     #
-    all_indices = np.arange(len(data_dict["yield_rate"]))
+    all_indices = np.arange(len(data_dict["normalized_yield"]))
 
     ############
     # select those that have > 1:
@@ -345,7 +345,7 @@ def sample_systems_main(
     # wrap up
 
     # delete the normalized yield
-    del sampled_data_dict["yield_rate"]
+    del sampled_data_dict["normalized_yield"]
 
     return {"convolution_result": sampled_data_dict}
 

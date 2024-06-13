@@ -1,5 +1,7 @@
 """
 Main file to handle the convolution of populations
+
+TODO: ma
 """
 
 import json
@@ -350,14 +352,24 @@ def convolution_queue_filler(  # DH0001
         )
     elif convolution_instruction["convolution_type"] == "sample":
 
-        # TODO: move to sfr dict checking
-        starformation_bin_sizes = np.diff(sfr_dict["starformation_rate_array"])
-        starformation_bin_centers = (
-            sfr_dict["starformation_rate_array"][1:]
-            + sfr_dict["starformation_rate_array"][:-1]
+        # TODO:  and put into sfr dict check and update.
+        # TODO: generalize this to also use redshift
+        starformation_time_bin_sizes = np.diff(sfr_dict["lookback_time_bin_edges"])
+        starformation_time_bin_centers = (
+            sfr_dict["lookback_time_bin_edges"][1:]
+            + sfr_dict["lookback_time_bin_edges"][:-1]
         ) / 2
 
-        zipped_bin_data = zip(starformation_bin_centers, starformation_bin_sizes)
+        # # TODO: move to sfr dict checking
+        # starformation_bin_sizes = np.diff(sfr_dict["starformation_rate_array"])
+        # starformation_bin_centers = (
+        #     sfr_dict["starformation_rate_array"][1:]
+        #     + sfr_dict["starformation_rate_array"][:-1]
+        # ) / 2
+
+        zipped_bin_data = zip(
+            starformation_time_bin_centers, starformation_time_bin_sizes
+        )
     else:
         raise ValueError("convolution type not supported")
 

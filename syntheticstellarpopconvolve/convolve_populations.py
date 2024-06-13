@@ -1,7 +1,5 @@
 """
 Main file to handle the convolution of populations
-
-TODO: ma
 """
 
 import json
@@ -198,15 +196,14 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
 
                 # TODO: store description
 
-            # ID output. From sampling-based event convolution
-            if "IDs" in convolution_result.keys():
-                config["logger"].debug("Storing IDs")
+            # indices output. From sampling-based event convolution
+            if "indices" in convolution_result.keys():
+                config["logger"].debug("Storing indices")
 
                 #
-                IDs = convolution_result["IDs"]
-                IDs = IDs.astype("S")
+                indices = convolution_result["indices"]
 
-                current_time_bin_grp.create_dataset("IDs", data=IDs)
+                current_time_bin_grp.create_dataset("indices", data=indices)
 
                 # TODO: store description
 

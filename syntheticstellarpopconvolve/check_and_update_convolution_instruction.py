@@ -106,7 +106,7 @@ def check_convolution_instruction(convolution_instruction, config):
         check_required(
             config=convolution_instruction["data_column_dict"],
             required_list=[
-                "IDs",
+                # "IDs",
                 "normalized_yield",
             ],
         )

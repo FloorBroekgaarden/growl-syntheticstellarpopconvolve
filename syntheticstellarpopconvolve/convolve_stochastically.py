@@ -106,7 +106,7 @@ def sample_systems(
     # print("formation_yield", formation_yield)
 
     #
-    all_indices = np.arange(len(data_dict["normalized_yield"]))
+    indices = np.arange(len(data_dict["normalized_yield"]))
 
     ############
     # select those that have > 1:
@@ -125,10 +125,10 @@ def sample_systems(
     # print("fractional_formations_sampled", fractional_formations_sampled)
 
     # Sample the indices
-    integer_formation_indices = np.repeat(all_indices, integer_formations)
+    integer_formation_indices = np.repeat(indices, integer_formations)
     # print("integer_formation_indices", integer_formation_indices)
 
-    fractional_formation_indices = all_indices[fractional_formations_sampled]
+    fractional_formation_indices = indices[fractional_formations_sampled]
     # print("fractional_formation_indices", fractional_formation_indices)
 
     combined_indices = np.concatenate(
@@ -197,6 +197,9 @@ def sample_systems_main(
             total_star_formation_in_lookback_time_bin,
         )
     )
+
+    # add indices to dict
+    data_dict["indices"] = np.arange(len(data_dict["normalized_yield"]))
 
     ############
     # Method 1: no metallicity dependence
@@ -333,7 +336,7 @@ def sample_systems_main(
     # print("sampled_data_dict", sampled_data_dict)
 
     # Sort on ID
-    sorted_indices = sampled_data_dict["IDs"].argsort()
+    sorted_indices = sampled_data_dict["indices"].argsort()
 
     sampled_data_dict = {
         data_key: sampled_data_dict[data_key][sorted_indices]

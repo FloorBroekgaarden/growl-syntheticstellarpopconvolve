@@ -4,6 +4,7 @@ This is the unittest file for the check_and_update_convolution_instruction.py so
 
 import unittest
 
+from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_and_update_convolution_instruction import (
     check_convolution_instruction,
     check_metallicity,
@@ -70,12 +71,20 @@ class test_check_convolution_instruction(unittest.TestCase):
             "data_layer_dict": {"delay_time": "delay"},
         }
 
+        self.config = default_convolution_config
+
     def test_check_convolution_instruction_event_type(self):
-        check_convolution_instruction(self.event_convolution_instruction)
+        check_convolution_instruction(
+            convolution_instruction=self.event_convolution_instruction,
+            config=self.config,
+        )
         # No exception should be raised
 
     def test_check_convolution_instruction_ensemble_type(self):
-        check_convolution_instruction(self.ensemble_convolution_instruction)
+        check_convolution_instruction(
+            convolution_instruction=self.ensemble_convolution_instruction,
+            config=self.config,
+        )
         # No exception should be raised
 
     def test_check_convolution_instruction_missing_event_required_key(self):
@@ -85,7 +94,10 @@ class test_check_convolution_instruction(unittest.TestCase):
             "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
         }
         with self.assertRaises(ValueError):
-            check_convolution_instruction(event_convolution_instruction_missing_key)
+            check_convolution_instruction(
+                convolution_instruction=event_convolution_instruction_missing_key,
+                config=self.config,
+            )
 
     def test_check_convolution_instruction_missing_ensemble_required_key(self):
         ensemble_convolution_instruction_missing_key = {
@@ -95,7 +107,10 @@ class test_check_convolution_instruction(unittest.TestCase):
             "data_layer_dict": {"delay_time": "delay"},
         }
         with self.assertRaises(ValueError):
-            check_convolution_instruction(ensemble_convolution_instruction_missing_key)
+            check_convolution_instruction(
+                convolution_instruction=ensemble_convolution_instruction_missing_key,
+                config=self.config,
+            )
 
     def test_check_convolution_instruction_event_missing_metallicity(self):
         event_convolution_instruction = {
@@ -106,7 +121,10 @@ class test_check_convolution_instruction(unittest.TestCase):
             "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
         }
         with self.assertRaises(ValueError):
-            check_convolution_instruction(event_convolution_instruction)
+            check_convolution_instruction(
+                convolution_instruction=event_convolution_instruction,
+                config=self.config,
+            )
 
     def test_check_convolution_instruction_ensemble_missing_metallicity(self):
         ensemble_convolution_instruction = {
@@ -118,7 +136,10 @@ class test_check_convolution_instruction(unittest.TestCase):
         }
 
         with self.assertRaises(ValueError):
-            check_convolution_instruction(ensemble_convolution_instruction)
+            check_convolution_instruction(
+                convolution_instruction=ensemble_convolution_instruction,
+                config=self.config,
+            )
 
 
 if __name__ == "__main__":

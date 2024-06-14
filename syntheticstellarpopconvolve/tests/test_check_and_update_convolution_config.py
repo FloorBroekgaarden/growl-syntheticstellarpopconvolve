@@ -5,17 +5,16 @@ TODO: rebuild this
 """
 
 import copy
-import logging
 import os
 import unittest
 
 import astropy.units as u
 import numpy as np
-from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
 from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
+    check_convolution_config,
 )
 from syntheticstellarpopconvolve.general_functions import check_required, temp_dir
 
@@ -61,13 +60,11 @@ class test_check_convolution_config(unittest.TestCase):
                 {
                     "name": "test",
                     "lookback_time_bin_edges": np.array([0, 1, 2, 3]) * 1e9 * u.yr,
-                    "starformation_array": np.array([1, 2, 3]) * u.Msun / u.yr,
+                    "starformation_rate_array": np.array([1, 2, 3]) * u.Msun / u.yr,
                     "metallicity_bin_edges": np.array([0.1, 0.2, 0.3]),
-                    "metallicity_weighted_starformation_array": np.array(
+                    "metallicity_distribution_array": np.array(
                         [[0.5, 0.6, 0.7], [0.5, 0.6, 0.7], [0.5, 0.6, 0.7]]
-                    )
-                    * u.Msun
-                    / u.yr,
+                    ),
                 }
             ],
         }
@@ -85,11 +82,13 @@ class test_check_convolution_config(unittest.TestCase):
             "SFR_info": [
                 {
                     "lookback_time_bin_edges": [0, 1, 2, 3],
-                    "starformation_array": [1, 2, 3] * u.Msun / u.yr,
+                    "starformation_rate_array": [1, 2, 3] * u.Msun / u.yr,
                     "metallicity_bin_edges": [0.1, 0.2, 0.3],
-                    "metallicity_weighted_starformation_array": [0.5, 0.6, 0.7]
-                    * u.Msun
-                    / u.yr,
+                    "metallicity_distribution_array": [
+                        [0.5, 0.6, 0.7],
+                        [0.5, 0.6, 0.7],
+                        [0.5, 0.6, 0.7],
+                    ],
                 }
             ],
         }
@@ -159,7 +158,10 @@ class test_update_convolution_config(unittest.TestCase):
         # Set up SFR
         config["SFR_info"] = {
             "redshift_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         #

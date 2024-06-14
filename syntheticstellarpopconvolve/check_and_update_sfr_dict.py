@@ -130,7 +130,7 @@ def pad_sfr_dict(config, sfr_dict):
         # log the binsizes
         config["logger"].debug(
             "Created redshift bin sizes {} and the corresponding lookback time-bin sizes {} ".format(
-                sfr_dict["redshift_time_bin_sizes"], sfr_dict["time_bin_sizes"]
+                sfr_dict["redshift_bin_sizes"], sfr_dict["time_bin_sizes"]
             )
         )
     else:
@@ -191,8 +191,24 @@ def pad_sfr_dict(config, sfr_dict):
         )
 
     ##########
-    # pad metallicity distribution array
-    # TODO
+    # pad metallicity distribution
+    if "metallicity_distribution_array" in sfr_dict:
+        #
+        sfr_dict["padded_metallicity_distribution_array"] = pad_function(
+            array=sfr_dict["metallicity_distribution_array"],
+            left_val=0,
+            right_val=0,
+            relative_to_edge_val=False,
+        )
+
+        #
+        sfr_dict["padded_metallicity_distribution_array"] = pad_function(
+            array=sfr_dict["padded_metallicity_distribution_array"],
+            left_val=0,
+            right_val=0,
+            relative_to_edge_val=False,
+            axis=1,
+        )
 
     ##########
     # pad metallicity weighted SFR rate bins
@@ -230,7 +246,7 @@ def update_sfr_dict(sfr_dict, config):
     config["logger"].debug("Updating SFR dict")
 
     # TODO: signal this better with some flag
-    if "metallicity_distribution_array" in sfr_dict:
+    if "metallicity_distribution_array" in sfr_dict.keys():
         # construct the combined array
         sfr_dict["metallicity_weighted_starformation_rate_array"] = (
             sfr_dict["starformation_rate_array"]
@@ -310,7 +326,7 @@ def check_sfr_dict(
         # check if the array has units. (not allowed)
         if has_unit(sfr_dict["metallicity_distribution_array"]):
             raise ValueError(
-                "metallicity_distribution_array is required in the sfr dictionary"
+                "metallicity_distribution_array should not contain any units"
             )
 
 

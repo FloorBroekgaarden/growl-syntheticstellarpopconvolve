@@ -146,19 +146,10 @@ def event_convolution_function(
         sfr_dict = job_dict["sfr_dict"]
         lookback_time_index = job_dict["bin_number"]
 
-        # TODO: make sure that this is all checked better at the start
+        # make sure that this is all checked better at the start
+        include_metallicity = False
         if "metallicity_weighted_starformation_rate_array" in sfr_dict:
-
-            metallicity_distribution_at_lookback_time = (
-                sfr_dict["metallicity_weighted_starformation_rate_array"][
-                    lookback_time_index
-                ]
-                / sfr_dict["starformation_rate_array"][lookback_time_index]
-            )
-            metallicity_bins = sfr_dict["metallicity_bin_edges"]
-        else:
-            metallicity_distribution_at_lookback_time = None
-            metallicity_bins = None
+            include_metallicity = True
 
         # TODO: allow for sampling with redshift as well
         sampled_data_dict = sample_systems_main(
@@ -176,8 +167,7 @@ def event_convolution_function(
             lookback_time_bin_size=sfr_dict["lookback_time_bin_sizes"][
                 lookback_time_index
             ],
-            metallicity_distribution_at_lookback_time=metallicity_distribution_at_lookback_time,
-            metallicity_bins=metallicity_bins,
+            include_metallicity=include_metallicity,
         )
 
         return sampled_data_dict

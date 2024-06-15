@@ -304,7 +304,7 @@ def calculate_digitized_sfr_rates(
         metallicity_indices = (
             np.digitize(
                 data_dict["metallicity"],
-                bins=config["padded_metallicity_bin_edges"],
+                bins=sfr_dict["padded_metallicity_bin_edges"],
                 right=False,
             )
             - 1

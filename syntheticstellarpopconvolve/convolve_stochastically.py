@@ -54,247 +54,41 @@ import numpy as np
 from syntheticstellarpopconvolve.general_functions import extract_arguments
 
 
-def combine_dicts_with_numpy_array_entries(dict1, dict2):
+def handle_sorting(sampled_data_dict):
     """
-    Function to combine dicts that contain numpy-array entries. Loops over the keys in dict2 and stores in or appends to the same entry in dict1
-
-    TODO: merge with convolve_ensembles.merge_dicts
+    Function to handle sorting
     """
 
-    # print("dict1, dict2", dict1, dict2)
-    # print("pre: len dict1, len dict2", len(dict1.get('IDs', [])), len(dict2.get('IDs', [])))
-    for key in dict2.keys():
-        if key not in dict1.keys():
-            dict1[key] = dict2[key]
-        else:
-            dict1[key] = np.concatenate([dict1[key], dict2[key]])
+    # Sort on indices
+    sorted_indices = sampled_data_dict["indices"].argsort()
 
-    # print("dict1, dict2", dict1, dict2)
-    # print("post: len dict1, len dict2", len(dict1.get('IDs', [])), len(dict2.get('IDs', [])))
-
-    return dict1
-
-
-def sample_systems(
-    total_star_formation_in_bin,
-    lookback_time_bin_size,
-    lookback_time_bin_lower_edge,
-    data_dict,
-    config,
-):
-    """
-    General function to handle sampling a set of systems based on
-    normalized yields and a total mass of stars formed
-
-    # TODO: we work with indices now, which might not work when we slice and dice.
-    # TODO: or we should make sure the indices map back to IDs
-    """
-
-    config["logger"].warning(
-        "Convolving through sampling. Using a total of {}".format(
-            total_star_formation_in_bin
-        )
-    )
-
-    ############
-    # calculate the formation yield of all the systems
-    formation_yield = (
-        total_star_formation_in_bin
-        * data_dict["normalized_yield"]
-        * config["yield_rate_unit"]
-    )
-    # print("formation_yield", formation_yield)
-
-    #
-    indices = np.arange(len(data_dict["normalized_yield"]))
-
-    ############
-    # select those that have > 1:
-    integer_formations = np.array(np.floor(formation_yield), dtype=int)
-    # print("integer_formations", integer_formations)
-
-    # select the remainder
-    fractional_formations = formation_yield - integer_formations
-    # print("fractional_formations", fractional_formations)
-
-    # take a random set to sample the fractional formations
-    random_chance = np.random.random(fractional_formations.shape)
-    # print("random_chance", random_chance)
-
-    fractional_formations_sampled = random_chance < fractional_formations
-    # print("fractional_formations_sampled", fractional_formations_sampled)
-
-    # Sample the indices
-    integer_formation_indices = np.repeat(indices, integer_formations)
-    # print("integer_formation_indices", integer_formation_indices)
-
-    fractional_formation_indices = indices[fractional_formations_sampled]
-    # print("fractional_formation_indices", fractional_formation_indices)
-
-    combined_indices = np.concatenate(
-        [integer_formation_indices, fractional_formation_indices]
-    )
-    # print("combined_indices", combined_indices)
-
-    # print("data_dict", data_dict)
-
-    ############
-    # Make a copy of the data dict and select everything using the combined indices
-    data_dict_sampled_systems = {
-        data_key: data_dict[data_key][combined_indices] for data_key in data_dict.keys()
+    sampled_data_dict = {
+        data_key: sampled_data_dict[data_key][sorted_indices]
+        for data_key in sampled_data_dict.keys()
     }
 
-    # Assign random formation times (of system)
-    sampled_formation_lookback_times = (
-        np.random.random(size=len(combined_indices)) * lookback_time_bin_size
-    ) + lookback_time_bin_lower_edge
-    # print("sampled_formation_lookback_times", sampled_formation_lookback_times)
-
-    # add to data_dict
-    data_dict_sampled_systems["formation_lookback_times"] = (
-        sampled_formation_lookback_times
-    )
-
-    #
-    config["logger"].warning("Sampled {} systems.".format(len(combined_indices)))
-
-    return data_dict_sampled_systems
+    return sampled_data_dict
 
 
-def sample_systems_main(
+def handle_position_sampling(
     config,
-    sfr_dict,
     job_dict,
-    convolution_instruction,
+    sfr_dict,
     data_dict,
-    star_formation_rate_in_lookback_time_bin,
-    lookback_time_bin_size,
-    lookback_time_bin_lower_edge,
-    metallicity_distribution_at_lookback_time=None,
-    metallicity_bins=None,
-    position_sampling_function=None,
+    convolution_instruction,
+    sampled_data_dict,
+    position_sampling_function,
 ):
     """
-    Function that handles sampling systems at a particular lookback time.
-
-    Optionally, we handle sampling in metallicity. `metallicity_distribution_at_lookback_time` is expected to contain (dP/dz)*dz
-
-    NOTE: data_dict should contain IDs of some sort
+    Function to handle position sampling
     """
 
-    total_star_formation_in_lookback_time_bin = (
-        star_formation_rate_in_lookback_time_bin * lookback_time_bin_size
-    )
-
-    #
-    config["logger"].warning(
-        "Main sampling through convolution. Will sample systems according to their normalized yield and the total mass formed in stars."
-    )
-    config["logger"].warning(
-        "Lower time bin {} upper time bin {} total mass formed {}".format(
-            lookback_time_bin_lower_edge,
-            lookback_time_bin_lower_edge + lookback_time_bin_size,
-            total_star_formation_in_lookback_time_bin,
-        )
-    )
-
-    # add indices to dict
-    data_dict["indices"] = np.arange(len(data_dict["normalized_yield"]))
-
-    ############
-    # Method 1: no metallicity dependence
-    if metallicity_distribution_at_lookback_time is None:
-        config["logger"].warning(
-            "Convolution sampling with absolute rate only (not using metallicity)"
-        )
-
-        sampled_data_dict = sample_systems(
-            total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
-            data_dict=data_dict,
-            lookback_time_bin_size=lookback_time_bin_size,
-            lookback_time_bin_lower_edge=lookback_time_bin_lower_edge,
-            config=config,
-        )
-
-    ############
-    # Method 2: metallicity dependence
-    else:
-
-        if metallicity_bins is None:
-            raise ValueError("Please provide metallicity bins")
-        config["logger"].warning("Convolution sampling using metallicity distributions")
-
-        #
-        sampled_data_dict = {}
-
-        # loop over the metallicities
-        for metallicity_i, metallicity_weight in enumerate(
-            metallicity_distribution_at_lookback_time
-        ):
-            # print("metallicity_i, metallicity_weight", metallicity_i, metallicity_weight)
-            total_star_formation_in_lookback_time_bin_in_metallicity_bin = (
-                total_star_formation_in_lookback_time_bin * metallicity_weight
-            )
-
-            #
-            lower_edge_metallicity_bin, upper_edge_metallicity_bin = (
-                metallicity_bins[metallicity_i],
-                metallicity_bins[metallicity_i + 1],
-            )
-
-            config["logger"].warning(
-                "Metallicity {} lower bin edge {} upper bin edge {}".format(
-                    metallicity_i,
-                    lower_edge_metallicity_bin,
-                    upper_edge_metallicity_bin,
-                )
-            )
-            config["logger"].warning(
-                "Total mass formed in current metallicity bin {}".format(
-                    total_star_formation_in_lookback_time_bin_in_metallicity_bin
-                )
-            )
-
-            # Select those systems that match the current metallicity bin
-            matching_metallicity_indices = np.where(
-                (data_dict["metallicity"] > lower_edge_metallicity_bin)
-                & (data_dict["metallicity"] <= upper_edge_metallicity_bin)
-            )
-            # print("matching_metallicity_indices", matching_metallicity_indices)
-
-            # Create data dict for those that match this metallicity
-            metallicity_matching_data_dict = {
-                data_key: data_dict[data_key][matching_metallicity_indices]
-                for data_key in data_dict.keys()
-            }
-            # print("metallicity_matching_data_dict", metallicity_matching_data_dict)
-
-            #
-            metallicity_sampled_data_dict = sample_systems(
-                total_star_formation_in_bin=total_star_formation_in_lookback_time_bin_in_metallicity_bin,
-                data_dict=metallicity_matching_data_dict,
-                lookback_time_bin_size=lookback_time_bin_size,
-                lookback_time_bin_lower_edge=lookback_time_bin_lower_edge,
-                config=config,
-            )
-            # print("metallicity_sampled_data_dict", metallicity_sampled_data_dict)
-
-            # combine this with the previous dict
-            sampled_data_dict = combine_dicts_with_numpy_array_entries(
-                sampled_data_dict, metallicity_sampled_data_dict
-            )
-            # print("combined sampled_data_dict", sampled_data_dict)
-            print("\n")
-
-    ###########
-    # TODO: move to separate function
     if position_sampling_function is not None:
 
         # Construct what parameters are available for the extra function
         available_parameters = {
             "config": config,
             "job_dict": job_dict,
-            "sfr_dict": sfr_dict,
             "sfr_dict": sfr_dict,
             "data_dict": data_dict,
             "time_value": job_dict["convolution_time_bin_center"],
@@ -328,21 +122,184 @@ def sample_systems_main(
             )
 
         # add to dict
-        # TODO: perhaps unpack into separate columns
         sampled_data_dict["positions"] = positions
 
-    ###########
-    # Sort the results on the IDs
-    # print("sampled_data_dict", sampled_data_dict)
+    return sampled_data_dict
 
-    # Sort on ID
-    sorted_indices = sampled_data_dict["indices"].argsort()
 
-    sampled_data_dict = {
-        data_key: sampled_data_dict[data_key][sorted_indices]
-        for data_key in sampled_data_dict.keys()
+def sample_systems(
+    total_star_formation_in_bin,
+    lookback_time_bin_size,
+    lookback_time_bin_lower_edge,
+    data_dict,
+    config,
+):
+    """
+    General function to handle sampling a set of systems based on
+    normalized yields and a total mass of stars formed
+    """
+
+    config["logger"].warning(
+        "Convolving through sampling. Using a total of {}".format(
+            total_star_formation_in_bin
+        )
+    )
+
+    ############
+    # calculate the formation yield of all the systems
+    formation_yield = (
+        total_star_formation_in_bin
+        * data_dict["normalized_yield"]
+        * config["yield_rate_unit"]
+    )
+
+    #
+    local_indices = np.arange(len(data_dict["normalized_yield"]))
+
+    ############
+    # first sample systems that have a should form at least one time, but only the down-rounded number of times
+    integer_formations = np.array(np.floor(formation_yield), dtype=int)
+    integer_sampled_formation_indices = np.repeat(local_indices, integer_formations)
+
+    ############
+    # then sample using the remainder (all parts with number between 0 and 1)
+
+    # select the remainder
+    fractional_formations = formation_yield - integer_formations
+
+    # take a random set to sample the fractional formations
+    random_chance = np.random.random(fractional_formations.shape)
+
+    # Sample the indices
+    fractional_sampled_formation_indices = local_indices[
+        random_chance < fractional_formations
+    ]
+
+    ############
+    # Combine the sampled indice
+    combined_sampled_indices = np.concatenate(
+        [integer_sampled_formation_indices, fractional_sampled_formation_indices]
+    )
+
+    ############
+    # Make a copy of the data dict and select everything using the combined indices
+    data_dict_sampled_systems = {
+        data_key: data_dict[data_key][combined_sampled_indices]
+        for data_key in data_dict.keys()
     }
-    # print("sorted sampled_data_dict", sampled_data_dict)
+
+    ############
+    # Assign random formation times (of system)
+    sampled_formation_lookback_times = (
+        np.random.random(size=len(combined_sampled_indices)) * lookback_time_bin_size
+    ) + lookback_time_bin_lower_edge
+
+    # add to data_dict
+    data_dict_sampled_systems["formation_lookback_times"] = (
+        sampled_formation_lookback_times
+    )
+
+    ############
+    #
+    config["logger"].warning(
+        "Sampled {} systems.".format(len(combined_sampled_indices))
+    )
+
+    return data_dict_sampled_systems
+
+
+def sample_systems_main(
+    config,
+    sfr_dict,
+    job_dict,
+    convolution_instruction,
+    data_dict,
+    star_formation_rate_in_lookback_time_bin,
+    lookback_time_bin_size,
+    lookback_time_bin_lower_edge,
+    include_metallicity,
+    position_sampling_function=None,
+):
+    """
+    Function that handles sampling systems at a particular lookback time.
+
+    if `include_metallicity` is True we include metallicity and metallicity-dependent starformation in the sampling
+    """
+
+    #
+    config["logger"].warning(
+        "Main sampling through convolution. Will sample systems according to their normalized yield and the total mass formed in stars."
+    )
+
+    #
+    total_star_formation_in_lookback_time_bin = (
+        star_formation_rate_in_lookback_time_bin * lookback_time_bin_size
+    )
+
+    config["logger"].warning(
+        "Lower time bin {} upper time bin {} total mass formed {}".format(
+            lookback_time_bin_lower_edge,
+            lookback_time_bin_lower_edge + lookback_time_bin_size,
+            total_star_formation_in_lookback_time_bin,
+        )
+    )
+
+    ############
+    # if we want to include metallicity then for each system we weigh
+    # the total starformation rate by a fraction determined by the
+    # metallicity bin they fall in
+    if include_metallicity:
+
+        if metallicity_bins is None:
+            raise ValueError("Please provide metallicity bins")
+        config["logger"].warning("Convolution sampling using metallicity distributions")
+
+        # get the indices in the metallicity bins that the elements fall into
+        metallicity_indices = (
+            np.digitize(
+                data_dict["metallicity"],
+                bins=config["padded_metallicity_bin_edges"],
+                right=False,
+            )
+            - 1
+        )
+
+        # calculate the star formation per system due to them forming with differnt metallicities. This turns 'total_star_formation_in_lookback_time_bin' into an array.
+        total_star_formation_in_lookback_time_bin = (
+            sfr_dict["padded_metallicity_distribution_array"][metallicity_indices]
+            * total_star_formation_in_lookback_time_bin
+        )
+    else:
+        config["logger"].warning("Convolution sampling using metallicity distributions")
+
+    # add indices to dict
+    data_dict["indices"] = np.arange(len(data_dict["normalized_yield"]))
+
+    #######
+    # Generate the samples
+    sampled_data_dict = sample_systems(
+        total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
+        data_dict=data_dict,
+        lookback_time_bin_size=lookback_time_bin_size,
+        lookback_time_bin_lower_edge=lookback_time_bin_lower_edge,
+        config=config,
+    )
+
+    #######
+    # Handle position sampling
+    sampled_data_dict = handle_position_sampling(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        sampled_data_dict=sampled_data_dict,
+        position_sampling_function=position_sampling_function,
+    )
+
+    ######
+    # Handle sorting on indices
+    sampled_data_dict = handle_sorting(sampled_data_dict=sampled_data_dict)
 
     ###########
     # wrap up

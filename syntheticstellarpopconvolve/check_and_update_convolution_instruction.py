@@ -127,7 +127,7 @@ def check_convolution_instruction(convolution_instruction, config):
         )
 
 
-def check_and_update_convolution_instruction(convolution_instruction, config):
+def check_and_update_convolution_instruction(convolution_instruction, config):  # DH0001
     """
     Function to check convolution instructions
     """
@@ -136,6 +136,8 @@ def check_and_update_convolution_instruction(convolution_instruction, config):
     check_convolution_instruction(
         convolution_instruction=convolution_instruction, config=config
     )
+
+    # TODO: add call to update convolution instruction
 
 
 def check_and_update_convolution_instructions(config):

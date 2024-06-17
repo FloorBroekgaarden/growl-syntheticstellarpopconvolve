@@ -34,7 +34,7 @@ from syntheticstellarpopconvolve.general_functions import (
 )
 
 
-def ensemble_compression(filename):
+def ensemble_compression(filename):  # DH0001
     """
     Return the compression type of the ensemble file, based on its filename extension.
     """
@@ -46,7 +46,7 @@ def ensemble_compression(filename):
     return None
 
 
-def open_ensemble(filename, encoding="utf-8"):
+def open_ensemble(filename, encoding="utf-8"):  # DH0001
     """
     Function to open an ensemble at filename for reading and decompression if required.
     """
@@ -65,7 +65,7 @@ def open_ensemble(filename, encoding="utf-8"):
     return file_object
 
 
-def keys_to_floats(input_dict: dict) -> dict:
+def keys_to_floats(input_dict: dict) -> dict:  # DH0001
     """
     Function to convert all the keys of the dictionary to float to float
 
@@ -111,7 +111,7 @@ def keys_to_floats(input_dict: dict) -> dict:
     return new_dict
 
 
-def ensemble_file_type(filename):
+def ensemble_file_type(filename):  # DH0001
     """
     Returns the file type of an ensemble file.
     """
@@ -125,14 +125,14 @@ def ensemble_file_type(filename):
     return filetype
 
 
-def load_ensemble(
+def load_ensemble(  # DH0001
     filename,
     convert_float_keys=True,
     select_keys=None,
     timing=False,
     flush=False,
     quiet=False,
-):
+):  # DH0001
     """
     Function to load an ensemeble file, even if it is compressed,
     and return its contents to as a Python dictionary.
@@ -177,7 +177,7 @@ def load_ensemble(
             tstart = time.time()
             _loaded = False
 
-            def _hook(obj):
+            def _hook(obj):  # DH0001
                 """
                 Hook to load ensemble
                 """
@@ -245,7 +245,7 @@ def load_ensemble(
     return data
 
 
-class AutoVivificationDict(dict):
+class AutoVivificationDict(dict):  # DH0001
     """
     Implementation of perl's autovivification feature, by overriding the
     get item and the __iadd__ operator (https://docs.python.org/3/reference/datamodel.html?highlight=iadd#object.__iadd__)
@@ -259,7 +259,7 @@ class AutoVivificationDict(dict):
         >>> {'example': {'mass': 10}}
     """
 
-    def __getitem__(self, item):
+    def __getitem__(self, item):  # DH0001
         """
         Getitem function for the autovivication dict
         """
@@ -270,7 +270,7 @@ class AutoVivificationDict(dict):
             value = self[item] = type(self)()
             return value
 
-    def __iadd__(self, other):
+    def __iadd__(self, other):  # DH0001
         """
         iadd function (handling the +=) for the autovivication dict.
         """

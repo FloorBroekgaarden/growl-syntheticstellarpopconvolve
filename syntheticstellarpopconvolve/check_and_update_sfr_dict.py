@@ -330,9 +330,9 @@ def check_sfr_dict(
             )
 
 
-def check_and_update_sfr_dict(
+def check_and_update_sfr_dict(  # DH0001
     sfr_dict, config, requires_name, requires_metallicity_info, time_type
-):
+):  # DH0001
     """
     Function to check the SFR dict for the appropriate content and update
     """
@@ -365,18 +365,16 @@ def check_and_update_sfr_dicts(config):
         ]
     )
 
-    # extract time-type from general config
-    time_type = config["time_type"]
-
     #######
     # check the SFR information
     if "SFR_info" in config:
+
         if isinstance(config["SFR_info"], dict):
             config["SFR_info"] = check_and_update_sfr_dict(
                 sfr_dict=config["SFR_info"],
                 requires_name=False,
                 requires_metallicity_info=requires_metallicity_info,
-                time_type=time_type,
+                time_type=config["time_type"],
                 config=config,
             )
         elif isinstance(config["SFR_info"], list):
@@ -386,7 +384,7 @@ def check_and_update_sfr_dicts(config):
                     sfr_dict=sfr_dict,
                     requires_name=True,
                     requires_metallicity_info=requires_metallicity_info,
-                    time_type=time_type,
+                    time_type=config["time_type"],
                     config=config,
                 )
     else:

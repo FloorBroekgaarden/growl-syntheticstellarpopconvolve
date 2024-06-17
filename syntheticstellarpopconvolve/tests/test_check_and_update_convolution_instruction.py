@@ -6,6 +6,7 @@ import unittest
 
 from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_and_update_convolution_instruction import (
+    check_and_update_convolution_instructions,
     check_convolution_instruction,
     check_metallicity,
 )
@@ -140,6 +141,18 @@ class test_check_convolution_instruction(unittest.TestCase):
                 convolution_instruction=ensemble_convolution_instruction,
                 config=self.config,
             )
+
+
+class test_check_and_update_convolution_instructions(unittest.TestCase):
+
+    def test_check_and_update_convolution_instructions_no_convolution_instructions(
+        self,
+    ):
+
+        config = {}
+
+        with self.assertRaises(ValueError):
+            check_and_update_convolution_instructions(config=config)
 
 
 if __name__ == "__main__":

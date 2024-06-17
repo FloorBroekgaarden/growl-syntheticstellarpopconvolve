@@ -6,6 +6,7 @@ import copy
 import json
 import logging
 import os
+import tempfile
 import unittest
 
 import astropy.units as u
@@ -23,11 +24,15 @@ from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     calculate_edge_values,
     calculate_origin_time_array,
+    check_required,
     extract_arguments,
     generate_group_name,
     get_tmp_dir,
+    get_username,
     handle_custom_scaling_or_conversion,
     handle_extra_weights_function,
+    has_unit,
+    is_time_unit,
     pad_function,
     temp_dir,
 )
@@ -39,6 +44,112 @@ from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_general_functions", clean_path=True
 )
+
+
+class test_is_time_unit(unittest.TestCase):
+    """ """
+
+    def test_is_time_unit(self):
+        time_unit_value = 1 * u.s
+
+        self.assertTrue(is_time_unit(time_unit_value))
+
+    def test_is_not_time_unit(self):
+        no_unit_value = 1
+        self.assertFalse(is_time_unit(no_unit_value))
+
+    def test_is_unit_but_not_time_unit(self):
+        wrong_unit_value = 1 * u.m
+        self.assertFalse(is_time_unit(wrong_unit_value))
+
+
+class test_has_unit(unittest.TestCase):
+    """ """
+
+    def test_unit(self):
+        unit_value = 1 * u.m
+
+        self.assertTrue(has_unit(unit_value))
+
+    def test_no_unit(self):
+        no_unit_value = 1
+
+        self.assertFalse(has_unit(no_unit_value))
+
+    def test_dimensionless_unit(self):
+
+        dimensionless_unit = u.m / u.m
+
+        dimensionless_value = 1 * dimensionless_unit
+
+        self.assertTrue(has_unit(dimensionless_value, fail_on_dimensionless=False))
+
+        self.assertFalse(has_unit(dimensionless_value, fail_on_dimensionless=True))
+
+
+class test_get_username(unittest.TestCase):
+    """ """
+
+    def test_get_username(self):
+        username = get_username()
+
+        # should be a string
+        self.assertTrue(isinstance(username, str))
+
+        # should be of some lenght
+        self.assertTrue(len(username) > 0)
+
+
+class test_temp_dir(unittest.TestCase):
+    """
+    Unittests for temp_dir
+    """
+
+    def test_create_temp_dir(self):
+        """
+        Test making a temp directory and comparing that to what it should be
+        """
+
+        #
+        username = get_username()
+        general_temp_dir = tempfile.gettempdir()
+
+        # Get username
+        username = get_username()
+
+        sspc_temp_dir = os.path.join(temp_dir(), "sspc-{}".format(username))
+
+        #
+        self.assertTrue(
+            os.path.isdir(os.path.join(general_temp_dir, "sspc-{}".format(username)))
+        )
+        self.assertTrue(
+            os.path.join(general_temp_dir, "sspc-{}".format(username)) == sspc_temp_dir
+        )
+
+
+class test_check_required(unittest.TestCase):
+    def setUp(self):
+        self.config = {
+            "input_shape": (32, 32, 3),
+            "output_shape": (10,),
+            "learning_rate": 0.001,
+        }
+
+    def test_check_required_all_present(self):
+        required_list = ["input_shape", "output_shape", "learning_rate"]
+        check_required(self.config, required_list)
+        # No exception should be raised
+
+    def test_check_required_missing_key(self):
+        required_list = ["input_shape", "output_shape", "learning_rate", "batch_size"]
+        with self.assertRaises(ValueError):
+            check_required(self.config, required_list)
+
+    def test_check_required_empty_list(self):
+        required_list = []
+        check_required(self.config, required_list)
+        # No exception should be raised
 
 
 class test_calculate_digitized_sfr_rates(unittest.TestCase):

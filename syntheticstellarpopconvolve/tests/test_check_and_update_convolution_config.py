@@ -16,7 +16,7 @@ from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
     check_convolution_config,
 )
-from syntheticstellarpopconvolve.general_functions import check_required, temp_dir
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
     "tests",
@@ -116,30 +116,6 @@ class test_check_convolution_config(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             check_convolution_config(config_with_missing_SFR_info)
-
-
-class test_check_required(unittest.TestCase):
-    def setUp(self):
-        self.config = {
-            "input_shape": (32, 32, 3),
-            "output_shape": (10,),
-            "learning_rate": 0.001,
-        }
-
-    def test_check_required_all_present(self):
-        required_list = ["input_shape", "output_shape", "learning_rate"]
-        check_required(self.config, required_list)
-        # No exception should be raised
-
-    def test_check_required_missing_key(self):
-        required_list = ["input_shape", "output_shape", "learning_rate", "batch_size"]
-        with self.assertRaises(ValueError):
-            check_required(self.config, required_list)
-
-    def test_check_required_empty_list(self):
-        required_list = []
-        check_required(self.config, required_list)
-        # No exception should be raised
 
 
 class test_update_convolution_config(unittest.TestCase):

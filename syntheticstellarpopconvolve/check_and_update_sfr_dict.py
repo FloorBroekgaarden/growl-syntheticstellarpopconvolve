@@ -59,7 +59,7 @@ def pad_sfr_dict(config, sfr_dict):
         sfr_dict["time_bin_sizes"] = sfr_dict["lookback_time_bin_sizes"]
 
         # Pad time-bin sizes
-        sfr_dict["padded_redshift_bin_sizeslookback_time_bin_sizes"] = pad_function(
+        sfr_dict["padded_lookback_time_bin_sizes"] = pad_function(
             array=sfr_dict["lookback_time_bin_sizes"],
             left_val=0,
             right_val=0,

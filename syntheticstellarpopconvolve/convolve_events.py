@@ -64,6 +64,7 @@ def extract_event_data(config, convolution_instruction):
 
             #################
             # Handle unit for delay-time
+            # TODO: this should just take whatever unit is provided
             if column == "delay_time":
                 data_dict[column] = (
                     data_dict[column] * config["delay_time_default_unit"]

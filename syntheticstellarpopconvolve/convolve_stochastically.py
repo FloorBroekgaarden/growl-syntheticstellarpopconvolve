@@ -55,6 +55,19 @@ import numpy as np
 from syntheticstellarpopconvolve.general_functions import extract_arguments
 
 
+def select_dict_entries_with_new_indices(sampled_data_dict, new_indices):
+    """
+    Function to select dict entires with new indices
+    """
+
+    sampled_data_dict = {
+        data_key: sampled_data_dict[data_key][new_indices]
+        for data_key in sampled_data_dict.keys()
+    }
+
+    return sampled_data_dict
+
+
 def handle_sorting(sampled_data_dict):
     """
     Function to handle sorting
@@ -63,10 +76,47 @@ def handle_sorting(sampled_data_dict):
     # Sort on indices
     sorted_indices = sampled_data_dict["indices"].argsort()
 
-    sampled_data_dict = {
-        data_key: sampled_data_dict[data_key][sorted_indices]
-        for data_key in sampled_data_dict.keys()
-    }
+    # re-select
+    sampled_data_dict = select_dict_entries_with_new_indices(
+        sampled_data_dict=sampled_data_dict, new_indices=sorted_indices
+    )
+
+    return sampled_data_dict
+
+
+def add_event_lookback_time(data_dict, convolution_instruction, sampled_data_dict):
+    """
+    Function to add the event lookback time to the data
+    """
+
+    if "delay_time" in data_dict:
+        # extract data
+        event_delay_times = data_dict["delay_time"]
+
+        # select the event delay-times of the actual sampled systems
+        event_delay_times_of_sampled_systems = event_delay_times[
+            sampled_data_dict["indices"]
+        ]
+
+        # calculate event lookback times
+        event_lookback_times = (
+            sampled_data_dict["formation_lookback_times"]
+            - event_delay_times_of_sampled_systems
+        )
+
+        # store in dict
+        sampled_data_dict["event_lookback_times"] = event_lookback_times
+
+        # filter out future events
+        if convolution_instruction.get("filter_future_events", True):
+            # calculate local indices that include only the events occuring in the past
+            past_event_local_indices = event_lookback_times > 0
+
+            # updated sampled data dict to include only past-events
+            sampled_data_dict = select_dict_entries_with_new_indices(
+                sampled_data_dict=sampled_data_dict,
+                new_indices=past_event_local_indices,
+            )
 
     return sampled_data_dict
 
@@ -284,6 +334,14 @@ def sample_systems_main(
         lookback_time_bin_size=lookback_time_bin_size,
         lookback_time_bin_lower_edge=lookback_time_bin_lower_edge,
         config=config,
+    )
+
+    ######
+    # Add event lookback time
+    sampled_data_dict = add_event_lookback_time(
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        sampled_data_dict=sampled_data_dict,
     )
 
     #######

@@ -222,11 +222,28 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
                     "formation_lookback_times", data=formation_lookback_times_value
                 )
 
-                # TODO: store unit and description
-                # store unit and description in meta-data
+                # TODO: store description
+                # store unit in meta-data
                 units_to_store["formation_lookback_times"] = (
                     formation_lookback_times_unit
                 )
+
+            # formation lookback-times output. From sampling-based event convolution
+            if "event_lookback_times" in convolution_result.keys():
+                config["logger"].debug("Storing event lookback-times")
+
+                #
+                event_lookback_times = convolution_result["event_lookback_times"]
+                event_lookback_times_value = event_lookback_times.value
+                event_lookback_times_unit = event_lookback_times.unit
+
+                current_time_bin_grp.create_dataset(
+                    "event_lookback_times", data=event_lookback_times_value
+                )
+
+                # TODO: store description
+                # store unit in meta-data
+                units_to_store["event_lookback_times"] = event_lookback_times_unit
 
             # positions output. From sampling-based event convolution
             if "positions" in convolution_result.keys():

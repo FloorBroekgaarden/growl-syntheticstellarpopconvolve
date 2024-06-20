@@ -84,39 +84,55 @@ def handle_sorting(sampled_data_dict):
     return sampled_data_dict
 
 
-def add_event_lookback_time(data_dict, convolution_instruction, sampled_data_dict):
+def add_event_lookback_time(
+    config, data_dict, convolution_instruction, sampled_data_dict
+):
     """
     Function to add the event lookback time to the data
     """
 
-    if "delay_time" in data_dict:
-        # extract data
-        event_delay_times = data_dict["delay_time"]
+    if "delay_time" not in data_dict.keys():
+        return sampled_data_dict
 
-        # select the event delay-times of the actual sampled systems
-        event_delay_times_of_sampled_systems = event_delay_times[
-            sampled_data_dict["indices"]
-        ]
+    #
+    config["logger"].warning("Adding event lookback time.")
 
-        # calculate event lookback times
-        event_lookback_times = (
-            sampled_data_dict["formation_lookback_times"]
-            - event_delay_times_of_sampled_systems
+    # extract data
+    event_delay_times = data_dict["delay_time"]
+
+    # select the event delay-times of the actual sampled systems
+    event_delay_times_of_sampled_systems = event_delay_times[
+        sampled_data_dict["indices"]
+    ]
+
+    # calculate event lookback times
+    event_lookback_times = (
+        sampled_data_dict["formation_lookback_times"]
+        - event_delay_times_of_sampled_systems
+    )
+
+    # store in dict
+    sampled_data_dict["event_lookback_times"] = event_lookback_times
+
+    # filter out future events
+    if convolution_instruction.get("filter_future_events", True):
+
+        # calculate local indices that include only the events occuring in the past
+        past_event_local_indices = event_lookback_times > 0
+        future_event_local_indices = event_lookback_times < 0
+
+        #
+        config["logger"].warning(
+            "Filtering out {} systems that would occur in the past. {} systems are left, and happen in the past".format(
+                len(future_event_local_indices), len(past_event_local_indices)
+            )
         )
 
-        # store in dict
-        sampled_data_dict["event_lookback_times"] = event_lookback_times
-
-        # filter out future events
-        if convolution_instruction.get("filter_future_events", True):
-            # calculate local indices that include only the events occuring in the past
-            past_event_local_indices = event_lookback_times > 0
-
-            # updated sampled data dict to include only past-events
-            sampled_data_dict = select_dict_entries_with_new_indices(
-                sampled_data_dict=sampled_data_dict,
-                new_indices=past_event_local_indices,
-            )
+        # updated sampled data dict to include only past-events
+        sampled_data_dict = select_dict_entries_with_new_indices(
+            sampled_data_dict=sampled_data_dict,
+            new_indices=past_event_local_indices,
+        )
 
     return sampled_data_dict
 
@@ -339,6 +355,7 @@ def sample_systems_main(
     ######
     # Add event lookback time
     sampled_data_dict = add_event_lookback_time(
+        config=config,
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
         sampled_data_dict=sampled_data_dict,

@@ -117,9 +117,11 @@ def add_event_lookback_time(
     # filter out future events
     if convolution_instruction.get("filter_future_events", True):
 
+        local_indices = np.arange(len(event_lookback_times))
+
         # calculate local indices that include only the events occuring in the past
-        past_event_local_indices = event_lookback_times > 0
-        future_event_local_indices = event_lookback_times < 0
+        past_event_local_indices = local_indices[event_lookback_times > 0]
+        future_event_local_indices = local_indices[event_lookback_times < 0]
 
         #
         config["logger"].warning(
@@ -250,10 +252,10 @@ def sample_systems(
 
     ############
     # Make a copy of the data dict and select everything using the combined indices
-    data_dict_sampled_systems = {
-        data_key: data_dict[data_key][combined_sampled_indices]
-        for data_key in data_dict.keys()
-    }
+    data_dict_sampled_systems = select_dict_entries_with_new_indices(
+        sampled_data_dict=data_dict,
+        new_indices=combined_sampled_indices,
+    )
 
     ############
     # Assign random formation times (of system)

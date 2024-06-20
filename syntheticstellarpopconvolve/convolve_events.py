@@ -66,13 +66,13 @@ def extract_event_data(config, convolution_instruction):
             # Handle unit for delay-time
             # TODO: this should just take whatever unit is provided
             if column == "delay_time":
-                data_dict[column] = (
-                    data_dict[column] * config["delay_time_default_unit"]
-                )
+                if "unit" in data_column_dict[column].keys():
+                    unit = data_column_dict[column]["unit"]
+                else:
+                    unit = config["delay_time_default_unit"]
 
-                if "delay_time_unit" in data_column_dict[column].keys():
-                    data_dict[column].to(data_column_dict[column]["delay_time_unit"])
-
+                #
+                data_dict[column] = data_dict[column] * unit
         else:
             raise ValueError("input type not supported.")
 

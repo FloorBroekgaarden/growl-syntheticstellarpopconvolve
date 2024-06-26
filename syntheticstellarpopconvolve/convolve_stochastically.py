@@ -125,7 +125,7 @@ def add_event_lookback_time(
 
         #
         config["logger"].warning(
-            "Filtering out {} systems that would occur in the past. {} systems are left, and happen in the past".format(
+            "Filtering out {} systems that would occur in the future. {} systems are left, and happen in the past".format(
                 len(future_event_local_indices), len(past_event_local_indices)
             )
         )

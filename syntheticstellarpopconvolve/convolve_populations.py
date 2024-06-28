@@ -27,14 +27,47 @@ from syntheticstellarpopconvolve.general_functions import (
     JsonCustomEncoder,
     generate_group_name,
     get_tmp_dir,
+    has_unit,
 )
 
 CONVOLUTION_FUNCTION_DICT = {
     "event": event_convolution_function,
     "ensemble": ensemble_convolution_function,
     "custom": custom_convolution_function,
-    #  "event_sample",
 }
+
+
+def store_convolution_result_entries(
+    config, current_time_bin_group, convolution_result
+):
+    """
+    Function to handle storing an entry of the convolution_result
+
+    TODO: handle stripped ensemble better
+    """
+
+    units_to_store = {}
+
+    # loop over the entries
+    for entry in convolution_result.keys():
+        config["logger"].debug(f"Storing {entry}")
+
+        entry_data = convolution_result[entry]
+
+        # handle storing data with units
+        if has_unit(entry_data):
+            current_time_bin_group.create_dataset(
+                entry, data=json.dumps(entry_data.value)
+            )
+            units_to_store[entry] = entry_data.unit
+        # handle storing data without units
+        else:
+            current_time_bin_group.create_dataset(entry, data=json.dumps(entry_data))
+
+    # store units
+    current_time_bin_group.attrs["units"] = json.dumps(
+        units_to_store, cls=JsonCustomEncoder
+    )
 
 
 def pre_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
@@ -103,7 +136,7 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
     - sampled_birth_times: (sampling, events): Assigned birth-times of sampled systems.
     - sampled_positions: (sampling, events): sampled positions. Can be multi-d.
 
-    We can automatically store these and update some of the meta-data
+    We can automatically store these and update some of the meta-data.
     """
 
     #################
@@ -140,7 +173,7 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
             key=lambda x: float(".".join(x.split(".")[:-1]).split(" ")[0]),
         )
         for pickle_file in sorted_content_dir:
-
+            #########
             # Load pickled data
             full_path = os.path.join(tmp_dir, pickle_file)
             with open(full_path, "rb") as picklefile:
@@ -150,114 +183,28 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
             # Unpack
             if "convolution_result" in data.keys():
                 convolution_result = data["convolution_result"]
-            else:
+            else:  # TODO: do we want to raise an error or just continue?
                 raise ValueError("No convolution result present in the data")
 
+            ##########
             # Create group
             current_time_bin_grp = grp.create_group(
                 "convolved_array/{}".format(str(data["bin_center"]))
             )
 
-            # Store payload in grp
+            ############
+            # handle storing entries and units
             config["logger"].debug(
                 "Storing convolution results of bin-center {}".format(
                     str(data["bin_center"])
                 )
             )
 
-            ############
-            # Store different kinds of output
-
-            units_to_store = {}
-
-            # yield output. From integration-based event and ensemble convolution
-            if "yield" in convolution_result.keys():
-                config["logger"].debug("Storing yield")
-
-                #
-                yield_value = convolution_result["yield"].value
-                yield_unit = convolution_result["yield"].unit
-
-                current_time_bin_grp.create_dataset("yield", data=yield_value)
-
-                # store unit and description in meta-data
-                units_to_store["yield"] = yield_unit
-
-            # stripped ensemble output. From integration-based ensemble convolution
-            if "stripped_ensemble" in convolution_result.keys():
-                config["logger"].debug("Storing stripped ensemble")
-
-                #
-                stripped_ensemble = convolution_result["stripped_ensemble"]
-
-                current_time_bin_grp.create_dataset(
-                    "stripped_ensemble", data=json.dumps(stripped_ensemble)
-                )
-
-                # TODO: store description
-
-            # indices output. From sampling-based event convolution
-            if "indices" in convolution_result.keys():
-                config["logger"].debug("Storing indices")
-
-                #
-                indices = convolution_result["indices"]
-
-                current_time_bin_grp.create_dataset("indices", data=indices)
-
-                # TODO: store description
-
-            # formation lookback-times output. From sampling-based event convolution
-            if "formation_lookback_times" in convolution_result.keys():
-                config["logger"].debug("Storing formation lookback-times")
-
-                #
-                formation_lookback_times = convolution_result[
-                    "formation_lookback_times"
-                ]
-                formation_lookback_times_value = formation_lookback_times.value
-                formation_lookback_times_unit = formation_lookback_times.unit
-
-                current_time_bin_grp.create_dataset(
-                    "formation_lookback_times", data=formation_lookback_times_value
-                )
-
-                # TODO: store description
-                # store unit in meta-data
-                units_to_store["formation_lookback_times"] = (
-                    formation_lookback_times_unit
-                )
-
-            # formation lookback-times output. From sampling-based event convolution
-            if "event_lookback_times" in convolution_result.keys():
-                config["logger"].debug("Storing event lookback-times")
-
-                #
-                event_lookback_times = convolution_result["event_lookback_times"]
-                event_lookback_times_value = event_lookback_times.value
-                event_lookback_times_unit = event_lookback_times.unit
-
-                current_time_bin_grp.create_dataset(
-                    "event_lookback_times", data=event_lookback_times_value
-                )
-
-                # TODO: store description
-                # store unit in meta-data
-                units_to_store["event_lookback_times"] = event_lookback_times_unit
-
-            # positions output. From sampling-based event convolution
-            if "positions" in convolution_result.keys():
-                config["logger"].debug("Storing positions")
-
-                current_time_bin_grp.create_dataset(
-                    "positions", data=convolution_result["positions"]
-                )
-
-                # TODO: store description
-
-            # store attributes
-            current_time_bin_grp.attrs["units"] = json.dumps(
-                units_to_store, cls=JsonCustomEncoder
+            #
+            store_convolution_result_entries(
+                config=config,
+                current_time_bin_group=current_time_bin_grp,
+                convolution_result=convolution_result,
             )
 
             # remove the pickled file

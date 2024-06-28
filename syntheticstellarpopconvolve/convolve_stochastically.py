@@ -140,7 +140,60 @@ def add_event_lookback_time(
     return sampled_data_dict
 
 
-def handle_position_sampling(
+def handle_post_convolution_function(
+    config,
+    job_dict,
+    sfr_dict,
+    data_dict,
+    convolution_instruction,
+    sampled_data_dict,
+    post_convolution_function,
+):
+    """
+    Function to handle post-convolution function call.
+
+    An example of a post-convolution call is integrating systems to present-day time with LegWork and filtering out systems that do not fall within the LISA frequency range or that have merged by the present-day.
+
+    Another example is to integrate systems through a gravitational potential based on the sampled position and a certain integration time.
+
+    TODO: function calls like this can be generalized
+    """
+
+    if post_convolution_function is not None:
+
+        # Construct what parameters are available for the extra function
+        available_parameters = {
+            "config": config,
+            "job_dict": job_dict,
+            "sfr_dict": sfr_dict,
+            "data_dict": data_dict,
+            "sampled_data_dict": sampled_data_dict,
+            "time_value": job_dict["convolution_time_bin_center"],
+            "convolution_instruction": convolution_instruction,
+            **convolution_instruction.get(
+                "post_convolution_function_extra_parameters", {}
+            ),
+        }
+
+        # Make sure we extract the correct things from the available parameters
+        post_convolution_function_args = extract_arguments(
+            func=post_convolution_function,
+            arg_dict=available_parameters,
+        )
+
+        #
+        config["logger"].debug(
+            "Handling post-convolution function call using function {} and arguments {}".format(
+                convolution_instruction["post_convolution_function"].__name__,
+                post_convolution_function_args,
+            )
+        )
+
+        # Call function
+        post_convolution_function(**post_convolution_function_args)
+
+
+def handle_position_sampling_function(
     config,
     job_dict,
     sfr_dict,
@@ -150,7 +203,10 @@ def handle_position_sampling(
     position_sampling_function,
 ):
     """
-    Function to handle position sampling
+    Function to handle position sampling function call
+
+    TODO: function calls like this can be generalized
+    TODO: have the function just update the sampled_data_dict instead
     """
 
     if position_sampling_function is not None:
@@ -161,14 +217,13 @@ def handle_position_sampling(
             "job_dict": job_dict,
             "sfr_dict": sfr_dict,
             "data_dict": data_dict,
+            "sampled_data_dict": sampled_data_dict,
             "time_value": job_dict["convolution_time_bin_center"],
             "convolution_instruction": convolution_instruction,
             **convolution_instruction.get(
                 "position_sampling_function_extra_parameters", {}
-            ),  #
+            ),
         }
-
-        # TODO: abstract this and the extra weights calculation into a general function that selects and calls a function
 
         # Make sure we extract the correct things from the available parameters
         position_sampling_function_args = extract_arguments(
@@ -289,6 +344,7 @@ def sample_systems_main(
     lookback_time_bin_lower_edge,
     include_metallicity,
     position_sampling_function=None,
+    post_convolution_function=None,
 ):
     """
     Function that handles sampling systems at a particular lookback time.
@@ -366,7 +422,7 @@ def sample_systems_main(
 
     #######
     # Handle position sampling
-    sampled_data_dict = handle_position_sampling(
+    sampled_data_dict = handle_position_sampling_function(
         config=config,
         job_dict=job_dict,
         sfr_dict=sfr_dict,
@@ -379,6 +435,18 @@ def sample_systems_main(
     ######
     # Handle sorting on indices
     sampled_data_dict = handle_sorting(sampled_data_dict=sampled_data_dict)
+
+    ######
+    # Handle post-convolution function
+    handle_post_convolution_function(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        sampled_data_dict=sampled_data_dict,
+        post_convolution_function=post_convolution_function,
+    )
 
     ###########
     # wrap up

@@ -180,7 +180,7 @@ def handle_extra_weights_function(
     """
     Function to handle the calculation of a set of extra weights that will be applied to the systems / sub-ensemble
 
-    TODO: move this function elsewhere
+    TODO: function calls like this can be generalized
     """
 
     # set default
@@ -591,12 +591,11 @@ def has_unit(parameter, fail_on_dimensionless=True):
     Function to check if a parameter has any unit assigned to it
     """
 
-    dimensionless_unit = u.m / u.m
-
     try:
         unit = parameter.unit
 
         if fail_on_dimensionless:
+            dimensionless_unit = u.m / u.m
             if unit == dimensionless_unit:
                 return False
         return True

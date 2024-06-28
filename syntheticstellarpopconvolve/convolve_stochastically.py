@@ -44,6 +44,7 @@ lookback time to the systems (taken randomly between the bin edges)
 
 TODO: consider putting the configuration in through the convolution instruction rather than the global config.
 TODO: allow calcualting the event lookback time and filtering of the events that occur in the future
+TODO: implement post-convolution method that allows us to filter the data based on something (like whether they are within some frequency range)
 """
 
 import time

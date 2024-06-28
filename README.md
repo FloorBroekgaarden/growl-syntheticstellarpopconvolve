@@ -40,6 +40,7 @@ list of some current features:
 -   astropy units
 -   rescaling and transforming data
 -   additional weighting during convolution (for e.g. detection probability)
+-   post-convolution processing of data, for example to filter out things based on an additional calculation (like whether a system is within the LISA frequency range at current day)
 -   etc.
 
 In the coming period I will:

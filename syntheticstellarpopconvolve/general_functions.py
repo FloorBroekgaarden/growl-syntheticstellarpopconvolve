@@ -543,7 +543,7 @@ def temp_dir(*child_dirs: str, clean_path=False) -> str:
 
     tmp_dir = tempfile.gettempdir()
     username = get_username()
-    full_path = os.path.join(tmp_dir, "binary_c_python-{}".format(username))
+    full_path = os.path.join(tmp_dir, "sspc-{}".format(username))
 
     # loop over the other paths if there are any:
     if child_dirs:

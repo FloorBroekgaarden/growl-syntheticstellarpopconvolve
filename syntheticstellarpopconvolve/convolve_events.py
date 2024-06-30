@@ -8,7 +8,9 @@ from syntheticstellarpopconvolve.convolve_stochastically import sample_systems_m
 from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     handle_custom_scaling_or_conversion,
-    handle_extra_weights_function,
+)
+from syntheticstellarpopconvolve.post_convolution_hook_routines import (
+    convolve_events_integration_post_convolution_hook_wrapper,
 )
 
 
@@ -90,6 +92,7 @@ def event_convolution_function(
     """
 
     if convolution_instruction["convolution_type"] == "integrate":
+        sfr_dict = job_dict["sfr_dict"]
 
         #
         convolution_time_bin_center = bin_center
@@ -113,22 +116,19 @@ def event_convolution_function(
             digitized_sfr_rates * data_dict["yield_rate"] * config["yield_rate_unit"]
         )
 
-        ################
-        # run custom function afterwards
-        extra_weights = handle_extra_weights_function(
-            config=config,
-            bin_center=convolution_time_bin_center,
-            convolution_instruction=convolution_instruction,
-            sfr_dict=job_dict["sfr_dict"],
-            data_dict=data_dict,
-            output_shape=convolved_rate_array.shape,
-        )
-
-        # re-weight
-        convolved_rate_array = convolved_rate_array * extra_weights
-
         #
         convolution_result = {"yield": convolved_rate_array}
+
+        ######
+        # Handle post-convolution function
+        convolve_events_integration_post_convolution_hook_wrapper(
+            config=config,
+            job_dict=job_dict,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            convolution_instruction=convolution_instruction,
+            result_dict=convolution_result,
+        )
 
         return {"convolution_result": convolution_result}
 

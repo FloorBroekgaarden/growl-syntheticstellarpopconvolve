@@ -2,7 +2,6 @@
 Some general functions related to the convolution
 """
 
-import inspect
 import json
 import logging
 import os
@@ -29,35 +28,6 @@ def get_username():
     """
 
     return psutil.Process().username()
-
-
-def extract_arguments(func, arg_dict):
-    """
-    Function that extracts the entries in 'arg_dict' that are arguments to the function 'func'
-    """
-
-    # get various arg types
-    signature = inspect.signature(func)
-    all_args = inspect.getfullargspec(func).args
-    args_with_defaults = [
-        k
-        for k, v in signature.parameters.items()
-        if v.default is not inspect.Parameter.empty
-    ]
-    args_without_defaults = [arg for arg in all_args if arg not in args_with_defaults]
-
-    # construct args
-    args = {arg: arg_dict[arg] for arg in args_without_defaults}
-
-    # check if kwonlyargs are also passed along
-    args_for_args_with_defaults = {
-        arg: arg_dict[arg] for arg in args_with_defaults if arg in arg_dict.keys()
-    }
-
-    # combine args
-    combined_args = {**args, **args_for_args_with_defaults}
-
-    return combined_args
 
 
 class JsonCustomEncoder(json.JSONEncoder):
@@ -167,68 +137,6 @@ def vb(message, verbosity, minimal_verbosity):  # DH0001
     """
 
     verbose_print(message, verbosity, minimal_verbosity)
-
-
-def handle_extra_weights_function(
-    config,
-    bin_center,
-    convolution_instruction,
-    sfr_dict,
-    data_dict,
-    output_shape,
-):
-    """
-    Function to handle the calculation of a set of extra weights that will be applied to the systems / sub-ensemble
-
-    TODO: function calls like this can be generalized
-    """
-
-    # set default
-    extra_weights = np.ones(output_shape)
-
-    # handle calculation extra weights
-    if convolution_instruction.get("extra_weights_function", None) is not None:
-        # Construct what parameters are available for the extra function
-        available_parameters = {
-            "config": config,
-            "time_value": bin_center,
-            "convolution_instruction": convolution_instruction,
-            "sfr_dict": sfr_dict,
-            "data_dict": data_dict,
-            **convolution_instruction.get(
-                "extra_weights_function_additional_parameters", {}
-            ),  #
-        }
-
-        # Make sure we extract the correct things from the available parameters
-        extra_weights_function_args = extract_arguments(
-            func=convolution_instruction["extra_weights_function"],
-            arg_dict=available_parameters,
-        )
-
-        #
-        config["logger"].debug(
-            "Calculating extra weights using function {} and arguments {}".format(
-                convolution_instruction["extra_weights_function"].__name__,
-                extra_weights_function_args,
-            )
-        )
-
-        # Call extra function and calculate extra weights (with something like detection probability)
-        extra_weights = convolution_instruction["extra_weights_function"](
-            **extra_weights_function_args
-        )
-        if extra_weights is None:
-            raise ValueError(
-                "The extra function did not return a correct set of extra weights"
-            )
-
-    if extra_weights.shape != output_shape:
-        raise ValueError(
-            "Desired output shape does not match the shape of the extra weights"
-        )
-
-    return extra_weights
 
 
 def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):

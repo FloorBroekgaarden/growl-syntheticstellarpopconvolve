@@ -1182,6 +1182,7 @@ def ensemble_handle_SFR_multiplication(
         data_dict=data_dict,
         sfr_dict=job_dict["sfr_dict"],
     )
+    # TODO: actually perform the multiplication here. Handle the extra weights by stripping and attaching
 
     ################
     # Run custom function afterwards
@@ -1193,6 +1194,8 @@ def ensemble_handle_SFR_multiplication(
         data_dict=data_dict,
         output_shape=np.array([1]).shape,
     )
+
+    # TODO: handle this a bit differently. i think i need to strip and attach
 
     # Combine SFR, extra weight and possibly time-duration (time bin-width) to turn rates into numbers
     combined = (digitized_sfr_rates[0] * extra_weights[0] * extra_value).value

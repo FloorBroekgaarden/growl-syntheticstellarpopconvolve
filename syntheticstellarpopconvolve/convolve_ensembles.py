@@ -30,8 +30,88 @@ from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     calculate_edge_values,
     handle_custom_scaling_or_conversion,
-    handle_extra_weights_function,
 )
+from syntheticstellarpopconvolve.post_convolution_hook_routines import (
+    handle_post_convolution_function,
+)
+
+
+def convolve_ensemble_integration_post_convolution_hook_wrapper(
+    config,
+    job_dict,
+    sfr_dict,
+    data_dict,
+    convolution_instruction,
+    ensemble,
+):
+    """
+    Function to wrap the post-convolution function call for ensemble-convolution by integration.
+
+    rules:
+    - additional data can be added to the result_dict
+    - the number of systems can lower than before the call
+
+    Note: the result_dict is expected to be updated in-place.
+    """
+
+    #
+    name = "convolve-ensemble by integration"
+
+    #
+    config["logger"].warning(
+        "Handling post-convolution function hook call for {}".format(name)
+    )
+
+    #############
+    # pre-call setup
+
+    stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(ensemble=ensemble)
+
+    result_dict = {"yield": stripped_endpoints}
+
+    #
+    num_systems_before = len(result_dict[list(result_dict.keys())[0]])
+
+    #############
+    # call hook
+    handle_post_convolution_function(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        result_dict=result_dict,
+        name=name,
+    )
+
+    #############
+    # check output
+    num_systems_after = len(result_dict[list(result_dict.keys())[0]])
+
+    #
+    if num_systems_before != num_systems_after:
+        raise ValueError(
+            "{} post-convolution function has changed the number of systems stored in the output dict. Due to current data structure decisions this is not supported currently. Please make sure that the number of systems before and after calling this function stays equal.".format(
+                name
+            )
+        )
+
+    #
+    num_output_entries = len(result_dict.keys())
+
+    if num_output_entries > 1:
+        raise ValueError(
+            "{} post-convolution function has added additional entries to the result dictionary. Due tot current data structure decisions this is not supported currently. Please make sure that the number the result dictionary only contains one entry".format(
+                name
+            )
+        )
+
+    ################
+    # re-attach the updated data to the ensemble
+    # TODO: allow the result dict to contain more data than just 1 number.
+    attach_endpoints(ensemble=ensemble, endpoint_array=result_dict["yield"])
+
+    return ensemble
 
 
 def ensemble_compression(filename):  # DH0001
@@ -1182,26 +1262,20 @@ def ensemble_handle_SFR_multiplication(
         data_dict=data_dict,
         sfr_dict=job_dict["sfr_dict"],
     )
-    # TODO: actually perform the multiplication here. Handle the extra weights by stripping and attaching
+
+    # Multiply ensemble with SFR and extra value
+    multiply_ensemble(ensemble=ensemble, factor=digitized_sfr_rates[0] * extra_value)
 
     ################
-    # Run custom function afterwards
-    extra_weights = handle_extra_weights_function(
+    # Handle post-convolution
+    ensemble = convolve_ensemble_integration_post_convolution_hook_wrapper(
         config=config,
-        bin_center=bin_center,
-        convolution_instruction=convolution_instruction,
+        job_dict=job_dict,
         sfr_dict=job_dict["sfr_dict"],
         data_dict=data_dict,
-        output_shape=np.array([1]).shape,
+        convolution_instruction=convolution_instruction,
+        ensemble=ensemble,
     )
-
-    # TODO: handle this a bit differently. i think i need to strip and attach
-
-    # Combine SFR, extra weight and possibly time-duration (time bin-width) to turn rates into numbers
-    combined = (digitized_sfr_rates[0] * extra_weights[0] * extra_value).value
-
-    # Multiply ensemble with that number
-    multiply_ensemble(ensemble=ensemble, factor=combined)
 
     return ensemble
 
@@ -1440,6 +1514,7 @@ def ensemble_convolution_function(
         )
 
         # detach endpoints from ensemble
+        # TODO: perhaps we can allow the endpoints to contain multiple values?
         stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(
             ensemble=ensemble
         )

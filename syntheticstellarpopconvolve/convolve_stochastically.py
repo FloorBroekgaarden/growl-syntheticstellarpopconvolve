@@ -54,8 +54,45 @@ import astropy.units as u
 import numpy as np
 
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
-    convolve_events_sampling_post_convolution_hook_wrapper,
+    handle_post_convolution_function,
 )
+
+
+def convolve_events_sampling_post_convolution_hook_wrapper(
+    config,
+    job_dict,
+    sfr_dict,
+    data_dict,
+    convolution_instruction,
+    result_dict,
+):
+    """
+    Function to wrap the post-convolution function call for event-convolution by sampling.
+
+    rules:
+    - additional data can be added to the result_dict
+    - the number of systems can lower than before the call
+    """
+
+    #
+    name = "convolve-events by sampling"
+
+    #
+    config["logger"].warning(
+        "Handling post-convolution function hook call for {}".format(name)
+    )
+
+    #############
+    # call hook
+    handle_post_convolution_function(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        result_dict=result_dict,
+        name=name,
+    )
 
 
 def select_dict_entries_with_new_indices(sampled_data_dict, new_indices):

@@ -10,8 +10,59 @@ from syntheticstellarpopconvolve.general_functions import (
     handle_custom_scaling_or_conversion,
 )
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
-    convolve_events_integration_post_convolution_hook_wrapper,
+    handle_post_convolution_function,
 )
+
+
+def convolve_events_integration_post_convolution_hook_wrapper(
+    config,
+    job_dict,
+    sfr_dict,
+    data_dict,
+    convolution_instruction,
+    result_dict,
+):
+    """
+    Function to wrap the post-convolution function call for event-convolution by integration.
+
+    rules:
+    - additional data can be added to the result_dict
+    - the number of systems has to be equal to before the post-convolution function.
+    """
+
+    #
+    name = "convolve-events by integration"
+
+    #
+    config["logger"].warning(
+        "Handling post-convolution function hook call for {}".format(name)
+    )
+
+    #############
+    # pre-call setup
+    num_systems_before = len(result_dict[list(result_dict.keys())[0]])
+
+    #############
+    # call hook
+    handle_post_convolution_function(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        result_dict=result_dict,
+        name=name,
+    )
+
+    #############
+    # check output
+    num_systems_after = len(result_dict[list(result_dict.keys())[0]])
+
+    #
+    if num_systems_before != num_systems_after:
+        raise ValueError(
+            "post-convolution function for event-convolution by integration has changed the number of systems stored in the output dict. Due to current data structure decisions this is not supported. Please make sure that the number of systems before and after calling this function stays equal."
+        )
 
 
 def extract_event_data(config, convolution_instruction):

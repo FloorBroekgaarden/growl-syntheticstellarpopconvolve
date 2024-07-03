@@ -50,19 +50,19 @@ def store_convolution_result_entries(
 
     # loop over the entries
     for entry in convolution_result.keys():
-        config["logger"].debug(f"Storing {entry}")
+        config["logger"].error(f"Storing {entry}")
 
         entry_data = convolution_result[entry]
 
         # handle storing data with units
         if has_unit(entry_data):
-            current_time_bin_group.create_dataset(
-                entry, data=json.dumps(entry_data.value)
-            )
+            current_time_bin_group.create_dataset(entry, data=entry_data.value)
             units_to_store[entry] = entry_data.unit
         # handle storing data without units
         else:
-            current_time_bin_group.create_dataset(entry, data=json.dumps(entry_data))
+            current_time_bin_group.create_dataset(entry, data=entry_data)
+
+    print("units_to_store", units_to_store)
 
     # store units
     current_time_bin_group.attrs["units"] = json.dumps(

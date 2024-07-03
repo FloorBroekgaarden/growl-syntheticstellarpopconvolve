@@ -181,7 +181,9 @@ def handle_post_convolution_function(
     argument. Can be extracted from the convolution_instruction itself
     """
 
-    post_convolution_function = convolution_instruction["post_convolution_function"]
+    post_convolution_function = convolution_instruction.get(
+        "post_convolution_function", None
+    )
 
     if post_convolution_function is not None:
 

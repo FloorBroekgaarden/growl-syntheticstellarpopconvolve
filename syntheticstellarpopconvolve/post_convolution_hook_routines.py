@@ -217,7 +217,7 @@ def handle_post_convolution_function(
         )
 
         # Call function
-        post_convolution_function(**post_convolution_function_args)
+        result_dict = post_convolution_function(**post_convolution_function_args)
 
         # check if the result dict is still a dict object
         if not isinstance(result_dict, dict):
@@ -226,3 +226,5 @@ def handle_post_convolution_function(
                     type(result_dict)
                 )
             )
+
+    return result_dict

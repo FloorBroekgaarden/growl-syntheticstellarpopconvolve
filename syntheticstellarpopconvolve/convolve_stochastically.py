@@ -94,6 +94,8 @@ def convolve_events_sampling_post_convolution_hook_wrapper(
         name=name,
     )
 
+    return result_dict
+
 
 def select_dict_entries_with_new_indices(sampled_data_dict, new_indices):
     """

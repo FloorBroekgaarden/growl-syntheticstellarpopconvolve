@@ -347,7 +347,7 @@ def sample_systems_main(
 
     ######
     # Handle post-convolution function
-    convolve_events_sampling_post_convolution_hook_wrapper(
+    sampled_data_dict = convolve_events_sampling_post_convolution_hook_wrapper(
         config=config,
         job_dict=job_dict,
         sfr_dict=sfr_dict,

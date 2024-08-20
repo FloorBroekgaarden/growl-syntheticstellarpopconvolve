@@ -2,6 +2,11 @@
 Functions to check and update the convolution instructions
 """
 
+import voluptuous as vol
+
+from syntheticstellarpopconvolve.default_convolution_instruction import (
+    default_convolution_instruction_dict,
+)
 from syntheticstellarpopconvolve.general_functions import check_required
 
 
@@ -23,12 +28,34 @@ def check_convolution_instruction(convolution_instruction, config):
     Function to check convolution instructions
     """
 
+    ##########
+    # from the main dictionary, create a validation scheme
+    validation_dict = {
+        key: value["validation"]
+        for key, value in default_convolution_instruction_dict.items()
+        if "validation" in value
+    }
+    validation_schema = vol.Schema(validation_dict, extra=vol.ALLOW_EXTRA)
+
+    ##########
+    # do the validation
+    for parameter, parameter_dict in config.items():
+
+        ##########
+        # Custom rules. we can decide to skip checking the input on some occasions
+
+        #
+        validation_schema({parameter: parameter_dict})
+
+    #######
     # required for all
     check_required(
         config=convolution_instruction,
         required_list=["input_data_type", "input_data_name", "output_data_name"],
     )
 
+    ###################
+    # checks for particular types of configurations
     if convolution_instruction["convolution_type"] == "integrate":
 
         ################

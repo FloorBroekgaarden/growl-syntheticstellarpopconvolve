@@ -30,6 +30,24 @@ logger.setLevel(logging.INFO)
 
 #################
 # Validation routines
+def list_of_dicts_validation(value):
+    if isinstance(value, list):
+        for el in list:
+            if not isinstance(el, dict):
+                raise ValueError(
+                    "All entries in the list should be dictionary-type objects"
+                )
+    else:
+        raise ValueError("Input has to either be a list or a dict")
+
+
+def dict_or_list_of_dicts_validation(value):
+    if not isinstance(value, (list, dict)):
+        raise ValueError("Input has to either be a list or a dict")
+    if isinstance(value, list):
+        dict_or_list_of_dicts_validation(value)
+
+
 def unit_validation(value):
     # allow 'astropy.units.core.Unit, 'astropy.units.quantity.Quantity', 'astropy.units.core.CompositeUnit'
     if not isinstance(value, (type(u.yr), type(1 / u.Msun), type(u.Msun**-1))):
@@ -102,6 +120,7 @@ default_convolution_config_dict = {
     "SFR_info": {
         "value": {},
         "description": "dictionary containing the starformation rate info. Can also be a list of dictionaries.",
+        "validation": dict_or_list_of_dicts_validation,
     },
     # # Global starformation rate config
     # "star_formation_rate_distribution_function": {
@@ -318,6 +337,7 @@ default_convolution_config_dict = {
     "convolution_instructions": {
         "value": [{}],
         "description": "List of instructions for the convolution. ",  # TODO: expand explanation
+        "validation": list_of_dicts_validation,  # TODO: lets also allow just 1 convolution instruction as a dictionary
         # "validation": # NOTE: validation handled with custom function
     },
     "input_filename": {

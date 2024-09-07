@@ -21,6 +21,8 @@ from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
 
 logger = logging.getLogger(__name__)
 
+dimensionless_unit = u.m / u.m
+
 
 def get_username():
     """

@@ -9,11 +9,13 @@ https://keepachangelog.com/en/0.3.0/
 
 	* 0.3:
 	- Updated notebooks, made time units more flexible, allow usage of sfr_dict in extra_weights_function so that we can pass spatial information along in it.
-	- Added option to multiple the SFR by the time relevant time bin (using
+	- Added option to multiply the SFR by the time relevant time bin (using 'multiply_by_time_binsize' in 'convolution_config')
 
 	* 0.4:
 	- added support for Monte-Carlo sampling-based convolution which currently uses forward convolution. This includes:
 	    - actually sampling instances of the systems
 	    - assigning formation times,
 	    - calculating event lookback times
-	- added general post-convolution function, replacing the extra_weights_function and position sampling function. Added wrappers for different cases (event-convolution by sampling, event-convolution by integration, ensemble-convolution by integration)
+	- added functionality to post-process the convolution results ('post_convolution_function'), replacing the extra_weights_function and position sampling function.
+		- Added wrappers for different cases (event-convolution by sampling, event-convolution by integration, ensemble-convolution by integration)
+	- created verification functionality for the convolution instructions, including documentation.

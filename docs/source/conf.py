@@ -29,7 +29,12 @@ from git import Repo
 
 from syntheticstellarpopconvolve.default_convolution_config import (
     default_convolution_config_dict,
-    write_default_settings_to_rst_file,
+)
+from syntheticstellarpopconvolve.default_convolution_instruction import (
+    default_convolution_instruction_dict,
+)
+from syntheticstellarpopconvolve.docs import (
+    write_convolution_config_and_instruction_documentation_to_rst_file,
 )
 
 
@@ -203,10 +208,11 @@ current_m2r2_setup = m2r2.setup
 #
 m2r2.setup = patched_m2r2_setup
 
-print("Generating default_convolution_config.rst")
-write_default_settings_to_rst_file(
-    options_defaults_dict=default_convolution_config_dict,
-    output_file="default_convolution_config.rst",
+print("Generating convolution_documentation.rst")
+write_convolution_config_and_instruction_documentation_to_rst_file(
+    convolution_config_defaults_dict=default_convolution_config_dict,
+    convolution_instruction_defaults_dict=default_convolution_instruction_dict,
+    output_file="convolution_documentation.rst",
 )
 print("Done")
 

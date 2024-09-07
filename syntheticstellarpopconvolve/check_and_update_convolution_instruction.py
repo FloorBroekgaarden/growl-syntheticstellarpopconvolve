@@ -38,7 +38,7 @@ def check_convolution_instruction(convolution_instruction, config):
     validation_schema = vol.Schema(validation_dict, extra=vol.ALLOW_EXTRA)
 
     ##########
-    # do the validation
+    # do the basic validation
     for parameter, parameter_dict in config.items():
 
         ##########

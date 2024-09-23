@@ -100,16 +100,17 @@ from syntheticstellarpopconvolve.tests.test_general_functions import (
     test_calculate_edge_values,
     test_calculate_origin_time_array,
     test_check_required,
-    test_extract_arguments,
     test_generate_group_name,
     test_get_tmp_dir,
     test_get_username,
     test_handle_custom_scaling_or_conversion,
-    test_handle_extra_weights_function,
     test_has_unit,
     test_is_time_unit,
     test_pad_function,
     test_temp_dir,
+)
+from syntheticstellarpopconvolve.tests.test_post_convolution_hook_routines import (  # test_handle_extra_weights_function,
+    test_extract_arguments,
 )
 from syntheticstellarpopconvolve.tests.test_prepare_output_file import (
     test_prepare_output_file,

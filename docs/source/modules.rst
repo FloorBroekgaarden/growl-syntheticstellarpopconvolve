@@ -16,6 +16,7 @@ This section contains the (auto)documentation for all the functions and modules 
    modules/convolve_ensembles
    modules/convolve_events
    modules/convolve_populations
+   modules/convolve_stochastically
    modules/convolve
    modules/cosmology_utils
    modules/dicts

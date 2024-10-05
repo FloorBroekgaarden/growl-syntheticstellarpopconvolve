@@ -6,6 +6,7 @@ import copy
 import json
 import logging
 import os
+import tempfile
 import unittest
 
 import astropy.units as u
@@ -15,17 +16,21 @@ import pandas as pd
 import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
+from syntheticstellarpopconvolve.check_and_update_convolution_config import (
+    check_and_update_convolution_config,
+)
 from syntheticstellarpopconvolve.general_functions import (
     calculate_bincenters,
     calculate_digitized_sfr_rates,
     calculate_edge_values,
     calculate_origin_time_array,
-    extract_arguments,
+    check_required,
     generate_group_name,
     get_tmp_dir,
+    get_username,
     handle_custom_scaling_or_conversion,
-    handle_extra_weights_function,
+    has_unit,
+    is_time_unit,
     pad_function,
     temp_dir,
 )
@@ -37,6 +42,112 @@ from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_general_functions", clean_path=True
 )
+
+
+class test_is_time_unit(unittest.TestCase):
+    """ """
+
+    def test_is_time_unit(self):
+        time_unit_value = 1 * u.s
+
+        self.assertTrue(is_time_unit(time_unit_value))
+
+    def test_is_not_time_unit(self):
+        no_unit_value = 1
+        self.assertFalse(is_time_unit(no_unit_value))
+
+    def test_is_unit_but_not_time_unit(self):
+        wrong_unit_value = 1 * u.m
+        self.assertFalse(is_time_unit(wrong_unit_value))
+
+
+class test_has_unit(unittest.TestCase):
+    """ """
+
+    def test_unit(self):
+        unit_value = 1 * u.m
+
+        self.assertTrue(has_unit(unit_value))
+
+    def test_no_unit(self):
+        no_unit_value = 1
+
+        self.assertFalse(has_unit(no_unit_value))
+
+    def test_dimensionless_unit(self):
+
+        dimensionless_unit = u.m / u.m
+
+        dimensionless_value = 1 * dimensionless_unit
+
+        self.assertTrue(has_unit(dimensionless_value, fail_on_dimensionless=False))
+
+        self.assertFalse(has_unit(dimensionless_value, fail_on_dimensionless=True))
+
+
+class test_get_username(unittest.TestCase):
+    """ """
+
+    def test_get_username(self):
+        username = get_username()
+
+        # should be a string
+        self.assertTrue(isinstance(username, str))
+
+        # should be of some lenght
+        self.assertTrue(len(username) > 0)
+
+
+class test_temp_dir(unittest.TestCase):
+    """
+    Unittests for temp_dir
+    """
+
+    def test_create_temp_dir(self):
+        """
+        Test making a temp directory and comparing that to what it should be
+        """
+
+        #
+        username = get_username()
+        general_temp_dir = tempfile.gettempdir()
+
+        # Get username
+        username = get_username()
+
+        sspc_temp_dir = os.path.join(temp_dir(), "sspc-{}".format(username))
+
+        #
+        self.assertTrue(
+            os.path.isdir(os.path.join(general_temp_dir, "sspc-{}".format(username)))
+        )
+        self.assertTrue(
+            os.path.join(general_temp_dir, "sspc-{}".format(username)) == sspc_temp_dir
+        )
+
+
+class test_check_required(unittest.TestCase):
+    def setUp(self):
+        self.config = {
+            "input_shape": (32, 32, 3),
+            "output_shape": (10,),
+            "learning_rate": 0.001,
+        }
+
+    def test_check_required_all_present(self):
+        required_list = ["input_shape", "output_shape", "learning_rate"]
+        check_required(self.config, required_list)
+        # No exception should be raised
+
+    def test_check_required_missing_key(self):
+        required_list = ["input_shape", "output_shape", "learning_rate", "batch_size"]
+        with self.assertRaises(ValueError):
+            check_required(self.config, required_list)
+
+    def test_check_required_empty_list(self):
+        required_list = []
+        check_required(self.config, required_list)
+        # No exception should be raised
 
 
 class test_calculate_digitized_sfr_rates(unittest.TestCase):
@@ -91,11 +202,14 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * 1e9 * u.yr,
-            "starformation_array": np.array([1, 2, 3, 4, 5]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 2, 3, 4, 5])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
-        self.convolution_config["convolution_time_bin_edges"] = (
+        self.convolution_config["convolution_lookback_time_bin_edges"] = (
             np.array([0, 1, 2, 3, 4]) * 1e9 * u.yr
         )
 
@@ -116,6 +230,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
                 "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "yield_rate": "probability",
@@ -128,20 +243,18 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
+        check_and_update_convolution_config(self.convolution_config)
+
+        #
         prepare_output_file(config=self.convolution_config)
 
     def test_calculate_digitized_sfr_rates_sfr_only(self):
-
-        #
-        sfr_dict = update_sfr_dict(
-            sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        )
 
         digitized_sfr_rates = calculate_digitized_sfr_rates(
             config=self.convolution_config,
             convolution_time_bin_center=0.5 * 1e9 * u.yr,
             data_dict={"delay_time": np.array([-1, 1, 2, 3, 100]) * 1e9 * u.yr},
-            sfr_dict=sfr_dict,
+            sfr_dict=self.convolution_config["SFR_info"],
         )
         output_unit = u.Msun / u.yr / u.Gpc**3
 
@@ -217,239 +330,6 @@ class test_calculate_origin_time_array(unittest.TestCase):
         )
 
 
-class test_handle_extra_weights_function(unittest.TestCase):
-    def setUp(self):
-        #
-        input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
-        output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
-
-        ##############
-        # SET UP DATA
-        self.dummy_data = {
-            "delay_time": np.array([0, 1, 2, 3]),
-            "probability": np.array([1, 2, 3, 4]),
-        }
-        dummy_df = pd.DataFrame.from_records(self.dummy_data)
-
-        #############
-        # create input HDF5 file
-        with h5py.File(input_hdf5_filename, "w") as input_hdf5_file:
-
-            ######################
-            # Create groups
-            input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
-            input_hdf5_file.create_group("config")
-
-            ###############
-            # Readout population settings
-            population_settings_filename = pkg_resources.resource_filename(
-                "syntheticstellarpopconvolve",
-                "example_data/example_population_settings.json",
-            )
-
-            with open(population_settings_filename, "r") as f:
-                population_settings = json.loads(f.read())
-
-            # Delete some stuff from the settings
-            del population_settings["population_settings"]["bse_options"]["metallicity"]
-
-            # Write population config to file
-            input_hdf5_file.create_dataset(
-                "config/population", data=json.dumps(population_settings)
-            )
-
-        ##############
-        # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
-
-        #
-        self.convolution_config = copy.copy(default_convolution_config)
-
-        # Set up SFR
-        self.convolution_config["SFR_info"] = {
-            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
-        }
-
-        # set up convolution bins
-        self.convolution_config["convolution_time_bin_edges"] = np.array(
-            [0, 1, 2, 3, 4]
-        )
-
-        # lookback time convolution only
-        self.convolution_config["time_type"] = "lookback_time"
-
-        #
-        self.convolution_config["input_filename"] = input_hdf5_filename
-        self.convolution_config["output_filename"] = output_hdf5_filename
-
-        self.convolution_config["redshift_interpolator_data_output_filename"] = (
-            os.path.join(TMP_DIR, "interpolator_dict.p")
-        )
-
-        #
-        self.convolution_config["convolution_instructions"] = [
-            {
-                "input_data_type": "event",
-                "input_data_name": "dummy",
-                "output_data_name": "dummy",
-                "data_column_dict": {
-                    "delay_time": "delay_time",
-                    "yield_rate": "probability",
-                },
-                "ignore_metallicity": True,
-            },
-        ]
-
-        #
-        self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
-
-        #
-        prepare_output_file(config=self.convolution_config)
-
-    def test_handle_extra_weights_function_normal(self):
-        def extra_weights_function(config, data_dict):
-            return np.zeros(data_dict["yield_rate"].shape)
-
-        convolution_instruction = self.convolution_config["convolution_instructions"][0]
-        convolution_instruction["extra_weights_function"] = extra_weights_function
-
-        self.dummy_data["yield_rate"] = self.dummy_data["probability"]
-
-        extra_weights = handle_extra_weights_function(
-            config=self.convolution_config,
-            convolution_time_bin_center=0.2,
-            convolution_instruction=convolution_instruction,
-            sfr_dict={},
-            data_dict=self.dummy_data,
-            output_shape=self.dummy_data["yield_rate"].shape,
-        )
-
-        #
-        np.testing.assert_array_equal(
-            extra_weights, np.zeros(self.dummy_data["yield_rate"].shape)
-        )
-
-    def test_handle_extra_weights_function_extra_input_fail(self):
-        # test should fail since we don't provide the input for the function
-        def extra_weights_function(config, data_dict, a, b):
-            return np.zeros(data_dict["yield_rate"].shape) + a + b
-
-        convolution_instruction = self.convolution_config["convolution_instructions"][0]
-        convolution_instruction["extra_weights_function"] = extra_weights_function
-
-        #
-        self.dummy_data["yield_rate"] = self.dummy_data["probability"]
-
-        with self.assertRaises(KeyError):
-            _ = handle_extra_weights_function(
-                config=self.convolution_config,
-                convolution_time_bin_center=0.2,
-                convolution_instruction=convolution_instruction,
-                sfr_dict={},
-                data_dict=self.dummy_data,
-                output_shape=self.dummy_data["yield_rate"].shape,
-            )
-
-    def test_handle_extra_weights_function_extra_function_fail(self):
-        # test should fail since the function does not return anything
-        def extra_weights_function(config, data_dict, a, b):
-            pass
-
-        convolution_instruction = self.convolution_config["convolution_instructions"][0]
-        convolution_instruction["extra_weights_function"] = extra_weights_function
-        convolution_instruction["extra_weights_function_additional_parameters"] = {
-            "a": 10,
-            "b": 2.5,
-        }
-
-        #
-        self.dummy_data["yield_rate"] = self.dummy_data["probability"]
-
-        with self.assertRaises(ValueError):
-            _ = handle_extra_weights_function(
-                config=self.convolution_config,
-                convolution_time_bin_center=0.2,
-                convolution_instruction=convolution_instruction,
-                sfr_dict={},
-                data_dict=self.dummy_data,
-                output_shape=self.dummy_data["yield_rate"].shape,
-            )
-
-    def test_handle_extra_weights_function_extra_input_pass(self):
-        # test should fail since we don't provide the input for the function
-        def extra_weights_function(config, data_dict, a, b):
-            return np.zeros(data_dict["yield_rate"].shape) + a + b
-
-        convolution_instruction = self.convolution_config["convolution_instructions"][0]
-        convolution_instruction["extra_weights_function"] = extra_weights_function
-        convolution_instruction["extra_weights_function_additional_parameters"] = {
-            "a": 10,
-            "b": 2.5,
-        }
-
-        #
-        self.dummy_data["yield_rate"] = self.dummy_data["probability"]
-
-        extra_weights = handle_extra_weights_function(
-            config=self.convolution_config,
-            convolution_time_bin_center=0.2,
-            convolution_instruction=convolution_instruction,
-            sfr_dict={},
-            data_dict=self.dummy_data,
-            output_shape=self.dummy_data["yield_rate"].shape,
-        )
-
-        np.testing.assert_array_equal(
-            extra_weights, np.zeros(self.dummy_data["yield_rate"].shape) + 12.5
-        )
-
-    def test_handle_extra_weights_function_no_function_shape_fail(self):
-        def extra_weights_function(config, data_dict, a, b):
-            return np.zeros(data_dict["yield_rate"].shape) + a + b
-
-        # test should fail since the output shape doesnt match
-        convolution_instruction = self.convolution_config["convolution_instructions"][0]
-        convolution_instruction["extra_weights_function"] = extra_weights_function
-        convolution_instruction["extra_weights_function_additional_parameters"] = {
-            "a": 10,
-            "b": 2.5,
-        }
-
-        #
-        self.dummy_data["yield_rate"] = self.dummy_data["probability"]
-
-        with self.assertRaises(ValueError):
-            _ = handle_extra_weights_function(
-                config=self.convolution_config,
-                convolution_time_bin_center=0.2,
-                convolution_instruction=convolution_instruction,
-                sfr_dict={},
-                data_dict=self.dummy_data,
-                output_shape=np.shape([1]),
-            )
-
-    def test_handle_extra_weights_function_no_function(self):
-        # test should fail since the output shape doesnt match
-        convolution_instruction = self.convolution_config["convolution_instructions"][0]
-
-        #
-        self.dummy_data["yield_rate"] = self.dummy_data["probability"]
-
-        extra_weights = handle_extra_weights_function(
-            config=self.convolution_config,
-            convolution_time_bin_center=0.2,
-            convolution_instruction=convolution_instruction,
-            sfr_dict={},
-            data_dict=self.dummy_data,
-            output_shape=np.shape([1]),
-        )
-
-        #
-        np.testing.assert_array_equal(extra_weights, np.ones(np.shape([1])))
-
-
 class test_handle_custom_scaling_or_conversion(unittest.TestCase):
     def setUp(self):
         self.data_layer_dict = {
@@ -506,50 +386,6 @@ class test_handle_custom_scaling_or_conversion(unittest.TestCase):
                 data_layer_or_column_dict_entry=self.data_layer_dict["both"],
                 value=2,
             )
-
-
-class test_extract_arguments(unittest.TestCase):
-    def test_extract_arguments_1_extra(self):
-        def funca(a, b):
-            pass
-
-        args = extract_arguments(funca, {"a": 2, "b": 3, "c": 4})
-        self.assertEqual(args, {"a": 2, "b": 3})
-
-    def test_extract_arguments_exact(self):
-        def funca(a, b):
-            pass
-
-        args = extract_arguments(funca, {"a": 2, "b": 3})
-        self.assertEqual(args, {"a": 2, "b": 3})
-
-    def test_extract_arguments_default_args_only(self):
-        def funcb(a, b, c=3):
-            pass
-
-        args = extract_arguments(funcb, {"a": 2, "b": 3})
-        self.assertEqual(args, {"a": 2, "b": 3})
-
-    def test_extract_arguments_default_all(self):
-        def funcb(a, b, c=3):
-            pass
-
-        args = extract_arguments(funcb, {"a": 2, "b": 3, "c": 4})
-        self.assertEqual(args, {"a": 2, "b": 3, "c": 4})
-
-    def test_extract_arguments_default_1_extra(self):
-        def funcb(a, b, c=3):
-            pass
-
-        args = extract_arguments(funcb, {"a": 2, "b": 3, "c": 4, "d": 5})
-        self.assertEqual(args, {"a": 2, "b": 3, "c": 4})
-
-    def test_extract_arguments_missing(self):
-        def funca(a, b):
-            pass
-
-        with self.assertRaises(KeyError):
-            extract_arguments(funca, {"a": 2})
 
 
 class test_calculate_bincenters(unittest.TestCase):

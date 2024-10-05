@@ -30,11 +30,91 @@ from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     calculate_edge_values,
     handle_custom_scaling_or_conversion,
-    handle_extra_weights_function,
+)
+from syntheticstellarpopconvolve.post_convolution_hook_routines import (
+    handle_post_convolution_function,
 )
 
 
-def ensemble_compression(filename):
+def convolve_ensemble_integration_post_convolution_hook_wrapper(
+    config,
+    job_dict,
+    sfr_dict,
+    data_dict,
+    convolution_instruction,
+    ensemble,
+):
+    """
+    Function to wrap the post-convolution function call for ensemble-convolution by integration.
+
+    rules:
+    - additional data can be added to the result_dict
+    - the number of systems can lower than before the call
+
+    Note: the result_dict is expected to be updated in-place.
+    """
+
+    #
+    name = "convolve-ensemble by integration"
+
+    #
+    config["logger"].warning(
+        "Handling post-convolution function hook call for {}".format(name)
+    )
+
+    #############
+    # pre-call setup
+
+    stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(ensemble=ensemble)
+
+    result_dict = {"yield": stripped_endpoints}
+
+    #
+    num_systems_before = len(result_dict[list(result_dict.keys())[0]])
+
+    #############
+    # call hook
+    handle_post_convolution_function(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        result_dict=result_dict,
+        name=name,
+    )
+
+    #############
+    # check output
+    num_systems_after = len(result_dict[list(result_dict.keys())[0]])
+
+    #
+    if num_systems_before != num_systems_after:
+        raise ValueError(
+            "{} post-convolution function has changed the number of systems stored in the output dict. Due to current data structure decisions this is not supported currently. Please make sure that the number of systems before and after calling this function stays equal.".format(
+                name
+            )
+        )
+
+    #
+    num_output_entries = len(result_dict.keys())
+
+    if num_output_entries > 1:
+        raise ValueError(
+            "{} post-convolution function has added additional entries to the result dictionary. Due tot current data structure decisions this is not supported currently. Please make sure that the number the result dictionary only contains one entry".format(
+                name
+            )
+        )
+
+    ################
+    # re-attach the updated data to the ensemble
+    # TODO: allow the result dict to contain more data than just 1 number.
+    attach_endpoints(ensemble=ensemble, endpoint_array=result_dict["yield"])
+
+    return ensemble
+
+
+def ensemble_compression(filename):  # DH0001
     """
     Return the compression type of the ensemble file, based on its filename extension.
     """
@@ -46,7 +126,7 @@ def ensemble_compression(filename):
     return None
 
 
-def open_ensemble(filename, encoding="utf-8"):
+def open_ensemble(filename, encoding="utf-8"):  # DH0001
     """
     Function to open an ensemble at filename for reading and decompression if required.
     """
@@ -65,7 +145,7 @@ def open_ensemble(filename, encoding="utf-8"):
     return file_object
 
 
-def keys_to_floats(input_dict: dict) -> dict:
+def keys_to_floats(input_dict: dict) -> dict:  # DH0001
     """
     Function to convert all the keys of the dictionary to float to float
 
@@ -111,7 +191,7 @@ def keys_to_floats(input_dict: dict) -> dict:
     return new_dict
 
 
-def ensemble_file_type(filename):
+def ensemble_file_type(filename):  # DH0001
     """
     Returns the file type of an ensemble file.
     """
@@ -125,14 +205,14 @@ def ensemble_file_type(filename):
     return filetype
 
 
-def load_ensemble(
+def load_ensemble(  # DH0001
     filename,
     convert_float_keys=True,
     select_keys=None,
     timing=False,
     flush=False,
     quiet=False,
-):
+):  # DH0001
     """
     Function to load an ensemeble file, even if it is compressed,
     and return its contents to as a Python dictionary.
@@ -177,7 +257,7 @@ def load_ensemble(
             tstart = time.time()
             _loaded = False
 
-            def _hook(obj):
+            def _hook(obj):  # DH0001
                 """
                 Hook to load ensemble
                 """
@@ -245,7 +325,7 @@ def load_ensemble(
     return data
 
 
-class AutoVivificationDict(dict):
+class AutoVivificationDict(dict):  # DH0001
     """
     Implementation of perl's autovivification feature, by overriding the
     get item and the __iadd__ operator (https://docs.python.org/3/reference/datamodel.html?highlight=iadd#object.__iadd__)
@@ -259,7 +339,7 @@ class AutoVivificationDict(dict):
         >>> {'example': {'mass': 10}}
     """
 
-    def __getitem__(self, item):
+    def __getitem__(self, item):  # DH0001
         """
         Getitem function for the autovivication dict
         """
@@ -270,7 +350,7 @@ class AutoVivificationDict(dict):
             value = self[item] = type(self)()
             return value
 
-    def __iadd__(self, other):
+    def __iadd__(self, other):  # DH0001
         """
         iadd function (handling the +=) for the autovivication dict.
         """
@@ -1141,7 +1221,7 @@ def extract_ensemble_data(config, convolution_instruction):
 
 
 def ensemble_handle_SFR_multiplication(
-    convolution_time_bin_center,
+    bin_center,
     job_dict,
     config,
     convolution_instruction,
@@ -1161,7 +1241,7 @@ def ensemble_handle_SFR_multiplication(
     #
     config["logger"].debug(
         "Convolving ensemble data with SFR rate at convolution bin {} with data_dict: {} and multiplying by {} ({})".format(
-            convolution_time_bin_center, data_dict, extra_value, extra_value_dict
+            bin_center, data_dict, extra_value, extra_value_dict
         )
     )
 
@@ -1178,33 +1258,30 @@ def ensemble_handle_SFR_multiplication(
     #############
     digitized_sfr_rates = calculate_digitized_sfr_rates(
         config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
+        convolution_time_bin_center=bin_center,
         data_dict=data_dict,
         sfr_dict=job_dict["sfr_dict"],
-    ).value
-
-    ################
-    # Run custom function afterwards
-    extra_weights = handle_extra_weights_function(
-        config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
-        convolution_instruction=convolution_instruction,
-        sfr_dict=job_dict["sfr_dict"],
-        data_dict=data_dict,
-        output_shape=np.array([1]).shape,
     )
 
-    # Combine SFR, extra weight and possibly time-duration (time bin-width) to turn rates into numbers
-    combined = digitized_sfr_rates[0] * extra_weights[0] * extra_value
+    # Multiply ensemble with SFR and extra value
+    multiply_ensemble(ensemble=ensemble, factor=digitized_sfr_rates[0] * extra_value)
 
-    # Multiply ensemble with that number
-    multiply_ensemble(ensemble=ensemble, factor=combined)
+    ################
+    # Handle post-convolution
+    ensemble = convolve_ensemble_integration_post_convolution_hook_wrapper(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=job_dict["sfr_dict"],
+        data_dict=data_dict,
+        convolution_instruction=convolution_instruction,
+        ensemble=ensemble,
+    )
 
     return ensemble
 
 
 def ensemble_convolve_ensemble(
-    convolution_time_bin_center,
+    bin_center,
     job_dict,
     config,
     convolution_instruction,
@@ -1341,7 +1418,7 @@ def ensemble_convolve_ensemble(
             if depth >= deepest_data_layer_depth:
                 # multiplication with SFR-related things here
                 ensemble[key] = ensemble_handle_SFR_multiplication(
-                    convolution_time_bin_center=convolution_time_bin_center,
+                    bin_center=bin_center,
                     job_dict=job_dict,
                     config=config,
                     convolution_instruction=convolution_instruction,
@@ -1352,7 +1429,7 @@ def ensemble_convolve_ensemble(
             else:
                 # call self with increased depth
                 ensemble[key] = ensemble_convolve_ensemble(
-                    convolution_time_bin_center=convolution_time_bin_center,
+                    bin_center=bin_center,
                     job_dict=job_dict,
                     config=config,
                     convolution_instruction=convolution_instruction,
@@ -1373,7 +1450,7 @@ def ensemble_convolve_ensemble(
 
 
 def ensemble_convolution_function(
-    convolution_time_bin_center, job_dict, config, convolution_instruction, data_dict
+    bin_center, job_dict, config, convolution_instruction, data_dict
 ):
     """
     Function for the multiprocessing worker to convolve ensemble-based data.
@@ -1385,59 +1462,81 @@ def ensemble_convolution_function(
     Moreover, the end-point nodes are expected to contain the
     quantity-per-unit-mass. In that way we do not have to rely on extracting
     that from the meta-data and stuff
+
+    Note: ensemble convolution only supports convolution by integration at this point.
     """
 
-    #
-    config["logger"].debug(
-        "Convolving ensemble-based data {} for bin_center {}".format(
-            convolution_instruction["input_data_name"], convolution_time_bin_center
+    if convolution_instruction["convolution_type"] == "integrate":
+
+        #
+        config["logger"].debug(
+            "Convolving ensemble-based data {} for bin_center {}".format(
+                convolution_instruction["input_data_name"], bin_center
+            )
         )
-    )
 
-    # pre-convolution preparation
-    ensemble = data_dict["ensemble_data"]
-    data_layer_dict = convolution_instruction["data_layer_dict"]
+        # pre-convolution preparation
+        ensemble = data_dict["ensemble_data"]
+        data_layer_dict = convolution_instruction["data_layer_dict"]
 
-    # check if we want to supply a fixed metallicity
-    data_dict = {}
-    if "metallicity_value" in convolution_instruction:
-        data_dict["metallicity"] = convolution_instruction["metallicity_value"]
+        # check if we want to supply a fixed metallicity
+        data_dict = {}
+        if "metallicity_value" in convolution_instruction:
+            data_dict["metallicity"] = convolution_instruction["metallicity_value"]
 
-    # add some extra things to the convolution instruction TODO this can be placed elsewhere? TODO: what the difference between max_depth and deepest_data_layer_depth?
-    convolution_instruction["deepest_data_layer_depth"] = get_deepest_data_layer_depth(
-        data_layer_dict=data_layer_dict
-    )
-    convolution_instruction["inverted_data_layer_dict"] = invert_data_layer_dict(
-        data_layer_dict=data_layer_dict
-    )
-    convolution_instruction["data_layer_values"] = get_data_layer_dict_values(
-        data_layer_dict=data_layer_dict
-    )
+        # add some extra things to the convolution instruction TODO this can be placed elsewhere? TODO: what the difference between max_depth and deepest_data_layer_depth?
+        convolution_instruction["deepest_data_layer_depth"] = (
+            get_deepest_data_layer_depth(data_layer_dict=data_layer_dict)
+        )
+        convolution_instruction["inverted_data_layer_dict"] = invert_data_layer_dict(
+            data_layer_dict=data_layer_dict
+        )
+        convolution_instruction["data_layer_values"] = get_data_layer_dict_values(
+            data_layer_dict=data_layer_dict
+        )
 
-    # convolution
-    ensemble = ensemble_convolve_ensemble(
-        ensemble=ensemble,
-        convolution_instruction=convolution_instruction,
-        config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
-        job_dict=job_dict,
-        data_dict=data_dict,
-    )
+        # convolution
+        ensemble = ensemble_convolve_ensemble(
+            ensemble=ensemble,
+            convolution_instruction=convolution_instruction,
+            config=config,
+            bin_center=bin_center,
+            job_dict=job_dict,
+            data_dict=data_dict,
+        )
 
-    # marginalisation
-    config, ensemble, convolution_instruction = ensemble_handle_marginalisation(
-        config=config,
-        ensemble=ensemble,
-        convolution_instruction=convolution_instruction,
-        is_pre_conv=False,
-    )
+        # marginalisation
+        config, ensemble, convolution_instruction = ensemble_handle_marginalisation(
+            config=config,
+            ensemble=ensemble,
+            convolution_instruction=convolution_instruction,
+            is_pre_conv=False,
+        )
 
-    # detach endpoints from ensemble
-    stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(ensemble=ensemble)
+        # detach endpoints from ensemble
+        # TODO: perhaps we can allow the endpoints to contain multiple values?
+        stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(
+            ensemble=ensemble
+        )
 
-    # return endpoints and ensemble if first job
-    result_dict = {"convolution_result": stripped_endpoints}
-    if job_dict["job_number"] == 0:
-        result_dict["stripped_ensemble"] = stripped_ensemble
+        # put back the units
+        stripped_endpoints = (
+            stripped_endpoints
+            * config["yield_rate_unit"]
+            * job_dict["sfr_dict"]["starformation_rate_array"][0].unit
+        )
 
-    return result_dict
+        #
+        convolution_result = {"yield": stripped_endpoints}
+
+        if job_dict["job_number"] == 0:
+            convolution_result["stripped_ensemble"] = stripped_ensemble
+
+        return {"convolution_result": convolution_result}
+
+    else:
+        raise ValueError(
+            "Convolution type '{}' not supported".format(
+                convolution_instruction["convolution_type"]
+            )
+        )

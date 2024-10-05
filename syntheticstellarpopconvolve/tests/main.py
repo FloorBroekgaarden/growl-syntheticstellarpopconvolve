@@ -9,13 +9,26 @@ import unittest
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
 )
-from syntheticstellarpopconvolve.tests.test_check_convolution_config import (
+from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
     test_check_convolution_config,
+)
+from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_instruction import (
     test_check_convolution_instruction,
     test_check_metallicity,
-    test_check_required,
-    test_check_sfr_dict,
 )
+from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
+    test_check_sfr_dict,
+    test_pad_sfr_dict,
+)
+
+# from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
+#     test_check_convolution_config,
+#     test_check_convolution_instruction,
+#     test_check_metallicity,
+#     test_check_required,
+#     test_check_sfr_dict,
+#     test_pad_sfr_dict,
+# )
 from syntheticstellarpopconvolve.tests.test_check_input_file import (
     test_check_input_file,
 )
@@ -63,8 +76,6 @@ from syntheticstellarpopconvolve.tests.test_convolve_events import (
 )
 from syntheticstellarpopconvolve.tests.test_convolve_populations import (
     test_generate_data_dict,
-    test_pad_sfr_dict,
-    test_update_sfr_dict,
 )
 from syntheticstellarpopconvolve.tests.test_cosmology_utils import (
     test_age_of_universe_to_redshift,
@@ -88,12 +99,18 @@ from syntheticstellarpopconvolve.tests.test_general_functions import (
     test_calculate_digitized_sfr_rates,
     test_calculate_edge_values,
     test_calculate_origin_time_array,
-    test_extract_arguments,
+    test_check_required,
     test_generate_group_name,
     test_get_tmp_dir,
+    test_get_username,
     test_handle_custom_scaling_or_conversion,
-    test_handle_extra_weights_function,
+    test_has_unit,
+    test_is_time_unit,
     test_pad_function,
+    test_temp_dir,
+)
+from syntheticstellarpopconvolve.tests.test_post_convolution_hook_routines import (  # test_handle_extra_weights_function,
+    test_extract_arguments,
 )
 from syntheticstellarpopconvolve.tests.test_prepare_output_file import (
     test_prepare_output_file,
@@ -106,9 +123,6 @@ from syntheticstellarpopconvolve.tests.test_prepare_redshift_interpolator import
 from syntheticstellarpopconvolve.tests.test_store_redshift_shell_info import (
     test_create_shell_volume_dict,
     test_store_redshift_shell_info,
-)
-from syntheticstellarpopconvolve.tests.test_update_convolution_config import (
-    test_update_convolution_config,
 )
 
 if __name__ == "__main__":

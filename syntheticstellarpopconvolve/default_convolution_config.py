@@ -7,7 +7,6 @@ TODO: allow a better configuration for the starformation rate, instead of having
 TODO: allow passing a unit for the starformation rate
 """
 
-import copy
 import logging
 import os
 from typing import Callable
@@ -30,6 +29,24 @@ logger.setLevel(logging.INFO)
 
 #################
 # Validation routines
+def list_of_dicts_validation(value):
+    if isinstance(value, list):
+        for el in list:
+            if not isinstance(el, dict):
+                raise ValueError(
+                    "All entries in the list should be dictionary-type objects"
+                )
+    else:
+        raise ValueError("Input has to either be a list or a dict")
+
+
+def dict_or_list_of_dicts_validation(value):
+    if not isinstance(value, (list, dict)):
+        raise ValueError("Input has to either be a list or a dict")
+    if isinstance(value, list):
+        dict_or_list_of_dicts_validation(value)
+
+
 def unit_validation(value):
     # allow 'astropy.units.core.Unit, 'astropy.units.quantity.Quantity', 'astropy.units.core.CompositeUnit'
     if not isinstance(value, (type(u.yr), type(1 / u.Msun), type(u.Msun**-1))):
@@ -75,10 +92,18 @@ default_convolution_config_dict = {
     ###################
     # Unsorted
     "multiply_by_time_binsize": {
-        "value": "False",
+        "value": False,
         "description": "Flag to multiply the SFR value by the time-bin size. When time-type='redshift' we use the associated lookback times and the width between those to calcualte the bi",
         "validation": boolean_int_validation,
     },
+    # "convolution_type": {
+    #     "value": "integrate",
+    #     "description": "Method used for the convolution of the input. 'integrate': integration based convolution where the normalized yield is multiplied by the starformation rate and that result is stored. 'sample': the input systems get sampled according to their normalized yield, and each of them get appointed a birth-time. Currently only works with 'time_type'=='lookback_time' and 'input_data_type'=='events'",
+    #     "validation": vol.All(
+    #         str,
+    #         vol.In(["integrate", "sample"]),
+    #     ),
+    # },
     ###################
     # Convolution configuration
     "time_type": {
@@ -94,6 +119,7 @@ default_convolution_config_dict = {
     "SFR_info": {
         "value": {},
         "description": "dictionary containing the starformation rate info. Can also be a list of dictionaries.",
+        "validation": dict_or_list_of_dicts_validation,
     },
     # # Global starformation rate config
     # "star_formation_rate_distribution_function": {
@@ -229,18 +255,18 @@ default_convolution_config_dict = {
         "description": "Filename for the redshift interpolator object.",  # TODO: expand explanation. Also consider if this is the best way
         "validation": str,
     },
-    ###################
-    # Extra weights functionality
-    "extra_weights_function": {
-        "value": None,
-        "description": "Function that calculates extra weights for each system or sub-ensemble. This functions should return a numpy array. The arguments of this function should be chosen from: 'config', 'time_value', 'convolution_instruction', 'data_dict' and the contents of 'extra_weights_function_additional_parameters'. For more explanation about this function see the convolution notebook.",
-        "validation": callable_or_none_validation,
-    },
-    "extra_weights_function_additional_parameters": {
-        "value": {},
-        "description": "additional arguments that can be accessed by the extra_weights_function.",
-        "validation": dict,
-    },
+    # ###################
+    # # Extra weights functionality
+    # "extra_weights_function": {
+    #     "value": None,
+    #     "description": "Function that calculates extra weights for each system or sub-ensemble. This functions should return a numpy array. The arguments of this function should be chosen from: 'config', 'time_value', 'convolution_instruction', 'data_dict' and the contents of 'extra_weights_function_additional_parameters'. For more explanation about this function see the convolution notebook.",
+    #     "validation": callable_or_none_validation,
+    # },
+    # "extra_weights_function_additional_parameters": {
+    #     "value": {},
+    #     "description": "additional arguments that can be accessed by the extra_weights_function.",
+    #     "validation": dict,
+    # },
     ###################
     # Multiprocessing settings
     "num_cores": {
@@ -310,6 +336,7 @@ default_convolution_config_dict = {
     "convolution_instructions": {
         "value": [{}],
         "description": "List of instructions for the convolution. ",  # TODO: expand explanation
+        "validation": list_of_dicts_validation,  # TODO: lets also allow just 1 convolution instruction as a dictionary
         # "validation": # NOTE: validation handled with custom function
     },
     "input_filename": {
@@ -348,177 +375,3 @@ default_convolution_config = {
 default_convolution_config_descriptions = {
     key: value["description"] for key, value in default_convolution_config_dict.items()
 }
-
-#############
-# Utilities to build the description table
-
-
-def build_description_table(table_name, parameter_list, description_dict):
-    """
-    Function to create a table containing the description of the options
-    """
-
-    #
-    indent = "   "
-
-    # Get parameter list and parse descriptions
-    parameter_list_with_descriptions = [
-        [
-            parameter,
-            parse_description(description_dict=description_dict[parameter]),
-        ]
-        for parameter in parameter_list
-    ]
-
-    # Construct parameter list
-    rst_table = """
-.. list-table:: {}
-{}:widths: 25, 75
-{}:header-rows: 1
-""".format(
-        table_name, indent, indent
-    )
-
-    #
-    rst_table += "\n"
-    rst_table += indent + "* - Option\n"
-    rst_table += indent + "  - Description\n"
-
-    for parameter_el in parameter_list_with_descriptions:
-        rst_table += indent + "* - {}\n".format(parameter_el[0])
-        rst_table += indent + "  - {}\n".format(parameter_el[1])
-
-    return rst_table
-
-
-def parse_description(description_dict):
-    """
-    Function to parse the description for a given parameter
-    """
-
-    # Make a local copy
-    description_dict = copy.copy(description_dict)
-
-    ############
-    # Add description
-    description_string = "Description:\n   "
-
-    # Clean description text
-    description_text = description_dict["description"].strip()
-
-    if description_text:
-        description_text = description_text[0].capitalize() + description_text[1:]
-        if description_text[-1] != ".":
-            description_text = description_text + "."
-    description_string += description_text
-
-    ##############
-    # Add unit (in latex)
-    if "unit" in description_dict:
-        if description_dict["unit"] != dimensionless_unit:
-            description_string = description_string + "\n\nUnit: [{}].".format(
-                description_dict["unit"].to_string("latex_inline")
-            )
-
-    ##############
-    # Add default value
-    if "value" in description_dict:
-        # Clean
-        if isinstance(description_dict["value"], str) and (
-            "/home" in description_dict["value"]
-        ):
-            description_dict["value"] = "example path"
-
-        # Write
-        description_string = description_string + "\n\nDefault value:\n   {}".format(
-            description_dict["value"]
-        )
-
-    ##############
-    # Add validation
-    if "validation" in description_dict:
-        # Write
-        description_string = description_string + "\n\nValidation:\n   {}".format(
-            description_dict["validation"]
-        )
-
-    # Check if there are newlines, and replace them by newlines with indent
-    description_string = description_string.replace("\n", "\n       ")
-
-    return description_string
-
-
-def write_default_settings_to_rst_file(options_defaults_dict, output_file: str) -> None:
-    """
-    Function that writes the descriptions of the grid options to an rst file
-
-    Args:
-        output_file: target file where the grid options descriptions are written to
-    """
-
-    ###############
-    # Check input
-    if not output_file.endswith(".rst"):
-        msg = "Filename doesn't end with .rst, please provide a proper filename"
-        raise ValueError(msg)
-
-    ###############
-    # construct descriptions dict
-    descriptions_dict = {}
-    for key, value in options_defaults_dict.items():
-        descriptions_dict[key] = {}
-        descriptions_dict[key]["description"] = value["description"]
-        descriptions_dict[key]["value"] = value["value"]
-
-        if "validation" in value:
-            descriptions_dict[key]["validation"] = value["validation"]
-
-    # separate public and private options
-    public_options = [key for key in descriptions_dict if not key.startswith("_")]
-    # private_options = [key for key in descriptions_dict if key.startswith("_")]
-
-    ###############
-    # Build description page text
-
-    # Set up intro
-    description_page_text = ""
-    title = "Convolution options"
-    description_page_text += title + "\n"
-    description_page_text += "=" * len(title) + "\n\n"
-    description_page_text += "The following chapter contains all Population code options, along with their descriptions."
-    description_page_text += "\n\n"
-
-    # Set up description table for the public options
-    public_options_description_title = "Public options"
-    public_options_description_text = public_options_description_title + "\n"
-    public_options_description_text += (
-        "-" * len(public_options_description_title) + "\n\n"
-    )
-    public_options_description_text += "In this section we list the public options for the population code. These are meant to be changed by the user.\n"
-    public_options_description_text += build_description_table(
-        table_name="Public options",
-        parameter_list=sorted(public_options),
-        description_dict=descriptions_dict,
-    )
-    description_page_text += public_options_description_text
-    description_page_text += "\n\n"
-
-    # # Set up description table for the private options
-    # private_options_description_title = "Private internal variables"
-    # private_options_description_text = private_options_description_title + "\n"
-    # private_options_description_text += (
-    #     "-" * len(private_options_description_title) + "\n\n"
-    # )
-    # private_options_description_text += "In this section we list the private internal parameters for the population code. These are not meant to be changed by the user.\n"
-    # private_options_description_text += build_description_table(
-    #     table_name="Private internal variables",
-    #     parameter_list=sorted(private_options),
-    #     description_dict=descriptions_dict,
-    # )
-    # description_page_text += private_options_description_text
-    # description_page_text += "\n\n"
-
-    ###############
-    # write to file
-    with open(output_file, "w") as f:
-        f.write(description_page_text)

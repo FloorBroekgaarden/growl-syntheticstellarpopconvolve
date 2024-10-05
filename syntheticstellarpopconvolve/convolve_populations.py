@@ -1,7 +1,5 @@
 """
 Main file to handle the convolution of populations
-
-TODO: when units are passed back to we need to store them in the meta-data
 """
 
 import json
@@ -10,6 +8,7 @@ import os
 import pickle
 
 import h5py
+import numpy as np
 import setproctitle
 
 from syntheticstellarpopconvolve.convolve_custom_data import (
@@ -28,6 +27,7 @@ from syntheticstellarpopconvolve.general_functions import (
     JsonCustomEncoder,
     generate_group_name,
     get_tmp_dir,
+    has_unit,
 )
 
 CONVOLUTION_FUNCTION_DICT = {
@@ -35,6 +35,39 @@ CONVOLUTION_FUNCTION_DICT = {
     "ensemble": ensemble_convolution_function,
     "custom": custom_convolution_function,
 }
+
+
+def store_convolution_result_entries(
+    config, current_time_bin_group, convolution_result
+):
+    """
+    Function to handle storing an entry of the convolution_result
+
+    TODO: handle stripped ensemble better
+    """
+
+    units_to_store = {}
+
+    # loop over the entries
+    for entry in convolution_result.keys():
+        config["logger"].error(f"Storing {entry}")
+
+        entry_data = convolution_result[entry]
+
+        # handle storing data with units
+        if has_unit(entry_data):
+            current_time_bin_group.create_dataset(entry, data=entry_data.value)
+            units_to_store[entry] = entry_data.unit
+        # handle storing data without units
+        else:
+            current_time_bin_group.create_dataset(entry, data=entry_data)
+
+    print("units_to_store", units_to_store)
+
+    # store units
+    current_time_bin_group.attrs["units"] = json.dumps(
+        units_to_store, cls=JsonCustomEncoder
+    )
 
 
 def pre_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
@@ -91,7 +124,19 @@ def pre_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
 
 def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
     """
-    TODO
+    TODO write each array as a sub group in the convolution
+    results. instead of dumping the data blindly within
+    convolved_array/ lets rename it to convolution_results and under
+    that umbrella we throw different kinds of data
+
+    data types:
+    - yield (integration, events and ensemble): SFR weighted probabilities of each system
+    - stripped_ensemble (integration, ensembe): Ensemble with its endpoints stripped off. Will only be stored in the first one and should be used to re-construct the other results
+    - sampled_IDs: (sampling, events): IDs of sampled systems
+    - sampled_birth_times: (sampling, events): Assigned birth-times of sampled systems.
+    - sampled_positions: (sampling, events): sampled positions. Can be multi-d.
+
+    We can automatically store these and update some of the meta-data.
     """
 
     #################
@@ -104,58 +149,67 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
 
     ########
     # Write results to output file
-    if config["write_to_hdf5"]:
-        # Get groupname
-        groupname, _ = generate_group_name(
-            convolution_instruction=convolution_instruction, sfr_dict=sfr_dict
+    if not config["write_to_hdf5"]:
+        return
+
+    # Get groupname
+    groupname, _ = generate_group_name(
+        convolution_instruction=convolution_instruction, sfr_dict=sfr_dict
+    )
+    full_groupname = "output_data/" + groupname
+
+    with h5py.File(config["output_filename"], "a") as output_hdf5file:
+        config["logger"].debug("Writing results to {}".format(full_groupname))
+
+        # Readout group
+        grp = output_hdf5file[full_groupname]
+
+        ###########
+        # loop over all files in the pickle
+        content_dir = os.listdir(tmp_dir)
+
+        sorted_content_dir = sorted(
+            content_dir,
+            key=lambda x: float(".".join(x.split(".")[:-1]).split(" ")[0]),
         )
-        full_groupname = "output_data/" + groupname
+        for pickle_file in sorted_content_dir:
+            #########
+            # Load pickled data
+            full_path = os.path.join(tmp_dir, pickle_file)
+            with open(full_path, "rb") as picklefile:
+                data = pickle.load(picklefile)
 
-        with h5py.File(config["output_filename"], "a") as output_hdf5file:
-            config["logger"].debug("Writing results to {}".format(full_groupname))
+            ##########
+            # Unpack
+            if "convolution_result" in data.keys():
+                convolution_result = data["convolution_result"]
+            else:  # TODO: do we want to raise an error or just continue?
+                raise ValueError("No convolution result present in the data")
 
-            # Readout group
-            grp = output_hdf5file[full_groupname]
-
-            ###########
-            # loop over all files in the pickle
-            content_dir = os.listdir(tmp_dir)
-
-            sorted_content_dir = sorted(
-                content_dir,
-                key=lambda x: float(".".join(x.split(".")[:-1]).split(" ")[0]),
+            ##########
+            # Create group
+            current_time_bin_grp = grp.create_group(
+                "convolved_array/{}".format(str(data["bin_center"]))
             )
-            for file in sorted_content_dir:
 
-                # Load pickled data
-                full_path = os.path.join(tmp_dir, file)
-                with open(full_path, "rb") as picklefile:
-                    data = pickle.load(picklefile)
-
-                # Store payload in grp
-                config["logger"].debug(
-                    "Storing convolution results of bin-center {}".format(
-                        str(data["convolution_time_bin_center"])
-                    )
+            ############
+            # handle storing entries and units
+            config["logger"].debug(
+                "Storing convolution results of bin-center {}".format(
+                    str(data["bin_center"])
                 )
-                grp.create_dataset(
-                    "convolved_array/{}".format(
-                        str(data["convolution_time_bin_center"])
-                    ),
-                    data=data["convolution_result"],
-                )
+            )
 
-                # if cleaned ensemble is included, add that too
-                if "stripped_ensemble" in data.keys():
-                    config["logger"].debug("Storing stripped ensemble")
+            #
+            store_convolution_result_entries(
+                config=config,
+                current_time_bin_group=current_time_bin_grp,
+                convolution_result=convolution_result,
+            )
 
-                    grp.create_dataset(
-                        "stripped_ensemble", data=json.dumps(data["stripped_ensemble"])
-                    )
-
-                # remove the pickled file
-                if config["remove_pickle_files"]:
-                    os.remove(full_path)
+            # remove the pickled file
+            if config["remove_pickle_files"]:
+                os.remove(full_path)
 
 
 def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
@@ -175,8 +229,9 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
             return None
 
         # Unpack info
-        convolution_time_bin_center = job_dict["convolution_time_bin_center"]
+        bin_center = job_dict["bin_center"]
         convolution_instruction = job_dict["convolution_instruction"]
+
         data_dict = job_dict["data_dict"]
 
         ##########
@@ -186,9 +241,14 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
         ##########
         #
         config["logger"].debug(
-            "Worker {}: convolution_time_bin_center: {}: Calculating {} {} rates".format(
+            "Worker {}: {} bin center: {}: Calculating {} {} rates".format(
                 worker_ID,
-                convolution_time_bin_center,
+                (
+                    "convolution time"
+                    if convolution_instruction["convolution_type"] == "integrate"
+                    else "starformation time"
+                ),
+                bin_center,
                 convolution_instruction["input_data_type"],
                 convolution_instruction["input_data_name"],
             )
@@ -209,7 +269,7 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
         convolution_result_dict = CONVOLUTION_FUNCTION_DICT[
             convolution_instruction["input_data_type"]
         ](
-            convolution_time_bin_center=convolution_time_bin_center,
+            bin_center=bin_center,
             job_dict=job_dict,
             config=config,
             convolution_instruction=convolution_instruction,
@@ -217,15 +277,13 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
         )
 
         # Construct dictionary that is stored in the pickle files
-        output_dict["convolution_time_bin_center"] = convolution_time_bin_center
+        output_dict["bin_center"] = bin_center
         output_dict["convolution_instruction"] = convolution_instruction
         output_dict = {**output_dict, **convolution_result_dict}
 
         #
         with open(
-            os.path.join(
-                job_dict["output_dir"], "{}.p".format(convolution_time_bin_center)
-            ),
+            os.path.join(job_dict["output_dir"], "{}.p".format(bin_center)),
             "wb",
         ) as f:
             pickle.dump(output_dict, f)
@@ -241,23 +299,53 @@ def convolution_queue_filler(  # DH0001
 ):
     """
     Function to handle filling the queue for the multiprocessing
+
+    When the convolution instruction is a sampling-based convolution,
+    we use forward convolution, which loops over starformation bins
+    rather than convolution bins
     """
 
-    # Fill the queue with centres
-    for convolution_bin_number, (
-        convolution_bin_center,
-        convolution_bin_size,
-    ) in enumerate(
-        zip(
+    ######
+    # Determine bins to loop over (integrate = backward conv, sampling = forward conv)
+    if convolution_instruction["convolution_type"] == "integrate":
+        zipped_bin_data = zip(
             config["convolution_time_bin_centers"], config["convolution_time_bin_sizes"]
         )
-    ):
+    elif convolution_instruction["convolution_type"] == "sample":
+
+        # TODO:  and put into sfr dict check and update.
+        # TODO: generalize this to also use redshift
+        starformation_time_bin_sizes = np.diff(sfr_dict["lookback_time_bin_edges"])
+        starformation_time_bin_centers = (
+            sfr_dict["lookback_time_bin_edges"][1:]
+            + sfr_dict["lookback_time_bin_edges"][:-1]
+        ) / 2
+
+        # # TODO: move to sfr dict checking
+        # starformation_bin_sizes = np.diff(sfr_dict["starformation_rate_array"])
+        # starformation_bin_centers = (
+        #     sfr_dict["starformation_rate_array"][1:]
+        #     + sfr_dict["starformation_rate_array"][:-1]
+        # ) / 2
+
+        zipped_bin_data = zip(
+            starformation_time_bin_centers, starformation_time_bin_sizes
+        )
+    else:
+        raise ValueError("convolution type not supported")
+
+    ######
+    # Fill the queue with centres
+    for bin_number, (
+        bin_center,
+        bin_size,
+    ) in enumerate(zipped_bin_data):
         # Set up job dict
         job_dict = {
-            "job_number": convolution_bin_number,
-            "convolution_time_bin_center": convolution_bin_center,
-            "convolution_time_bin_size": convolution_bin_size,
-            "convolution_time_bin_number": convolution_bin_number,
+            "job_number": bin_number,
+            "bin_center": bin_center,
+            "bin_size": bin_size,
+            "bin_number": bin_number,
             "sfr_dict": sfr_dict,
             "convolution_instruction": convolution_instruction,
             "data_dict": data_dict,

@@ -80,7 +80,10 @@ class test_convolution_with_events(unittest.TestCase):
         # Set up SFR
         convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -105,6 +108,7 @@ class test_convolution_with_events(unittest.TestCase):
                 "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "yield_rate": "probability",
@@ -125,25 +129,25 @@ class test_convolution_with_events(unittest.TestCase):
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/0.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/0.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/1.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/1.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/2.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/2.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 0])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/3.5 yr"
+                "output_data/event/dummy/dummy/convolved_array/3.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 0, 0])))
 

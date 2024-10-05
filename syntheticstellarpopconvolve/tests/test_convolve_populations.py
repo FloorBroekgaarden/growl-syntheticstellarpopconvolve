@@ -16,14 +16,10 @@ import pkg_resources
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
 from syntheticstellarpopconvolve import default_convolution_config
-from syntheticstellarpopconvolve.check_convolution_config import (
-    check_convolution_config,
+from syntheticstellarpopconvolve.check_and_update_convolution_config import (
+    check_and_update_convolution_config,
 )
-from syntheticstellarpopconvolve.convolve_populations import (
-    generate_data_dict,
-    pad_sfr_dict,
-    update_sfr_dict,
-)
+from syntheticstellarpopconvolve.convolve_populations import generate_data_dict
 from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
@@ -32,46 +28,46 @@ TMP_DIR = temp_dir(
 )
 
 
-class test_update_sfr_dict(unittest.TestCase):
-    def setUp(self):
+# class test_update_sfr_dict(unittest.TestCase):
+#     def setUp(self):
 
-        logger = logging.getLogger(__name__)
-        FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s ] %(asctime)s: %(message)s"
-        logging.basicConfig(format=FORMAT)
-        logger.setLevel(logging.INFO)
+#         logger = logging.getLogger(__name__)
+#         FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s ] %(asctime)s: %(message)s"
+#         logging.basicConfig(format=FORMAT)
+#         logger.setLevel(logging.INFO)
 
-        self.config = {
-            "logger": logger,
-            "time_type": "lookback_time",
-            "cosmology": cosmo,
-        }  # Example config
-        self.sfr_dict = {
-            "lookback_time_bin_edges": np.array([1, 2, 3]),
-            "redshift_bin_edges": np.array([0.1, 0.2, 0.3]),
-            "starformation_array": np.array([10, 20, 30]),
-            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
-            "metallicity_weighted_starformation_array": np.array(
-                [[1, 2, 3], [4, 5, 6]]
-            ),
-        }
+#         self.config = {
+#             "logger": logger,
+#             "time_type": "lookback_time",
+#             "cosmology": cosmo,
+#         }  # Example config
+#         self.sfr_dict = {
+#             "lookback_time_bin_edges": np.array([1, 2, 3]),
+#             "redshift_bin_edges": np.array([0.1, 0.2, 0.3]),
+#             "starformation_array": np.array([10, 20, 30]),
+#             "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
+#             "metallicity_weighted_starformation_array": np.array(
+#                 [[1, 2, 3], [4, 5, 6]]
+#             ),
+#         }
 
-    def test_update_sfr_dict_lookback(self):
-        updated_sfr_dict = update_sfr_dict(config=self.config, sfr_dict=self.sfr_dict)
-        padded_keys = [
-            key for key in updated_sfr_dict.keys() if key.startswith("padded")
-        ]
+#     def test_update_sfr_dict_lookback(self):
+#         updated_sfr_dict = update_sfr_dict(config=self.config, sfr_dict=self.sfr_dict)
+#         padded_keys = [
+#             key for key in updated_sfr_dict.keys() if key.startswith("padded")
+#         ]
 
-        self.assertTrue(len(padded_keys) > 0)
-        self.assertTrue("redshift_shell_volume_dict" not in updated_sfr_dict.keys())
+#         self.assertTrue(len(padded_keys) > 0)
+#         self.assertTrue("redshift_shell_volume_dict" not in updated_sfr_dict.keys())
 
-    def test_update_sfr_dict_redshift(self):
-        self.config["time_type"] = "redshift"
-        updated_sfr_dict = update_sfr_dict(config=self.config, sfr_dict=self.sfr_dict)
-        padded_keys = [
-            key for key in updated_sfr_dict.keys() if key.startswith("padded")
-        ]
-        self.assertTrue(len(padded_keys) > 0)
-        self.assertTrue("redshift_shell_volume_dict" in updated_sfr_dict.keys())
+#     def test_update_sfr_dict_redshift(self):
+#         self.config["time_type"] = "redshift"
+#         updated_sfr_dict = update_sfr_dict(config=self.config, sfr_dict=self.sfr_dict)
+#         padded_keys = [
+#             key for key in updated_sfr_dict.keys() if key.startswith("padded")
+#         ]
+#         self.assertTrue(len(padded_keys) > 0)
+#         self.assertTrue("redshift_shell_volume_dict" in updated_sfr_dict.keys())
 
 
 class test_generate_data_dict(unittest.TestCase):
@@ -127,7 +123,10 @@ class test_generate_data_dict(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -152,6 +151,7 @@ class test_generate_data_dict(unittest.TestCase):
                 "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "yield_rate": "probability",
@@ -167,7 +167,7 @@ class test_generate_data_dict(unittest.TestCase):
         prepare_output_file(config=self.convolution_config)
 
         #
-        check_convolution_config(self.convolution_config)
+        check_and_update_convolution_config(self.convolution_config)
 
         #
         normal_convolution_instructions = {
@@ -250,7 +250,10 @@ class test_generate_data_dict(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -275,6 +278,7 @@ class test_generate_data_dict(unittest.TestCase):
                 "input_data_type": "ensemble",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_layer_dict": {
                     "delay_time": 3,
                 },
@@ -358,7 +362,10 @@ class test_generate_data_dict(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -383,6 +390,7 @@ class test_generate_data_dict(unittest.TestCase):
                 "input_data_type": "custom",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_layer_dict": {
                     "delay_time": 3,
                 },
@@ -404,83 +412,6 @@ class test_generate_data_dict(unittest.TestCase):
                     "convolution_instructions"
                 ][0],
             )
-
-
-class test_pad_sfr_dict(unittest.TestCase):
-    def setUp(self):
-
-        logger = logging.getLogger(__name__)
-        FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s ] %(asctime)s: %(message)s"
-        logging.basicConfig(format=FORMAT)
-        logger.setLevel(logging.INFO)
-
-        self.config = {"logger": logger, "time_type": "lookback_time"}  # Example config
-        self.sfr_dict = {
-            "lookback_time_bin_edges": np.array([1, 2, 3]),
-            "redshift_bin_edges": np.array([0.1, 0.2, 0.3]),
-            "starformation_array": np.array([10, 20, 30]),
-            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
-            "metallicity_weighted_starformation_array": np.array(
-                [[1, 2, 3], [4, 5, 6]]
-            ),
-        }
-
-    def test_pad_sfr_dict_lookback_time(self):
-        padded_sfr_dict = pad_sfr_dict(self.config, self.sfr_dict)
-        self.assertTrue("padded_lookback_time_bin_edges" in padded_sfr_dict)
-        self.assertTrue(
-            np.array_equal(
-                padded_sfr_dict["padded_lookback_time_bin_edges"],
-                np.array([1 - 1e13, 1, 2, 3, 3 + 1e13]),
-            )
-        )
-        self.assertTrue("padded_starformation_array" in padded_sfr_dict)
-        self.assertTrue(
-            np.array_equal(
-                padded_sfr_dict["padded_starformation_array"],
-                np.array([0, 10, 20, 30, 0]),
-            )
-        )
-
-    def test_pad_sfr_dict_redshift(self):
-        self.config["time_type"] = "redshift"
-        padded_sfr_dict = pad_sfr_dict(self.config, self.sfr_dict)
-        self.assertTrue("padded_redshift_bin_edges" in padded_sfr_dict)
-        self.assertTrue(
-            np.array_equal(
-                padded_sfr_dict["padded_redshift_bin_edges"],
-                np.array([0.1 - 1e13, 0.1, 0.2, 0.3, 0.3 + 1e13]),
-            )
-        )
-        self.assertTrue("padded_starformation_array" in padded_sfr_dict)
-        self.assertTrue(
-            np.array_equal(
-                padded_sfr_dict["padded_starformation_array"],
-                np.array([0, 10, 20, 30, 0]),
-            )
-        )
-
-    def test_pad_sfr_dict_metallicity(self):
-        padded_sfr_dict = pad_sfr_dict(self.config, self.sfr_dict)
-        self.assertTrue("padded_metallicity_bin_edges" in padded_sfr_dict)
-        self.assertTrue(
-            np.array_equal(
-                padded_sfr_dict["padded_metallicity_bin_edges"],
-                np.array([1e-20, 0.01, 0.1, 0.2, 1]),
-            )
-        )
-        self.assertTrue(
-            "padded_metallicity_weighted_starformation_array" in padded_sfr_dict
-        )
-        expected_array = np.array(
-            [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 4, 5, 6, 0], [0, 0, 0, 0, 0]]
-        )
-        self.assertTrue(
-            np.array_equal(
-                padded_sfr_dict["padded_metallicity_weighted_starformation_array"],
-                expected_array,
-            )
-        )
 
 
 if __name__ == "__main__":

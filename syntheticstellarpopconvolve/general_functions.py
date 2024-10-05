@@ -2,7 +2,6 @@
 Some general functions related to the convolution
 """
 
-import inspect
 import json
 import logging
 import os
@@ -22,6 +21,8 @@ from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
 
 logger = logging.getLogger(__name__)
 
+dimensionless_unit = u.m / u.m
+
 
 def get_username():
     """
@@ -29,35 +30,6 @@ def get_username():
     """
 
     return psutil.Process().username()
-
-
-def extract_arguments(func, arg_dict):
-    """
-    Function that extracts the entries in 'arg_dict' that are arguments to the function 'func'
-    """
-
-    # get various arg types
-    signature = inspect.signature(func)
-    all_args = inspect.getfullargspec(func).args
-    args_with_defaults = [
-        k
-        for k, v in signature.parameters.items()
-        if v.default is not inspect.Parameter.empty
-    ]
-    args_without_defaults = [arg for arg in all_args if arg not in args_with_defaults]
-
-    # construct args
-    args = {arg: arg_dict[arg] for arg in args_without_defaults}
-
-    # check if kwonlyargs are also passed along
-    args_for_args_with_defaults = {
-        arg: arg_dict[arg] for arg in args_with_defaults if arg in arg_dict.keys()
-    }
-
-    # combine args
-    combined_args = {**args, **args_for_args_with_defaults}
-
-    return combined_args
 
 
 class JsonCustomEncoder(json.JSONEncoder):
@@ -169,68 +141,6 @@ def vb(message, verbosity, minimal_verbosity):  # DH0001
     verbose_print(message, verbosity, minimal_verbosity)
 
 
-def handle_extra_weights_function(
-    config,
-    convolution_time_bin_center,
-    convolution_instruction,
-    sfr_dict,
-    data_dict,
-    output_shape,
-):
-    """
-    Function to handle the calculation of a set of extra weights that will be applied to the systems / sub-ensemble
-
-    TODO: move this function elsewhere
-    """
-
-    # set default
-    extra_weights = np.ones(output_shape)
-
-    # handle calculation extra weights
-    if convolution_instruction.get("extra_weights_function", None) is not None:
-        # Construct what parameters are available for the extra function
-        available_parameters = {
-            "config": config,
-            "time_value": convolution_time_bin_center,
-            "convolution_instruction": convolution_instruction,
-            "sfr_dict": sfr_dict,
-            "data_dict": data_dict,
-            **convolution_instruction.get(
-                "extra_weights_function_additional_parameters", {}
-            ),  #
-        }
-
-        # Make sure we extract the correct things from the available parameters
-        extra_weights_function_args = extract_arguments(
-            func=convolution_instruction["extra_weights_function"],
-            arg_dict=available_parameters,
-        )
-
-        #
-        config["logger"].debug(
-            "Calculating extra weights using function {} and arguments {}".format(
-                convolution_instruction["extra_weights_function"].__name__,
-                extra_weights_function_args,
-            )
-        )
-
-        # Call extra function and calculate extra weights (with something like detection probability)
-        extra_weights = convolution_instruction["extra_weights_function"](
-            **extra_weights_function_args
-        )
-        if extra_weights is None:
-            raise ValueError(
-                "The extra function did not return a correct set of extra weights"
-            )
-
-    if extra_weights.shape != output_shape:
-        raise ValueError(
-            "Desired output shape does not match the shape of the extra weights"
-        )
-
-    return extra_weights
-
-
 def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
     """
     Function to calculate the origin time array
@@ -251,8 +161,7 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
                 origin_time_array
             )
         )
-
-    if config["time_type"] == "redshift":
+    elif config["time_type"] == "redshift":
         origin_time_array = calculate_origin_redshift_array(
             config=config,
             convolution_redshift_value=convolution_time_bin_center,
@@ -264,7 +173,7 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
             )
         )
     else:
-        raise ValueError("Choice for time-type unknown")
+        raise ValueError("Choice for time-type unknown. {}".format(config["time_type"]))
 
     return origin_time_array
 
@@ -305,7 +214,7 @@ def calculate_digitized_sfr_rates(
         metallicity_indices = (
             np.digitize(
                 data_dict["metallicity"],
-                bins=config["padded_metallicity_bin_edges"],
+                bins=sfr_dict["padded_metallicity_bin_edges"],
                 right=False,
             )
             - 1
@@ -314,14 +223,14 @@ def calculate_digitized_sfr_rates(
         # Calculate rates
         config["logger"].debug("Calculating metallicity weighted SFR rates")
         digitised_sfr_rates = sfr_dict[
-            "padded_metallicity_weighted_starformation_array"
+            "padded_metallicity_weighted_starformation_rate_array"
         ][metallicity_indices, digitized_time_indices]
     else:
         # use JUST the SFR, not the metallicity dependent one
 
         # Calculate rates
         config["logger"].debug("Calculating absolute SFR rates")
-        digitised_sfr_rates = sfr_dict["padded_starformation_array"][
+        digitised_sfr_rates = sfr_dict["padded_starformation_rate_array"][
             digitized_time_indices
         ]
 
@@ -355,6 +264,8 @@ def calculate_bincenters(array, convert="linear"):
 
     if convert == "linear":
         bincenters = (array[1:] + array[:-1]) / 2
+    else:
+        raise ValueError(f"convert choice {convert} is unknown")
 
     return bincenters
 
@@ -542,7 +453,7 @@ def temp_dir(*child_dirs: str, clean_path=False) -> str:
 
     tmp_dir = tempfile.gettempdir()
     username = get_username()
-    full_path = os.path.join(tmp_dir, "binary_c_python-{}".format(username))
+    full_path = os.path.join(tmp_dir, "sspc-{}".format(username))
 
     # loop over the other paths if there are any:
     if child_dirs:
@@ -557,3 +468,46 @@ def temp_dir(*child_dirs: str, clean_path=False) -> str:
     os.makedirs(full_path, exist_ok=True)
 
     return full_path
+
+
+def check_required(config, required_list):
+    """
+    Function to check if the keys in the required_list are present in the convolution_instruction dict
+    """
+
+    for key in required_list:
+        if key not in config.keys():
+            raise ValueError(
+                "{} is required in the convolution_instruction".format(key)
+            )
+
+
+def is_time_unit(parameter):
+    """
+    Function to check if a parameter has time-units
+    """
+
+    try:
+        parameter.to(u.yr)
+        return True
+    except u.core.UnitConversionError:
+        return False
+    except AttributeError:
+        return False
+
+
+def has_unit(parameter, fail_on_dimensionless=True):
+    """
+    Function to check if a parameter has any unit assigned to it
+    """
+
+    try:
+        unit = parameter.unit
+
+        if fail_on_dimensionless:
+            dimensionless_unit = u.m / u.m
+            if unit == dimensionless_unit:
+                return False
+        return True
+    except:
+        return False

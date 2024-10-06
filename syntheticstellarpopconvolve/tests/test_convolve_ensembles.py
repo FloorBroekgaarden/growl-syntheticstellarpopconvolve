@@ -44,7 +44,7 @@ from syntheticstellarpopconvolve.convolve_ensembles import (
     shift_layers_list,
     strip_ensemble_endpoints,
 )
-from syntheticstellarpopconvolve.general_functions import temp_dir
+from syntheticstellarpopconvolve.general_functions import JsonCustomEncoder, temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
@@ -280,7 +280,8 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
             extra_value_dict=None,
         )
 
-        expected_ensemble = {"a": {"1": 2.0}, "b": {"1": 2.0}}
+        unit = u.Msun / u.yr / u.Gpc**3
+        expected_ensemble = {"a": {"1": 2.0 * unit}, "b": {"1": 2.0 * unit}}
 
         self.assertTrue(ensemble == expected_ensemble)
 
@@ -307,7 +308,8 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
             extra_value_dict=extra_value_dict,
         )
 
-        expected_ensemble = {"a": {"1": 24.0}, "b": {"1": 24.0}}
+        unit = u.Msun / u.yr / u.Gpc**3
+        expected_ensemble = {"a": {"1": 24.0 * unit}, "b": {"1": 24.0 * unit}}
 
         self.assertTrue(ensemble == expected_ensemble)
 
@@ -454,6 +456,15 @@ class test_ensemble_convolution_function(unittest.TestCase):
 
         #
         self.assertTrue("convolution_result" in result_dict)
+
+        print("\n")
+        print(
+            json.dumps(
+                result_dict["convolution_result"], cls=JsonCustomEncoder, indent=4
+            )
+        )
+        print("\n")
+
         np.testing.assert_array_equal(
             result_dict["convolution_result"]["yield"],
             np.array([1, 1, 2, 2, 3, 3, 4, 4]) * (1.0 / u.yr / u.Gpc**3),

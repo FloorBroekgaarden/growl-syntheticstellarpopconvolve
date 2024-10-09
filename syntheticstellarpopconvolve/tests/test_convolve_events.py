@@ -410,11 +410,10 @@ class test_event_convolution_function(unittest.TestCase):
         )
 
         yield_result = convolution_result["convolution_result"]["yield"]
-        print(yield_result)
 
         #
         np.testing.assert_array_equal(
-            convolution_result["convolution_result"]["yield"],
+            yield_result,
             np.zeros(self.dummy_data["probability"].shape) * (1.0 / u.yr / u.Gpc**3),
         )
 

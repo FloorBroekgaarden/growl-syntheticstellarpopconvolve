@@ -27,7 +27,6 @@ from syntheticstellarpopconvolve.default_convolution_config import (
     ALLOWED_NUMERICAL_TYPES,
 )
 from syntheticstellarpopconvolve.general_functions import (
-    JsonCustomEncoder,
     calculate_digitized_sfr_rates,
     calculate_edge_values,
     handle_custom_scaling_or_conversion,
@@ -1475,10 +1474,10 @@ def extract_units_from_endpoints(endpoints):
     units = []
     unique_units = []
 
-    for endpoint_i, endpoint in endpoints:
+    for endpoint_i, endpoint in enumerate(endpoints):
         unit = endpoint.unit
         units.append(unit)
-        if not unit in unique_units:
+        if unit not in unique_units:
             unique_units.append(unit)
             if len(unique_units) > 1:
                 raise ValueError(
@@ -1559,18 +1558,12 @@ def ensemble_convolution_function(
             ensemble=ensemble
         )
 
-        print("FOUND units", found_units)
-        print("stripped endppoints", stripped_endpoints)
         # extract units from array (or rather, make it an array with a unit, instead of a array of values with units)
-        if found_units:
-            stripped_endpoints = extract_units_from_endpoints(
-                endpoints=stripped_endpoints
-            )
-        print("stripped endppoints", stripped_endpoints)
+        # if found_units:
+        stripped_endpoints = extract_units_from_endpoints(endpoints=stripped_endpoints)
 
         # put back the units
         stripped_endpoints = stripped_endpoints * config["yield_rate_unit"]
-        print(config["yield_rate_unit"])
 
         #
         convolution_result = {"yield": stripped_endpoints}

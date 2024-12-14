@@ -2,6 +2,7 @@
 Some general functions related to the convolution
 """
 
+import functools
 import json
 import logging
 import os
@@ -511,3 +512,6 @@ def has_unit(parameter, fail_on_dimensionless=True):
         return True
     except:
         return False
+
+
+has_unit_dimensionless_okay = functools.partial(has_unit, fail_on_dimensionless=False)

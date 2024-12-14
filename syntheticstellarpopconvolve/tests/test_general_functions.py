@@ -114,8 +114,7 @@ class test_temp_dir(unittest.TestCase):
 
         # Get username
         username = get_username()
-
-        sspc_temp_dir = os.path.join(temp_dir(), "sspc-{}".format(username))
+        sspc_temp_dir = os.path.join(temp_dir())
 
         #
         self.assertTrue(

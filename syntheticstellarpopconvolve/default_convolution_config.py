@@ -31,7 +31,7 @@ logger.setLevel(logging.INFO)
 # Validation routines
 def list_of_dicts_validation(value):
     if isinstance(value, list):
-        for el in list:
+        for el in value:
             if not isinstance(el, dict):
                 raise ValueError(
                     "All entries in the list should be dictionary-type objects"
@@ -44,7 +44,7 @@ def dict_or_list_of_dicts_validation(value):
     if not isinstance(value, (list, dict)):
         raise ValueError("Input has to either be a list or a dict")
     if isinstance(value, list):
-        dict_or_list_of_dicts_validation(value)
+        list_of_dicts_validation(value)
 
 
 def unit_validation(value):

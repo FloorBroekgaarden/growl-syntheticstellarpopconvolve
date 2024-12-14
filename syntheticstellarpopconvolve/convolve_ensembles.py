@@ -30,6 +30,7 @@ from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     calculate_edge_values,
     handle_custom_scaling_or_conversion,
+    has_unit_dimensionless_okay,
 )
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     handle_post_convolution_function,
@@ -51,7 +52,8 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
     - additional data can be added to the result_dict
     - the number of systems can lower than before the call
 
-    Note: the result_dict is expected to be updated in-place.
+    NOTE: the result_dict is expected to be updated in-place.
+    TODO: perhaps we should inflate the ensemble and pass it as the data for the data dict here.
     """
 
     #
@@ -64,8 +66,9 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
 
     #############
     # pre-call setup
-
-    stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(ensemble=ensemble)
+    stripped_ensemble, stripped_endpoints, found_units = strip_ensemble_endpoints(
+        ensemble=ensemble
+    )
 
     result_dict = {"yield": stripped_endpoints}
 
@@ -866,7 +869,7 @@ def shift_layers_list(layer_list, shift_value):
 
 ################
 # endpoints functionality
-def extract_endpoints(ensemble, endpoint_list=None):
+def extract_endpoints(ensemble, endpoint_list=None, found_units=False):
     """
     Function to strip the endpoints
     """
@@ -878,14 +881,20 @@ def extract_endpoints(ensemble, endpoint_list=None):
     if isinstance(ensemble, (dict, OrderedDict)):
         for key in ensemble.keys():
             if isinstance(ensemble[key], (dict, OrderedDict)):
-                endpoint_list = extract_endpoints(
-                    ensemble[key], endpoint_list=list(endpoint_list)
+                endpoint_list, unit_endpoint_list = extract_endpoints(
+                    ensemble[key],
+                    endpoint_list=list(endpoint_list),
+                    found_units=found_units,
                 )
+            elif has_unit_dimensionless_okay(ensemble[key]):
+                found_units = True
+                endpoint_list.append(ensemble[key])
             elif isinstance(ensemble[key], (int, float)):
                 endpoint_list.append(ensemble[key])
-        return endpoint_list
 
-    return np.array(endpoint_list)
+        return endpoint_list, found_units
+
+    return np.array(endpoint_list), found_units
 
 
 def attach_endpoints(ensemble, endpoint_array, counter=0, depth=0):
@@ -905,6 +914,12 @@ def attach_endpoints(ensemble, endpoint_array, counter=0, depth=0):
                     counter=counter,
                     depth=depth + 1,
                 )
+            elif isinstance(ensemble[key], (int, float)):
+                ensemble[key] = endpoint_array[counter]
+                counter += 1
+            elif has_unit_dimensionless_okay(ensemble[key]):
+                ensemble[key] = endpoint_array[counter]
+                counter += 1
             if ensemble[key] is None:
                 ensemble[key] = endpoint_array[counter]
                 counter += 1
@@ -931,6 +946,8 @@ def set_endpoints(ensemble, value):
                 set_endpoints(ensemble=ensemble[key], value=value)
             elif isinstance(ensemble[key], (int, float)):
                 ensemble[key] = value
+            elif has_unit_dimensionless_okay(ensemble[key]):
+                ensemble[key] = value
             elif ensemble[key] is None:
                 ensemble[key] = value
 
@@ -947,12 +964,12 @@ def strip_ensemble_endpoints(ensemble):
     """
 
     # extract endpoints
-    endpoints = extract_endpoints(ensemble=ensemble)
+    endpoints, found_units = extract_endpoints(ensemble=ensemble)
 
     # set original ensemble endpoints to 0
     set_endpoints(ensemble=ensemble, value=0)
 
-    return ensemble, endpoints
+    return ensemble, endpoints, found_units
 
 
 ################
@@ -1449,6 +1466,29 @@ def ensemble_convolve_ensemble(
     return ensemble
 
 
+def extract_units_from_endpoints(endpoints):
+    """
+    The endpoint array possibly contains values with units.
+    """
+
+    units = []
+    unique_units = []
+
+    for endpoint_i, endpoint in enumerate(endpoints):
+        unit = endpoint.unit
+        units.append(unit)
+        if unit not in unique_units:
+            unique_units.append(unit)
+            if len(unique_units) > 1:
+                raise ValueError(
+                    "Multiple units in the same endpoint array not supported currently"
+                )
+        endpoints[endpoint_i] = endpoints[endpoint_i].value
+
+    # multiply the whole array with the single, first unit. That should be the only unit cause otherwise there would be an error
+    return np.array(endpoints) * units[0]
+
+
 def ensemble_convolution_function(
     bin_center, job_dict, config, convolution_instruction, data_dict
 ):
@@ -1514,17 +1554,16 @@ def ensemble_convolution_function(
         )
 
         # detach endpoints from ensemble
-        # TODO: perhaps we can allow the endpoints to contain multiple values?
-        stripped_ensemble, stripped_endpoints = strip_ensemble_endpoints(
+        stripped_ensemble, stripped_endpoints, found_units = strip_ensemble_endpoints(
             ensemble=ensemble
         )
 
+        # extract units from array (or rather, make it an array with a unit, instead of a array of values with units)
+        # if found_units:
+        stripped_endpoints = extract_units_from_endpoints(endpoints=stripped_endpoints)
+
         # put back the units
-        stripped_endpoints = (
-            stripped_endpoints
-            * config["yield_rate_unit"]
-            * job_dict["sfr_dict"]["starformation_rate_array"][0].unit
-        )
+        stripped_endpoints = stripped_endpoints * config["yield_rate_unit"]
 
         #
         convolution_result = {"yield": stripped_endpoints}

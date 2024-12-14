@@ -44,7 +44,7 @@ from syntheticstellarpopconvolve.convolve_ensembles import (
     shift_layers_list,
     strip_ensemble_endpoints,
 )
-from syntheticstellarpopconvolve.general_functions import temp_dir
+from syntheticstellarpopconvolve.general_functions import JsonCustomEncoder, temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
@@ -280,7 +280,8 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
             extra_value_dict=None,
         )
 
-        expected_ensemble = {"a": {"1": 2.0}, "b": {"1": 2.0}}
+        unit = u.Msun / u.yr / u.Gpc**3
+        expected_ensemble = {"a": {"1": 2.0 * unit}, "b": {"1": 2.0 * unit}}
 
         self.assertTrue(ensemble == expected_ensemble)
 
@@ -307,7 +308,8 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
             extra_value_dict=extra_value_dict,
         )
 
-        expected_ensemble = {"a": {"1": 24.0}, "b": {"1": 24.0}}
+        unit = u.Msun / u.yr / u.Gpc**3
+        expected_ensemble = {"a": {"1": 24.0 * unit}, "b": {"1": 24.0 * unit}}
 
         self.assertTrue(ensemble == expected_ensemble)
 
@@ -454,6 +456,7 @@ class test_ensemble_convolution_function(unittest.TestCase):
 
         #
         self.assertTrue("convolution_result" in result_dict)
+
         np.testing.assert_array_equal(
             result_dict["convolution_result"]["yield"],
             np.array([1, 1, 2, 2, 3, 3, 4, 4]) * (1.0 / u.yr / u.Gpc**3),
@@ -1123,16 +1126,17 @@ class test_shift_layers_list(unittest.TestCase):
 
 
 class test_strip_ensemble_endpoints(unittest.TestCase):
+    # TODO: add with units
     def setUp(self):
         self.nested_dict = {"a": {"b": {"c": 1, "d": 2}, "e": 3}, "f": {"g": 4}, "h": 5}
 
     def test_strip_ensemble_endpoints(self):
         expected_endpoints = [1, 2, 3, 4, 5]
-        ensemble, endpoints = strip_ensemble_endpoints(self.nested_dict)
+        ensemble, endpoints, found_units = strip_ensemble_endpoints(self.nested_dict)
         self.assertEqual(endpoints, expected_endpoints)
 
         # Ensure original ensemble endpoints are set to 0
-        extracted_endpoints = extract_endpoints(ensemble)
+        extracted_endpoints, found_units = extract_endpoints(ensemble)
         self.assertTrue(all(endpoint == 0 for endpoint in extracted_endpoints))
 
 
@@ -1224,14 +1228,17 @@ class test_extract_endpoints(unittest.TestCase):
 
     def test_extract_endpoints_nested_dict(self):
         expected_endpoints = [1, 2, 3, 4, 5]
-        self.assertEqual(extract_endpoints(self.nested_dict), expected_endpoints)
+        endpoints, found_units = extract_endpoints(self.nested_dict)
+        self.assertEqual(endpoints, expected_endpoints)
 
     def test_extract_endpoints_flat_dict(self):
         expected_endpoints = [1, 2, 3]
-        self.assertEqual(extract_endpoints(self.flat_dict), expected_endpoints)
+        endpoints, found_units = extract_endpoints(self.flat_dict)
+        self.assertEqual(endpoints, expected_endpoints)
 
     def test_extract_endpoints_empty_dict(self):
-        self.assertEqual(extract_endpoints(self.empty_dict), [])
+        endpoints, found_units = extract_endpoints(self.empty_dict)
+        self.assertEqual(endpoints, [])
 
 
 class test_attach_endpoints(unittest.TestCase):

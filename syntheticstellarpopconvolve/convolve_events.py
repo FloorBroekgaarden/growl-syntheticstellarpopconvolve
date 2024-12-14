@@ -147,6 +147,9 @@ def event_convolution_function(
 
         #
         convolution_time_bin_center = bin_center
+        job_dict["convolution_time_bin_center"] = (
+            convolution_time_bin_center  # TODO: putting this here isnt the cleanest solution. should be set earlier
+        )
 
         #
         config["logger"].debug(

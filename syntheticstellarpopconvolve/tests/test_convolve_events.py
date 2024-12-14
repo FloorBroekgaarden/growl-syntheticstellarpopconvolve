@@ -21,8 +21,6 @@ from syntheticstellarpopconvolve.convolve_events import (
     event_convolution_function,
     extract_event_data,
 )
-
-# from syntheticstellarpopconvolve.convolve_populations import update_sfr_dict
 from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
@@ -229,7 +227,9 @@ class test_extract_event_data(unittest.TestCase):
 
 
 class test_event_convolution_function(unittest.TestCase):
-    """ """
+    """
+    TODO: make a more complicated post convolution hook function test
+    """
 
     def setUp(self):
         #
@@ -370,9 +370,13 @@ class test_event_convolution_function(unittest.TestCase):
             np.array([1, 2, 3, 4.0]) * (1.0 / u.yr / u.Gpc**3),
         )
 
-    def test_event_convolution_function_extra_weights(self):
-        def extra_weights_function(config, data_dict):
-            return np.zeros(data_dict["yield_rate"].shape)
+    def test_event_convolution_function_post_convolution_simple(self):
+        def simple_post_convolution_function(
+            config, job_dict, sfr_dict, data_dict, result_dict, convolution_instruction
+        ):
+            result_dict["yield"] = result_dict["yield"] * 0
+
+            return result_dict
 
         #
         normal_convolution_instructions = {
@@ -385,7 +389,7 @@ class test_event_convolution_function(unittest.TestCase):
                 "yield_rate": "probability",
             },
             "ignore_metallicity": True,
-            "extra_weights_function": extra_weights_function,
+            "post_convolution_function": simple_post_convolution_function,
         }
 
         #
@@ -393,11 +397,6 @@ class test_event_convolution_function(unittest.TestCase):
             config=self.convolution_config,
             convolution_instruction=normal_convolution_instructions,
         )
-
-        # #
-        # sfr_dict = update_sfr_dict(
-        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        # )
 
         sfr_dict = self.convolution_config["SFR_info"]
 
@@ -410,9 +409,11 @@ class test_event_convolution_function(unittest.TestCase):
             data_dict=data_dict,
         )
 
+        yield_result = convolution_result["convolution_result"]["yield"]
+
         #
         np.testing.assert_array_equal(
-            convolution_result["convolution_result"]["yield"],
+            yield_result,
             np.zeros(self.dummy_data["probability"].shape) * (1.0 / u.yr / u.Gpc**3),
         )
 

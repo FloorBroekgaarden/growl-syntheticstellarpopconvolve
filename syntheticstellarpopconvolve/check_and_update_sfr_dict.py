@@ -1,5 +1,7 @@
 """
 Functions to check and update the SFR dict
+
+TODO: add checks for the dimensions of the input arrays
 """
 
 import numpy as np
@@ -72,7 +74,6 @@ def pad_sfr_dict(config, sfr_dict):
                 sfr_dict["lookback_time_bin_sizes"],
             )
         )
-
     elif config["time_type"] == "redshift":
         #
         sfr_dict["padded_redshift_bin_edges"] = pad_function(
@@ -134,7 +135,7 @@ def pad_sfr_dict(config, sfr_dict):
             )
         )
     else:
-        raise ValueError("Invalid time-type")
+        raise ValueError("Invalid time-type ({})".format(config["time_type"]))
 
     #########
     # Pad time-bin sizes
@@ -277,6 +278,17 @@ def check_sfr_dict(
 
     ##########
     # Check if the correct time bins are present
+    if "starformation_rate_array" not in sfr_dict:
+        raise ValueError("starformation_rate_array is required in the sfr dictionary")
+
+    # check if starformation array has any unit
+    try:
+        sfr_dict["starformation_rate_array"].unit
+    except AttributeError:
+        raise AttributeError("starformation_rate_array requires an astropy unit")
+
+    ##########
+    # Check if the correct time bins are present
     if time_type == "lookback_time":
         if "lookback_time_bin_edges" not in sfr_dict:
             raise ValueError(
@@ -289,23 +301,33 @@ def check_sfr_dict(
                 "Please express 'lookback_time_bin_edges' in units of time"
             )
 
+        # check if length is correct:
+        if (
+            not len(sfr_dict["lookback_time_bin_edges"])
+            == len(sfr_dict["starformation_rate_array"]) + 1
+        ):
+            raise ValueError(
+                "Please ensure the length of the `starformation_rate_array` ({}) is one element shorter than the length of `lookback_time_bin_edges` ({})".format(
+                    len(sfr_dict["starformation_rate_array"]),
+                    len(sfr_dict["lookback_time_bin_edges"]),
+                )
+            )
+
     elif time_type == "redshift":
         if "redshift_bin_edges" not in sfr_dict:
             raise ValueError("redshift_bin_edges is required in the sfr dictionary")
 
-    ##########
-    # Check if the correct time bins are present
-    if "starformation_rate_array" not in sfr_dict:
-        raise ValueError("starformation_rate_array is required in the sfr dictionary")
-
-    # check if starformation array has any unit
-    try:
-        sfr_dict["starformation_rate_array"].unit
-    except AttributeError:
-        raise AttributeError("starformation_rate_array requires an astropy unit")
-
-    ##########
-    # TODO: Check if the shape of the time_bin_edges is 1 smaller than the starformation array
+        # check if length is correct:
+        if (
+            not len(sfr_dict["redshift_bin_edges"])
+            == len(sfr_dict["starformation_rate_array"]) + 1
+        ):
+            raise ValueError(
+                "Please ensure the length of the `starformation_rate_array` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
+                    len(sfr_dict["starformation_rate_array"]),
+                    len(sfr_dict["redshift_bin_edges"]),
+                )
+            )
 
     ##########
     # check if metallicity information is present
@@ -328,6 +350,43 @@ def check_sfr_dict(
             raise ValueError(
                 "metallicity_distribution_array should not contain any units"
             )
+
+        # check if length in the metallicity direction is correct:
+        if (
+            not sfr_dict["metallicity_distribution_array"].shape[1]
+            == len(sfr_dict["metallicity_bin_edges"]) - 1
+        ):
+            raise ValueError(
+                "Please ensure the length of the `metallicity_distribution_array.shape[1]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
+                    sfr_dict["metallicity_distribution_array"].shape[1],
+                    len(sfr_dict["metallicity_bin_edges"]),
+                )
+            )
+
+        # check if length in the time direction is correct:
+        if time_type == "lookback_time":
+            if (
+                not sfr_dict["metallicity_distribution_array"].shape[0]
+                == len(sfr_dict["lookback_time_bin_edges"]) - 1
+            ):
+                raise ValueError(
+                    "Please ensure the length of the metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `lookback_time_bin_edges` ({})".format(
+                        sfr_dict["metallicity_distribution_array"].shape[0],
+                        len(sfr_dict["lookback_time_bin_edges"]),
+                    )
+                )
+
+        elif time_type == "redshift":
+            if (
+                not sfr_dict["metallicity_distribution_array"].shape[0]
+                == len(sfr_dict["redshift_bin_edges"]) - 1
+            ):
+                raise ValueError(
+                    "Please ensure the length of the metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
+                        sfr_dict["metallicity_distribution_array"].shape[0],
+                        len(sfr_dict["redshift_bin_edges"]),
+                    )
+                )
 
 
 def check_and_update_sfr_dict(  # DH0001

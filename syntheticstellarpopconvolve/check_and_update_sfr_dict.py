@@ -41,8 +41,6 @@ def pad_sfr_dict(config, sfr_dict):
             right_val=max_pad,
             relative_to_edge_val=True,
         )
-
-        #
         sfr_dict["padded_time_bin_edges"] = sfr_dict["padded_lookback_time_bin_edges"]
         sfr_dict["time_bin_edges"] = sfr_dict["lookback_time_bin_edges"]
 
@@ -54,7 +52,7 @@ def pad_sfr_dict(config, sfr_dict):
             )
         )
 
-        #
+        # add bin sizes
         sfr_dict["lookback_time_bin_sizes"] = np.abs(
             np.diff(sfr_dict["lookback_time_bin_edges"])
         )
@@ -239,8 +237,6 @@ def update_sfr_dict(sfr_dict, config):
     Function to update the SFR dict
     - provides padding
     - adds redshift shell info
-
-    TODO: should also construct the metallicity-weighted stuff
     """
 
     #
@@ -253,6 +249,41 @@ def update_sfr_dict(sfr_dict, config):
             sfr_dict["starformation_rate_array"]
             * sfr_dict["metallicity_distribution_array"]
         )
+
+        # add bin centers
+        if sfr_dict.get("metallicity_scale", "linear") == "linear":
+            sfr_dict["metallicity_bin_centers"] = (
+                sfr_dict["metallicity_bin_edges"][1:]
+                + sfr_dict["metallicity_bin_edges"][:-1]
+            ) / 2
+        elif sfr_dict.get("metallicity_scale", "linear") == "log10":
+            sfr_dict["metallicity_bin_centers"] = 10 ** (
+                (
+                    np.log10(sfr_dict["metallicity_bin_edges"][1:])
+                    + np.log10(sfr_dict["metallicity_bin_edges"][:-1])
+                )
+                / 2
+            )
+        elif sfr_dict.get("metallicity_scale", "linear") == "log":
+            sfr_dict["metallicity_bin_centers"] = np.exp(
+                (
+                    np.log(sfr_dict["metallicity_bin_edges"][1:])
+                    + np.log(sfr_dict["metallicity_bin_edges"][:-1]) / 2
+                )
+            )
+
+    # add bin centers
+    if config["time_type"] == "lookback_time":
+        sfr_dict["lookback_time_bin_centers"] = (
+            sfr_dict["lookback_time_bin_edges"][1:]
+            + sfr_dict["lookback_time_bin_edges"][:-1]
+        ) / 2
+        sfr_dict["time_bin_centers"] = sfr_dict["lookback_time_bin_centers"]
+    elif config["time_type"] == "redshift":
+        sfr_dict["redshift_bin_centers"] = (
+            sfr_dict["redshift_bin_edges"][1:] + sfr_dict["redshift_bin_edges"][:-1]
+        ) / 2
+        sfr_dict["time_bin_centers"] = sfr_dict["redshift_bin_centers"]
 
     # Pad the SFR dict with the empty bins around
     sfr_dict = pad_sfr_dict(config=config, sfr_dict=sfr_dict)
@@ -353,12 +384,12 @@ def check_sfr_dict(
 
         # check if length in the metallicity direction is correct:
         if (
-            not sfr_dict["metallicity_distribution_array"].shape[1]
+            not sfr_dict["metallicity_distribution_array"].shape[0]
             == len(sfr_dict["metallicity_bin_edges"]) - 1
         ):
             raise ValueError(
-                "Please ensure the length of the `metallicity_distribution_array.shape[1]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
-                    sfr_dict["metallicity_distribution_array"].shape[1],
+                "Please ensure the length of the `metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
+                    sfr_dict["metallicity_distribution_array"].shape[0],
                     len(sfr_dict["metallicity_bin_edges"]),
                 )
             )
@@ -366,24 +397,24 @@ def check_sfr_dict(
         # check if length in the time direction is correct:
         if time_type == "lookback_time":
             if (
-                not sfr_dict["metallicity_distribution_array"].shape[0]
+                not sfr_dict["metallicity_distribution_array"].shape[1]
                 == len(sfr_dict["lookback_time_bin_edges"]) - 1
             ):
                 raise ValueError(
-                    "Please ensure the length of the metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `lookback_time_bin_edges` ({})".format(
-                        sfr_dict["metallicity_distribution_array"].shape[0],
+                    "Please ensure the length of the metallicity_distribution_array.shape[1]` ({}) is one element shorter than the length of `lookback_time_bin_edges` ({})".format(
+                        sfr_dict["metallicity_distribution_array"].shape[1],
                         len(sfr_dict["lookback_time_bin_edges"]),
                     )
                 )
 
         elif time_type == "redshift":
             if (
-                not sfr_dict["metallicity_distribution_array"].shape[0]
+                not sfr_dict["metallicity_distribution_array"].shape[1]
                 == len(sfr_dict["redshift_bin_edges"]) - 1
             ):
                 raise ValueError(
-                    "Please ensure the length of the metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
-                        sfr_dict["metallicity_distribution_array"].shape[0],
+                    "Please ensure the length of the metallicity_distribution_array.shape[1]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
+                        sfr_dict["metallicity_distribution_array"].shape[1],
                         len(sfr_dict["redshift_bin_edges"]),
                     )
                 )

@@ -121,78 +121,6 @@ default_convolution_config_dict = {
         "description": "dictionary containing the starformation rate info. Can also be a list of dictionaries.",
         "validation": dict_or_list_of_dicts_validation,
     },
-    # # Global starformation rate config
-    # "star_formation_rate_distribution_function": {
-    #     "value": madau_dickinson_sfr,
-    #     "description": "Function to calculate the star formation rate (density) with. This function needs to accept either time or redshift, and the parameters that are passed with 'star_formation_rate_distribution_args'. This function needs to return an astropy unit object of either 'mass per time per volume' or a 'mass per time'.",
-    #     "validation": callable_validation,  # TODO: improve validation
-    # },
-    # "star_formation_rate_distribution_args": {
-    #     "value": {
-    #         # Star formation rate for madau dickinson-type SFR with the configurations of van Son 2021
-    #         "a": 0.02,
-    #         "b": 1.48,
-    #         "c": 4.45,
-    #         "d": 5.90,
-    #     },
-    #     "description": "Arguments for the star formation rate (density) function. See 'star_formation_rate_function'.",
-    #     "validation": dict,
-    # },
-    # "star_formation_rate_distribution_time_bin_edges": {
-    #     "value": np.arange(0, 10, 0.025),
-    #     "description": "time-quantity array (lookback-time or redshift) on which the star formation rates are calculated.",
-    #     "validation": array_validation,
-    # },
-    # # TODO: change the setup s.t. user can just provide a function that sets the values
-    # # "star_formation_distribution_use_file": {
-    # #     "value": False,
-    # #     "description": "Whether to use a starformation rate file that contains the data.",  # TODO: expand explanation
-    # #     "validation": boolean_int_validation,
-    # # },
-    # # "star_formation_distribution_filename": {
-    # #     "value": "",
-    # #     "description": "Filename of the SFR file.",  # TODO: expand explanation. likely cahnge t
-    # #     "validation": existing_path_validation,
-    # # },
-    # # Global metallicity distribution config
-    # "metallicity_distribution_function": {
-    #     "value": compas_metallicity_distribution,
-    #     "description": "Function to calculate the metallicity distribution with. This function needs to accept either time or redshift, and the parameters that are passed with 'metallicity_distribution_args'. ",
-    #     "validation": callable_validation,  # TODO: improve validation
-    # },
-    # "metallicity_distribution_args": {
-    #     "value": {
-    #         # # metallicity distribution settings for Neijssel 2019
-    #         # 'mu0': 0.035,
-    #         # 'muz': -0.23,
-    #         # 'sigma_0': 0.39,
-    #         # 'sigma_z': 0.0
-    #         # 'alpha': 0.0,
-    #         # metallicity distribution settings for van Son 2021
-    #         "mu0": 0.025,
-    #         "muz": -0.05,
-    #         "sigma_0": 1.125,
-    #         "sigma_z": 0.05,
-    #         "alpha": -1.77,
-    #     },
-    #     "description": "Arguments for the star formation rate (density) function. See 'metallicity_distribution_function'.",
-    #     "validation": dict,
-    # },
-    # "metallicity_distribution_min_value": {
-    #     "value": 1e-8,
-    #     "description": "Minimum value to calculate the global metallicity distribution at.",
-    #     "validation": float,
-    # },
-    # "metallicity_distribution_max_value": {
-    #     "value": 1.0,
-    #     "description": "Maximum value to calculate the global metallicity distribution at.",
-    #     "validation": float,
-    # },
-    # "metallicity_distribution_resolution": {
-    #     "value": 10000,
-    #     "description": "Resolution to calculate the global metallicity distibution in.",
-    #     "validation": int,
-    # },
     # Convolution time bins
     "convolution_lookback_time_bin_edges": {
         "value": None,
@@ -204,12 +132,6 @@ default_convolution_config_dict = {
         "description": "Redshift bin-edges used in convolution.",  # TODO: update this if we do things with units
         "validation": array_validation,
     },
-    # # Convolution metallicity bins
-    # "convolution_metallicity_bin_edges": {
-    #     "value": 10 ** np.linspace(-5, 0.5, 8),
-    #     "description": "Metallicity bin-edges used in convolution.",  # TODO: expand explanation. Also consider if this is the best way
-    #     "validation": array_validation,
-    # },
     ###################
     # Redshift interpolator settings
     "redshift_interpolator_force_rebuild": {
@@ -255,18 +177,6 @@ default_convolution_config_dict = {
         "description": "Filename for the redshift interpolator object.",  # TODO: expand explanation. Also consider if this is the best way
         "validation": str,
     },
-    # ###################
-    # # Extra weights functionality
-    # "extra_weights_function": {
-    #     "value": None,
-    #     "description": "Function that calculates extra weights for each system or sub-ensemble. This functions should return a numpy array. The arguments of this function should be chosen from: 'config', 'time_value', 'convolution_instruction', 'data_dict' and the contents of 'extra_weights_function_additional_parameters'. For more explanation about this function see the convolution notebook.",
-    #     "validation": callable_or_none_validation,
-    # },
-    # "extra_weights_function_additional_parameters": {
-    #     "value": {},
-    #     "description": "additional arguments that can be accessed by the extra_weights_function.",
-    #     "validation": dict,
-    # },
     ###################
     # Multiprocessing settings
     "num_cores": {

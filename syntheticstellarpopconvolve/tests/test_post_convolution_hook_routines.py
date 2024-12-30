@@ -19,7 +19,7 @@ from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (  # handle_extra_weights_function,
     extract_arguments,
 )
-from syntheticstellarpopconvolve.utils import Boilerplate
+from syntheticstellarpopconvolve.tests.utils import Boilerplate
 
 np.random.seed(0)
 
@@ -267,30 +267,30 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
             ][()]
             self.assertTrue(len(indices_2) == 198)
 
-    # def test_postprocessing_multiple_dictionaries_without_name(self):
+    def test_postprocessing_multiple_dictionaries_without_name(self):
 
-    #     #
-    #     self.convolution_config["convolution_instructions"] = [
-    #         {
-    #             "input_data_type": "event",
-    #             "input_data_name": "dummy",
-    #             "output_data_name": "dummy",
-    #             "convolution_type": "sample",
-    #             "data_column_dict": {
-    #                 # required
-    #                 "normalized_yield": "normalized_yield",
-    #                 "delay_time": {"column_name": "time", "unit": u.Myr},
-    #             },
-    #             "ignore_metallicity": True,
-    #             "post_convolution_function": postprocessing_multiple_dicts_without_name,
-    #             "filter_future_events": False
-    #         },
-    #     ]
+        #
+        self.convolution_config["convolution_instructions"] = [
+            {
+                "input_data_type": "event",
+                "input_data_name": "dummy",
+                "output_data_name": "dummy",
+                "convolution_type": "sample",
+                "data_column_dict": {
+                    # required
+                    "normalized_yield": "normalized_yield",
+                    "delay_time": {"column_name": "time", "unit": u.Myr},
+                },
+                "ignore_metallicity": True,
+                "post_convolution_function": postprocessing_multiple_dicts_without_name,
+                "filter_future_events": False,
+            },
+        ]
 
-    #     # # Check if ValueError is raised
-    #     # with self.assertRaises(ValueError):
-    #     # convolve
-    #     convolve(config=self.convolution_config)
+        # Check if ValueError is raised
+        with self.assertRaises(ValueError):
+            # convolve
+            convolve(config=self.convolution_config)
 
 
 if __name__ == "__main__":

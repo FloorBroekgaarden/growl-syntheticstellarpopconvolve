@@ -35,6 +35,32 @@ CONVOLUTION_FUNCTION_DICT = {
     "custom": custom_convolution_function,
 }
 
+# class Process(multiprocessing.Process):
+#     """
+#     Class which returns child Exceptions to Parent.
+#     https://stackoverflow.com/a/33599967/4992248
+#     """
+
+#     def __init__(self, *args, **kwargs):
+#         multiprocessing.Process.__init__(self, *args, **kwargs)
+#         self._pconn, self._cconn = multiprocessing.Pipe()
+#         self._exception = None
+
+#     def run(self):
+#         try:
+#             multiprocessing.Process.run(self)
+#             self._cconn.send(None)
+#         except Exception as e:
+#             tb = traceback.format_exc()
+#             self._cconn.send((e, tb))
+#             # raise e  # You can still rise this exception if you need to
+
+#     @property
+#     def exception(self):
+#         if self._pconn.poll():
+#             self._exception = self._pconn.recv()
+#         return self._exception
+
 
 def handle_storing_convolution_results(config, grp, data, convolution_results):
     """
@@ -258,7 +284,7 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
                 os.remove(full_path)
 
 
-def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
+def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
     """
     Function that handles running the job
     """
@@ -312,32 +338,35 @@ def convolution_job_worker(job_queue, worker_ID, config):  # DH0001
         #
 
         # run convolution with the appropriate function
-        convolution_results = CONVOLUTION_FUNCTION_DICT[
-            convolution_instruction["input_data_type"]
-        ](
-            convolution_time_bin_center=convolution_time_bin_center,
-            job_dict=job_dict,
-            config=config,
-            convolution_instruction=convolution_instruction,
-            data_dict=data_dict,
-        )
+        try:
+            convolution_results = CONVOLUTION_FUNCTION_DICT[
+                convolution_instruction["input_data_type"]
+            ](
+                convolution_time_bin_center=convolution_time_bin_center,
+                job_dict=job_dict,
+                config=config,
+                convolution_instruction=convolution_instruction,
+                data_dict=data_dict,
+            )
 
-        # Construct dictionary that is stored in the pickle files
-        output_dict["convolution_time_bin_center"] = convolution_time_bin_center
-        output_dict["convolution_instruction"] = convolution_instruction
-        output_dict = {
-            **output_dict,
-            "convolution_results": convolution_results["convolution_results"],
-        }
+            # Construct dictionary that is stored in the pickle files
+            output_dict["convolution_time_bin_center"] = convolution_time_bin_center
+            output_dict["convolution_instruction"] = convolution_instruction
+            output_dict = {
+                **output_dict,
+                "convolution_results": convolution_results["convolution_results"],
+            }
 
-        #
-        with open(
-            os.path.join(
-                job_dict["output_dir"], "{}.p".format(convolution_time_bin_center)
-            ),
-            "wb",
-        ) as f:
-            pickle.dump(output_dict, f)
+            #
+            with open(
+                os.path.join(
+                    job_dict["output_dir"], "{}.p".format(convolution_time_bin_center)
+                ),
+                "wb",
+            ) as f:
+                pickle.dump(output_dict, f)
+        except Exception as e:
+            error_queue.put(("exception", e, worker_ID))
 
 
 def convolution_queue_filler(  # DH0001
@@ -347,6 +376,7 @@ def convolution_queue_filler(  # DH0001
     sfr_dict,
     convolution_instruction,
     data_dict,
+    processes,
 ):
     """
     Function to handle filling the queue for the multiprocessing
@@ -396,6 +426,11 @@ def convolution_queue_filler(  # DH0001
 
         # Put job in queue
         job_queue.put(job_dict)
+
+        # # check if something is wrong with any of the processes
+        # for p in processes:
+        #     if p.exception:
+        #         print("EXCEPTION RAISED")
 
     # Signal stop to workers
     config["logger"].debug("Sending job termination signals")
@@ -450,37 +485,43 @@ def multiprocess_convolution(config, convolution_instruction, sfr_dict):  # DH00
     # Set up the manager object that can share info between processes
     manager = multiprocessing.Manager()
     job_queue = manager.Queue(config["max_job_queue_size"])
+    error_queue = manager.Queue(len(config["convolution_time_bin_edges"]))
 
     # Create process instances
     processes = []
     for worker_ID in range(config["num_cores"]):
         processes.append(
+            # Process(
             multiprocessing.Process(
                 target=convolution_job_worker,
-                args=(job_queue, worker_ID, config),
+                args=(job_queue, error_queue, worker_ID, config),
             )
         )
 
     # Activate the processes
-    try:
-        for p in processes:
-            p.start()
+    for p in processes:
+        p.start()
 
-        # Start the system_queue and process
-        convolution_queue_filler(
-            job_queue=job_queue,
-            num_cores=config["num_cores"],
-            config=config,
-            sfr_dict=sfr_dict,
-            convolution_instruction=convolution_instruction,
-            data_dict=data_dict,
-        )
+    # Start the system_queue and process
+    convolution_queue_filler(
+        job_queue=job_queue,
+        num_cores=config["num_cores"],
+        config=config,
+        sfr_dict=sfr_dict,
+        convolution_instruction=convolution_instruction,
+        data_dict=data_dict,
+        processes=processes,
+    )
 
-        # Join the processes to wrap up
-        for p in processes:
-            p.join()
-    except:
-        print("error yo")
+    # Join the processes to wrap up
+    for p in processes:
+        p.join()
+
+    # Pass errors
+    if not error_queue.empty():
+        result_type, result_value, worker_id = error_queue.get()
+        if result_type == "exception":
+            raise result_value
 
 
 def convolve_populations(config):

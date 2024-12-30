@@ -388,7 +388,7 @@ def check_sfr_dict(
             == len(sfr_dict["metallicity_bin_edges"]) - 1
         ):
             raise ValueError(
-                "Please ensure the length of the `metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
+                "Please ensure the length of the `metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `metallicity_bin_edges` ({})".format(
                     sfr_dict["metallicity_distribution_array"].shape[0],
                     len(sfr_dict["metallicity_bin_edges"]),
                 )

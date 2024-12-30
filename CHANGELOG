@@ -19,3 +19,6 @@ https://keepachangelog.com/en/0.3.0/
 	- added functionality to post-process the convolution results ('post_convolution_function'), replacing the extra_weights_function and position sampling function.
 		- Added wrappers for different cases (event-convolution by sampling, event-convolution by integration, ensemble-convolution by integration)
 	- created verification functionality for the convolution instructions, including documentation.
+    - [feature/multiple_return_dicts]:
+        - provided support for the return of multiple convolution_result dicts after the post-convolution function call.
+        - changed the name for the internal field from yield-rate to normalized-yield

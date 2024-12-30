@@ -20,13 +20,13 @@ def convolve_events_integration_post_convolution_hook_wrapper(
     sfr_dict,
     data_dict,
     convolution_instruction,
-    result_dict,
+    convolution_results,
 ):
     """
     Function to wrap the post-convolution function call for event-convolution by integration.
 
     rules:
-    - additional data can be added to the result_dict
+    - additional data can be added to the convolution_results
     - the number of systems has to be equal to before the post-convolution function.
     """
 
@@ -40,29 +40,50 @@ def convolve_events_integration_post_convolution_hook_wrapper(
 
     #############
     # pre-call setup
-    num_systems_before = len(result_dict[list(result_dict.keys())[0]])
+    num_systems_before = len(convolution_results[list(convolution_results.keys())[0]])
 
     #############
     # call hook
-    handle_post_convolution_function(
+    convolution_results = handle_post_convolution_function(
         config=config,
         job_dict=job_dict,
         sfr_dict=sfr_dict,
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
-        result_dict=result_dict,
+        convolution_results=convolution_results,
         name=name,
     )
 
     #############
     # check output
-    num_systems_after = len(result_dict[list(result_dict.keys())[0]])
+    if isinstance(convolution_results, list):
+        for convolution_result in convolution_results:
 
-    #
-    if num_systems_before != num_systems_after:
-        raise ValueError(
-            "post-convolution function for event-convolution by integration has changed the number of systems stored in the output dict. Due to current data structure decisions this is not supported. Please make sure that the number of systems before and after calling this function stays equal."
+            #############
+            # check output
+            num_systems_after = len(
+                convolution_result[list(convolution_result.keys())[0]]
+            )
+
+            #
+            if num_systems_before != num_systems_after:
+                raise ValueError(
+                    "post-convolution function for event-convolution by integration has changed the number of systems stored in the output dict. Due to current data structure decisions this is not supported. Please make sure that the number of systems before and after calling this function stays equal."
+                )
+    else:
+        #############
+        # check output
+        num_systems_after = len(
+            convolution_results[list(convolution_results.keys())[0]]
         )
+
+        #
+        if num_systems_before != num_systems_after:
+            raise ValueError(
+                "post-convolution function for event-convolution by integration has changed the number of systems stored in the output dict. Due to current data structure decisions this is not supported. Please make sure that the number of systems before and after calling this function stays equal."
+            )
+
+    return convolution_results
 
 
 def extract_event_data(config, convolution_instruction):
@@ -134,7 +155,7 @@ def extract_event_data(config, convolution_instruction):
 
 
 def event_convolution_function(
-    bin_center, job_dict, config, convolution_instruction, data_dict
+    convolution_time_bin_center, job_dict, config, convolution_instruction, data_dict
 ):
     """
     Function for the multiprocessing worker to convolve event-based data.
@@ -146,15 +167,9 @@ def event_convolution_function(
         sfr_dict = job_dict["sfr_dict"]
 
         #
-        convolution_time_bin_center = bin_center
-        job_dict["convolution_time_bin_center"] = (
-            convolution_time_bin_center  # TODO: putting this here isnt the cleanest solution. should be set earlier
-        )
-
-        #
         config["logger"].debug(
             "Convolving event-based data {} for bin_center {} using integration-based convolution".format(
-                convolution_instruction["input_data_name"], bin_center
+                convolution_instruction["input_data_name"], convolution_time_bin_center
             )
         )
 
@@ -167,28 +182,30 @@ def event_convolution_function(
             sfr_dict=job_dict["sfr_dict"],
         )
         convolved_rate_array = (
-            digitized_sfr_rates * data_dict["yield_rate"] * config["yield_rate_unit"]
+            digitized_sfr_rates
+            * data_dict["normalized_yield"]
+            * config["normalized_yield_unit"]
         )
 
         #
-        convolution_result = {"yield": convolved_rate_array}
+        convolution_results = {"yield": convolved_rate_array}
 
         ######
         # Handle post-convolution function
-        convolve_events_integration_post_convolution_hook_wrapper(
+        convolution_results = convolve_events_integration_post_convolution_hook_wrapper(
             config=config,
             job_dict=job_dict,
             sfr_dict=sfr_dict,
             data_dict=data_dict,
             convolution_instruction=convolution_instruction,
-            result_dict=convolution_result,
+            convolution_results=convolution_results,
         )
 
-        return {"convolution_result": convolution_result}
+        return {"convolution_results": convolution_results}
 
     elif convolution_instruction["convolution_type"] == "sample":
         #
-        starformation_bin_center = bin_center
+        starformation_bin_center = convolution_time_bin_center
 
         #
         config["logger"].debug(

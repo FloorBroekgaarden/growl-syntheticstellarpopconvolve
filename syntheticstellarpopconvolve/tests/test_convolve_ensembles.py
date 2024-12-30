@@ -44,7 +44,7 @@ from syntheticstellarpopconvolve.convolve_ensembles import (
     shift_layers_list,
     strip_ensemble_endpoints,
 )
-from syntheticstellarpopconvolve.general_functions import JsonCustomEncoder, temp_dir
+from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
@@ -269,7 +269,7 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         sfr_dict = self.convolution_config["SFR_info"]
 
         ensemble = ensemble_handle_SFR_multiplication(
-            bin_center=0.5 * u.Gyr,
+            convolution_time_bin_center=0.5 * u.Gyr,
             job_dict={"sfr_dict": sfr_dict, "job_number": 0},
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
@@ -297,7 +297,7 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         sfr_dict = self.convolution_config["SFR_info"]
 
         ensemble = ensemble_handle_SFR_multiplication(
-            bin_center=0.5 * u.Gyr,
+            convolution_time_bin_center=0.5 * u.Gyr,
             job_dict={"sfr_dict": sfr_dict, "job_number": 0},
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
@@ -431,7 +431,7 @@ class test_ensemble_convolution_function(unittest.TestCase):
 
         #
         result_dict = ensemble_convolution_function(
-            bin_center=0.5 * u.yr,
+            convolution_time_bin_center=0.5 * u.yr,
             job_dict={"sfr_dict": sfr_dict, "job_number": 0},
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
@@ -455,17 +455,17 @@ class test_ensemble_convolution_function(unittest.TestCase):
         }
 
         #
-        self.assertTrue("convolution_result" in result_dict)
+        self.assertTrue("convolution_results" in result_dict)
 
         np.testing.assert_array_equal(
-            result_dict["convolution_result"]["yield"],
+            result_dict["convolution_results"]["yield"],
             np.array([1, 1, 2, 2, 3, 3, 4, 4]) * (1.0 / u.yr / u.Gpc**3),
         )
 
         #
-        self.assertTrue("stripped_ensemble" in result_dict["convolution_result"])
+        self.assertTrue("stripped_ensemble" in result_dict["convolution_results"])
         self.assertTrue(
-            result_dict["convolution_result"]["stripped_ensemble"]
+            result_dict["convolution_results"]["stripped_ensemble"]
             == {"dummy": expected_stripped_ensemble}
         )
 

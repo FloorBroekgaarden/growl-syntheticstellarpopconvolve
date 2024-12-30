@@ -31,21 +31,43 @@ def update_convolution_config(config):
 
     #########
     # Calculate some extra convolution-bin info if needed
-    requires_convolution_bin_info = any(
-        [
-            convolution_instruction["convolution_type"] == "integrate"
-            for convolution_instruction in config["convolution_instructions"]
-        ]
-    )
+    # requires_convolution_bin_info = any(
+    #     [
+    #         convolution_instruction["convolution_type"] == "integrate"
+    #         for convolution_instruction in config["convolution_instructions"]
+    #     ]
+    # )
 
-    if requires_convolution_bin_info:
-        config["convolution_time_bin_centers"] = (
-            config["convolution_time_bin_edges"][1:]
-            + config["convolution_time_bin_edges"][:-1]
+    #
+    if config["time_type"] == "lookback_time":
+        # if requires_convolution_bin_info:
+        config["convolution_lookback_time_bin_centers"] = (
+            config["convolution_lookback_time_bin_edges"][1:]
+            + config["convolution_lookback_time_bin_edges"][:-1]
         ) / 2
-        config["convolution_time_bin_sizes"] = np.diff(
-            config["convolution_time_bin_edges"]
+        config["convolution_lookback_time_bin_sizes"] = np.diff(
+            config["convolution_lookback_time_bin_edges"]
         )
+
+        config["convolution_time_bin_edges"] = config[
+            "convolution_lookback_time_bin_edges"
+        ]
+        config["convolution_time_bin_centers"] = config[
+            "convolution_lookback_time_bin_centers"
+        ]
+        config["convolution_time_bin_sizes"] = config[
+            "convolution_lookback_time_bin_sizes"
+        ]
+
+        config["logger"].debug(
+            "Updated bin data: convolution_lookback_time_bin_centers: {} convolution_lookback_time_bin_sizes: {}".format(
+                config["convolution_lookback_time_bin_centers"],
+                config["convolution_lookback_time_bin_sizes"],
+            )
+        )
+
+    else:
+        raise ValueError("issue")
 
     return config
 

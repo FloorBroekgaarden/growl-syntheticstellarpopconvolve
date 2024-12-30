@@ -111,6 +111,7 @@ from syntheticstellarpopconvolve.tests.test_general_functions import (
 )
 from syntheticstellarpopconvolve.tests.test_post_convolution_hook_routines import (  # test_handle_extra_weights_function,
     test_extract_arguments,
+    test_postprocessing,
 )
 from syntheticstellarpopconvolve.tests.test_prepare_output_file import (
     test_prepare_output_file,

@@ -41,7 +41,7 @@ class test_check_convolution_config(unittest.TestCase):
                     "convolution_type": "integrate",
                     "data_column_dict": {
                         "delay_time": "delay",
-                        "yield_rate": "rate",
+                        "normalized_yield": "rate",
                         "metallicity": "metallicity",
                     },
                 },
@@ -61,7 +61,7 @@ class test_check_convolution_config(unittest.TestCase):
                     "name": "test",
                     "lookback_time_bin_edges": np.array([0, 1, 2, 3]) * 1e9 * u.yr,
                     "starformation_rate_array": np.array([1, 2, 3]) * u.Msun / u.yr,
-                    "metallicity_bin_edges": np.array([0.1, 0.2, 0.3]),
+                    "metallicity_bin_edges": np.array([0.1, 0.2, 0.3, 0.4]),
                     "metallicity_distribution_array": np.array(
                         [[0.5, 0.6, 0.7], [0.5, 0.6, 0.7], [0.5, 0.6, 0.7]]
                     ),
@@ -108,7 +108,10 @@ class test_check_convolution_config(unittest.TestCase):
                     "convolution_type": "integrate",
                     "input_data_name": "event_data",
                     "output_data_name": "output_event_data",
-                    "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
+                    "data_column_dict": {
+                        "delay_time": "delay",
+                        "normalized_yield": "rate",
+                    },
                 }
             ],
             "SFR_info": [],  # Missing SFR info
@@ -149,7 +152,7 @@ class test_update_convolution_config(unittest.TestCase):
                 "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
-                    "yield_rate": "probability",
+                    "normalized_yield": "probability",
                 },
                 "ignore_metallicity": True,
             },

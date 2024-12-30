@@ -162,7 +162,7 @@ def handle_post_convolution_function(
     sfr_dict,
     data_dict,
     convolution_instruction,
-    result_dict,
+    convolution_results,
     name,
 ):
     """
@@ -193,7 +193,7 @@ def handle_post_convolution_function(
             "job_dict": job_dict,
             "sfr_dict": sfr_dict,
             "data_dict": data_dict,
-            "result_dict": result_dict,
+            "convolution_results": convolution_results,
             "time_value": job_dict["convolution_time_bin_center"],
             "convolution_instruction": convolution_instruction,
             **convolution_instruction.get(
@@ -216,15 +216,37 @@ def handle_post_convolution_function(
             )
         )
 
-        # Call function
-        result_dict = post_convolution_function(**post_convolution_function_args)
+        # Call post-convolution function
+        convolution_results = post_convolution_function(
+            **post_convolution_function_args
+        )
 
-        # check if the result dict is still a dict object
-        if not isinstance(result_dict, dict):
+        ################
+        #
+
+        # check if the result is a list
+        if isinstance(convolution_results, list):
+            for convolution_result in convolution_results:
+                # check if the elements are dicts
+                if not isinstance(convolution_result, dict):
+                    raise ValueError(
+                        "The result dict object must be a dictionary type object after the post-convolution call. It's now a {}-type object".format(
+                            type(convolution_result)
+                        )
+                    )
+
+                # check if a name is provided to the convolution result
+                if "name" not in convolution_result.keys():
+                    raise ValueError(
+                        "When returning multiple result-dicts, the result-dicts need to have a 'name' entry to identify and store them correctly. Please provide one."
+                    )
+
+        # Otherwise check if the convolution_results is a dict object
+        elif not isinstance(convolution_results, dict):
             raise ValueError(
                 "The result dict object must be a dictionary type object after the post-convolution call. It's now a {}-type object".format(
-                    type(result_dict)
+                    type(convolution_results)
                 )
             )
 
-    return result_dict
+    return convolution_results

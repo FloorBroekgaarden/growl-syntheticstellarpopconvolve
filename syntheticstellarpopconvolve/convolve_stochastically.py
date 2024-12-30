@@ -44,7 +44,6 @@ lookback time to the systems (taken randomly between the bin edges)
 
 TODO: consider putting the configuration in through the convolution instruction rather than the global config.
 TODO: allow calcualting the event lookback time and filtering of the events that occur in the future
-TODO: implement post-convolution method that allows us to filter the data based on something (like whether they are within some frequency range)
 """
 
 import time
@@ -64,7 +63,7 @@ def convolve_events_sampling_post_convolution_hook_wrapper(
     sfr_dict,
     data_dict,
     convolution_instruction,
-    result_dict,
+    convolution_results,
 ):
     """
     Function to wrap the post-convolution function call for event-convolution by sampling.
@@ -84,17 +83,17 @@ def convolve_events_sampling_post_convolution_hook_wrapper(
 
     #############
     # call hook
-    handle_post_convolution_function(
+    convolution_results = handle_post_convolution_function(
         config=config,
         job_dict=job_dict,
         sfr_dict=sfr_dict,
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
-        result_dict=result_dict,
+        convolution_results=convolution_results,
         name=name,
     )
 
-    return result_dict
+    return convolution_results
 
 
 def select_dict_entries_with_new_indices(sampled_data_dict, new_indices):
@@ -105,28 +104,40 @@ def select_dict_entries_with_new_indices(sampled_data_dict, new_indices):
     sampled_data_dict = {
         data_key: sampled_data_dict[data_key][new_indices]
         for data_key in sampled_data_dict.keys()
+        if not data_key == "name"
     }
 
     return sampled_data_dict
 
 
-def handle_sorting(sampled_data_dict):
+def handle_sorting(convolution_results):
     """
     Function to handle sorting
     """
 
-    # Sort on indices
-    sorted_indices = sampled_data_dict["indices"].argsort()
+    if isinstance(convolution_results, dict):
 
-    # re-select
-    sampled_data_dict = select_dict_entries_with_new_indices(
-        sampled_data_dict=sampled_data_dict, new_indices=sorted_indices
-    )
+        # Sort on indices
+        sorted_indices = convolution_results["indices"].argsort()
 
-    return sampled_data_dict
+        # re-select
+        convolution_results = select_dict_entries_with_new_indices(
+            sampled_data_dict=convolution_results, new_indices=sorted_indices
+        )
+    else:
+        for convolution_result in convolution_results:
+            # Sort on indices
+            sorted_indices = convolution_result["indices"].argsort()
+
+            # re-select
+            select_dict_entries_with_new_indices(
+                sampled_data_dict=convolution_result, new_indices=sorted_indices
+            )
+
+    return convolution_results
 
 
-def add_event_lookback_time(
+def add_event_lookback_time_and_filter(
     config, data_dict, convolution_instruction, sampled_data_dict
 ):
     """
@@ -204,7 +215,7 @@ def sample_systems(
     formation_yield = (
         total_star_formation_in_bin
         * data_dict["normalized_yield"]
-        * config["yield_rate_unit"]
+        * config["normalized_yield_unit"]
     )
 
     #
@@ -330,7 +341,7 @@ def sample_systems_main(
 
     #######
     # Generate the samples
-    sampled_data_dict = sample_systems(
+    convolution_results = sample_systems(
         total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
         data_dict=data_dict,
         lookback_time_bin_size=lookback_time_bin_size,
@@ -339,36 +350,41 @@ def sample_systems_main(
     )
 
     ######
-    # Add event lookback time
-    sampled_data_dict = add_event_lookback_time(
+    # Add event lookback time. If the user provides delay-times for the systems/events,
+    # we determine the event times and (by default) filter out anything that happens in the future.
+    convolution_results = add_event_lookback_time_and_filter(
         config=config,
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
-        sampled_data_dict=sampled_data_dict,
+        sampled_data_dict=convolution_results,
     )
 
     ######
     # Handle post-convolution function
-    sampled_data_dict = convolve_events_sampling_post_convolution_hook_wrapper(
+    convolution_results = convolve_events_sampling_post_convolution_hook_wrapper(
         config=config,
         job_dict=job_dict,
         sfr_dict=sfr_dict,
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
-        result_dict=sampled_data_dict,
+        convolution_results=convolution_results,
     )
 
     ######
     # Handle sorting on indices
-    sampled_data_dict = handle_sorting(sampled_data_dict=sampled_data_dict)
+    convolution_results = handle_sorting(convolution_results=convolution_results)
 
     ###########
     # wrap up
 
     # delete the normalized yield
-    del sampled_data_dict["normalized_yield"]
+    if isinstance(convolution_results, dict):
+        del convolution_results["normalized_yield"]
+    else:
+        for convolution_result in convolution_results:
+            del convolution_result["normalized_yield"]
 
-    return {"convolution_result": sampled_data_dict}
+    return {"convolution_results": convolution_results}
 
 
 if __name__ == "__main__":
@@ -480,7 +496,7 @@ if __name__ == "__main__":
             "data_column_dict": {
                 # required
                 "IDs": "IDs",
-                "yield_rate": "normalized_yield_array",
+                "normalized_yield": "normalized_yield_array",
                 # # optional*
                 # 'metallicity': 'metallicity',
             },
@@ -521,25 +537,25 @@ if __name__ == "__main__":
         # )
         # print(
         #     output_hdf5_file[
-        #         "output_data/event/stochastic_example/stochastic_example/convolved_array"
+        #         "output_data/event/stochastic_example/stochastic_example/convolution_results"
         #     ].keys()
         # )
 
         # print(
         #     output_hdf5_file[
-        #         "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+        #         "output_data/event/stochastic_example/stochastic_example/convolution_results/2.25 Gyr"
         #     ].keys()
         # )
 
         print(
             output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+                "output_data/event/stochastic_example/stochastic_example/convolution_results/2.25 Gyr"
             ]["IDs"][()]
         )
 
         print(
             output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+                "output_data/event/stochastic_example/stochastic_example/convolution_results/2.25 Gyr"
             ]["formation_lookback_times"][()]
         )
 
@@ -656,7 +672,7 @@ if __name__ == "__main__":
             "data_column_dict": {
                 # required
                 "IDs": "IDs",
-                "yield_rate": "normalized_yield_array",
+                "normalized_yield": "normalized_yield_array",
                 "metallicity": "metallicity",
                 # # optional*
                 # 'metallicity': 'metallicity',
@@ -704,24 +720,24 @@ if __name__ == "__main__":
         )
         print(
             output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array"
+                "output_data/event/stochastic_example/stochastic_example/convolution_results"
             ].keys()
         )
 
         print(
             output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+                "output_data/event/stochastic_example/stochastic_example/convolution_results/2.25 Gyr"
             ].keys()
         )
 
         print(
             output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+                "output_data/event/stochastic_example/stochastic_example/convolution_results/2.25 Gyr"
             ]["IDs"][()]
         )
 
         print(
             output_hdf5_file[
-                "output_data/event/stochastic_example/stochastic_example/convolved_array/2.25 Gyr"
+                "output_data/event/stochastic_example/stochastic_example/convolution_results/2.25 Gyr"
             ]["formation_lookback_times"][()]
         )

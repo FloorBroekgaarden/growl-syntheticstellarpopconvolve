@@ -2,12 +2,27 @@
 Testcases for post_convolution_hook_routines file
 """
 
+import logging
 import unittest
 
+import astropy.units as u
+import h5py
+import numpy as np
+import pandas as pd
+import pkg_resources
+
+from syntheticstellarpopconvolve import convolve
+from syntheticstellarpopconvolve.convolve_stochastically import (
+    select_dict_entries_with_new_indices,
+)
 from syntheticstellarpopconvolve.general_functions import temp_dir
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (  # handle_extra_weights_function,
     extract_arguments,
 )
+from syntheticstellarpopconvolve.tests.utils import Boilerplate
+
+np.random.seed(0)
+
 
 TMP_DIR = temp_dir(
     "tests",
@@ -61,237 +76,225 @@ class test_extract_arguments(unittest.TestCase):
             extract_arguments(funca, {"a": 2})
 
 
-# class test_handle_extra_weights_function(unittest.TestCase):
-#     def setUp(self):
-#         #
-#         input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
-#         output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
+##################
+# Non unit-tests but sanity checks
+#
 
-#         ##############
-#         # SET UP DATA
-#         self.dummy_data = {
-#             "delay_time": np.array([0, 1, 2, 3]),
-#             "probability": np.array([1, 2, 3, 4]),
-#         }
-#         dummy_df = pd.DataFrame.from_records(self.dummy_data)
 
-#         #############
-#         # create input HDF5 file
-#         with h5py.File(input_hdf5_filename, "w") as input_hdf5_file:
+####
+# Define
+def postprocessing_multiple_dicts(
+    config, job_dict, sfr_dict, data_dict, convolution_results, convolution_instruction
+):
+    """
+    Post-convolution function to handle integrating the systems forward in time and finding those that end up in the LISA waveband.
 
-#             ######################
-#             # Create groups
-#             input_hdf5_file.create_group("input_data")
-#             input_hdf5_file.create_group("input_data/events")
-#             input_hdf5_file.create_group("config")
+    using local_indices to select everything and using Alexey's distance sampler to handle sampling the distances
+    """
 
-#             ###############
-#             # Readout population settings
-#             population_settings_filename = pkg_resources.resource_filename(
-#                 "syntheticstellarpopconvolve",
-#                 "example_data/example_population_settings.json",
-#             )
+    # unpack data
+    system_indices = convolution_results["indices"]
+    local_indices = np.arange(len(system_indices))
 
-#             with open(population_settings_filename, "r") as f:
-#                 population_settings = json.loads(f.read())
+    # add distances
+    convolution_results["dists"] = (
+        np.random.randint(0, 1e6, size=len(local_indices)) * u.kpc
+    )
 
-#             # Delete some stuff from the settings
-#             del population_settings["population_settings"]["bse_options"]["metallicity"]
+    # shuffle and select 2 sets
+    shuffled_indices = np.arange(len(system_indices))
+    np.random.shuffle(shuffled_indices)
+    random_length = np.random.randint(0, high=len(shuffled_indices))
 
-#             # Write population config to file
-#             input_hdf5_file.create_dataset(
-#                 "config/population", data=json.dumps(population_settings)
-#             )
+    # Select all results from set 1
+    convolution_result_1 = select_dict_entries_with_new_indices(
+        sampled_data_dict=convolution_results,
+        new_indices=shuffled_indices[:random_length],
+    )
 
-#         ##############
-#         # Store data in pandas
-#         dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+    # Select all results from set 2
+    convolution_result_2 = select_dict_entries_with_new_indices(
+        sampled_data_dict=convolution_results,
+        new_indices=shuffled_indices[random_length:],
+    )
 
-#         #
-#         self.convolution_config = copy.copy(default_convolution_config)
+    # split into two
+    convolution_results = [convolution_result_1, convolution_result_2]
 
-#         # Set up SFR
-#         self.convolution_config["SFR_info"] = {
-#             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-#             "starformation_rate_array": np.array([1, 1, 1, 1, 1])
-#             * u.Msun
-#             / u.yr
-#             / u.Gpc**3,
-#         }
+    return convolution_results
 
-#         # set up convolution bins
-#         self.convolution_config["convolution_time_bin_edges"] = np.array(
-#             [0, 1, 2, 3, 4]
-#         )
 
-#         # lookback time convolution only
-#         self.convolution_config["time_type"] = "lookback_time"
+def postprocessing_multiple_dicts_with_name(
+    config, job_dict, sfr_dict, data_dict, convolution_results, convolution_instruction
+):
+    convolution_results = postprocessing_multiple_dicts(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_results=convolution_results,
+        convolution_instruction=convolution_instruction,
+    )
 
-#         #
-#         self.convolution_config["input_filename"] = input_hdf5_filename
-#         self.convolution_config["output_filename"] = output_hdf5_filename
+    convolution_results[0]["name"] = "set_1"
+    convolution_results[1]["name"] = "set_2"
 
-#         self.convolution_config["redshift_interpolator_data_output_filename"] = (
-#             os.path.join(TMP_DIR, "interpolator_dict.p")
-#         )
+    return convolution_results
 
-#         #
-#         self.convolution_config["convolution_instructions"] = [
-#             {
-#                 "input_data_type": "event",
-#                 "input_data_name": "dummy",
-#                 "output_data_name": "dummy",
-#                 "data_column_dict": {
-#                     "delay_time": "delay_time",
-#                     "yield_rate": "probability",
-#                 },
-#                 "ignore_metallicity": True,
-#             },
-#         ]
 
-#         #
-#         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
+def postprocessing_multiple_dicts_without_name(
+    config, job_dict, sfr_dict, data_dict, convolution_results, convolution_instruction
+):
+    convolution_results = postprocessing_multiple_dicts(
+        config=config,
+        job_dict=job_dict,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        convolution_results=convolution_results,
+        convolution_instruction=convolution_instruction,
+    )
 
-#         #
-#         prepare_output_file(config=self.convolution_config)
+    return convolution_results
 
-#     def test_handle_extra_weights_function_normal(self):
-#         def extra_weights_function(config, data_dict):
-#             return np.zeros(data_dict["yield_rate"].shape)
 
-#         convolution_instruction = self.convolution_config["convolution_instructions"][0]
-#         convolution_instruction["extra_weights_function"] = extra_weights_function
+class test_postprocessing(unittest.TestCase, Boilerplate):
 
-#         self.dummy_data["yield_rate"] = self.dummy_data["probability"]
+    def setUp(self):
+        self.setup(
+            name="test_postprocessing",
+            tmp_dir=TMP_DIR,
+            add_population_settings=False,
+            sfr_unit=u.Msun / u.yr,
+        )
+        self.convolution_config["logger"].setLevel(logging.CRITICAL)
 
-#         extra_weights = handle_extra_weights_function(
-#             config=self.convolution_config,
-#             bin_center=0.2,
-#             convolution_instruction=convolution_instruction,
-#             sfr_dict={},
-#             data_dict=self.dummy_data,
-#             output_shape=self.dummy_data["yield_rate"].shape,
-#         )
+        ###################
+        # Set up data
+        BinCodex_events_filename = pkg_resources.resource_filename(
+            "syntheticstellarpopconvolve",
+            "example_data/example_BinCodex_dwd.h5",
+        )
 
-#         #
-#         np.testing.assert_array_equal(
-#             extra_weights, np.zeros(self.dummy_data["yield_rate"].shape)
-#         )
+        #
+        BinCodex_T0_events = pd.read_hdf(
+            BinCodex_events_filename,
+            "T0",
+        )
 
-#     def test_handle_extra_weights_function_extra_input_fail(self):
-#         # test should fail since we don't provide the input for the function
-#         def extra_weights_function(config, data_dict, a, b):
-#             return np.zeros(data_dict["yield_rate"].shape) + a + b
+        ##################
+        # update T0 output
 
-#         convolution_instruction = self.convolution_config["convolution_instructions"][0]
-#         convolution_instruction["extra_weights_function"] = extra_weights_function
+        # get mass normalisation
+        mass_normalisation_fiducial = 4476544.539875359 * u.Msun
 
-#         #
-#         self.dummy_data["yield_rate"] = self.dummy_data["probability"]
+        # set normalised yield
+        BinCodex_T0_events["normalized_yield"] = 1 / mass_normalisation_fiducial
 
-#         with self.assertRaises(KeyError):
-#             _ = handle_extra_weights_function(
-#                 config=self.convolution_config,
-#                 bin_center=0.2,
-#                 convolution_instruction=convolution_instruction,
-#                 sfr_dict={},
-#                 data_dict=self.dummy_data,
-#                 output_shape=self.dummy_data["yield_rate"].shape,
-#             )
+        # Query the dataset to select the formation of the WDs
 
-#     def test_handle_extra_weights_function_extra_function_fail(self):
-#         # test should fail since the function does not return anything
-#         def extra_weights_function(config, data_dict, a, b):
-#             pass
+        # to check if things start with some number its easier to turn them into strings
+        BinCodex_T0_events["str_event"] = BinCodex_T0_events["event"].astype(str)
+        BinCodex_T0_events["str_type1"] = BinCodex_T0_events["type1"].astype(str)
+        BinCodex_T0_events["str_type2"] = BinCodex_T0_events["type2"].astype(str)
 
-#         convolution_instruction = self.convolution_config["convolution_instructions"][0]
-#         convolution_instruction["extra_weights_function"] = extra_weights_function
-#         convolution_instruction["extra_weights_function_additional_parameters"] = {
-#             "a": 10,
-#             "b": 2.5,
-#         }
+        # first, lets query the type-changing events. Any type-change will do
+        wd_binaries = BinCodex_T0_events.query("str_event.str.startswith('1')")
 
-#         #
-#         self.dummy_data["yield_rate"] = self.dummy_data["probability"]
+        # The type should change to a WD-type (and the other should already be one)
+        wd_binaries = wd_binaries.query("str_type1.str.startswith('2')")
+        wd_binaries = wd_binaries.query("str_type2.str.startswith('2')")
 
-#         with self.assertRaises(ValueError):
-#             _ = handle_extra_weights_function(
-#                 config=self.convolution_config,
-#                 bin_center=0.2,
-#                 convolution_instruction=convolution_instruction,
-#                 sfr_dict={},
-#                 data_dict=self.dummy_data,
-#                 output_shape=self.dummy_data["yield_rate"].shape,
-#             )
+        # lets delete the string versions of the columns again
+        wd_binaries = wd_binaries.drop(columns=["str_event", "str_type1", "str_type2"])
 
-#     def test_handle_extra_weights_function_extra_input_pass(self):
-#         # test should fail since we don't provide the input for the function
-#         def extra_weights_function(config, data_dict, a, b):
-#             return np.zeros(data_dict["yield_rate"].shape) + a + b
+        # lets also delete the original dataframe
+        del BinCodex_T0_events
 
-#         convolution_instruction = self.convolution_config["convolution_instructions"][0]
-#         convolution_instruction["extra_weights_function"] = extra_weights_function
-#         convolution_instruction["extra_weights_function_additional_parameters"] = {
-#             "a": 10,
-#             "b": 2.5,
-#         }
+        # store the data frame in the hdf5file
+        wd_binaries.to_hdf(
+            self.convolution_config["input_filename"], key="input_data/events/dummy"
+        )
 
-#         #
-#         self.dummy_data["yield_rate"] = self.dummy_data["probability"]
+    def test_postprocessing_multiple_dictionaries_with_name(self):
 
-#         extra_weights = handle_extra_weights_function(
-#             config=self.convolution_config,
-#             bin_center=0.2,
-#             convolution_instruction=convolution_instruction,
-#             sfr_dict={},
-#             data_dict=self.dummy_data,
-#             output_shape=self.dummy_data["yield_rate"].shape,
-#         )
+        #
+        self.convolution_config["convolution_instructions"] = [
+            {
+                "input_data_type": "event",
+                "input_data_name": "dummy",
+                "output_data_name": "dummy",
+                "convolution_type": "sample",
+                "data_column_dict": {
+                    # required
+                    "normalized_yield": "normalized_yield",
+                    "delay_time": {"column_name": "time", "unit": u.Myr},
+                },
+                "ignore_metallicity": True,
+                "post_convolution_function": postprocessing_multiple_dicts_with_name,
+                "filter_future_events": False,
+            },
+        ]
 
-#         np.testing.assert_array_equal(
-#             extra_weights, np.zeros(self.dummy_data["yield_rate"].shape) + 12.5
-#         )
+        # convolve
+        convolve(config=self.convolution_config)
 
-#     def test_handle_extra_weights_function_no_function_shape_fail(self):
-#         def extra_weights_function(config, data_dict, a, b):
-#             return np.zeros(data_dict["yield_rate"].shape) + a + b
+        # read out content and integrate until today
+        with h5py.File(
+            self.convolution_config["output_filename"], "r"
+        ) as output_hdf5_file:
+            self.assertTrue(
+                "set_1"
+                in output_hdf5_file[
+                    "output_data/event/dummy/dummy/convolution_results/"
+                ].keys()
+            )
+            self.assertTrue(
+                "set_2"
+                in output_hdf5_file[
+                    "output_data/event/dummy/dummy/convolution_results/"
+                ].keys()
+            )
 
-#         # test should fail since the output shape doesnt match
-#         convolution_instruction = self.convolution_config["convolution_instructions"][0]
-#         convolution_instruction["extra_weights_function"] = extra_weights_function
-#         convolution_instruction["extra_weights_function_additional_parameters"] = {
-#             "a": 10,
-#             "b": 2.5,
-#         }
+            #
+            indices_1 = output_hdf5_file[
+                "output_data/event/dummy/dummy/convolution_results/set_1/0.5 Gyr/indices"
+            ][()]
+            self.assertTrue(len(indices_1) == 2)
 
-#         #
-#         self.dummy_data["yield_rate"] = self.dummy_data["probability"]
+            #
+            indices_2 = output_hdf5_file[
+                "output_data/event/dummy/dummy/convolution_results/set_2/0.5 Gyr/indices"
+            ][()]
+            self.assertTrue(len(indices_2) == 198)
 
-#         with self.assertRaises(ValueError):
-#             _ = handle_extra_weights_function(
-#                 config=self.convolution_config,
-#                 bin_center=0.2,
-#                 convolution_instruction=convolution_instruction,
-#                 sfr_dict={},
-#                 data_dict=self.dummy_data,
-#                 output_shape=np.shape([1]),
-#             )
+    def test_postprocessing_multiple_dictionaries_without_name(self):
 
-#     def test_handle_extra_weights_function_no_function(self):
-#         # test should fail since the output shape doesnt match
-#         convolution_instruction = self.convolution_config["convolution_instructions"][0]
+        #
+        self.convolution_config["convolution_instructions"] = [
+            {
+                "input_data_type": "event",
+                "input_data_name": "dummy",
+                "output_data_name": "dummy",
+                "convolution_type": "sample",
+                "data_column_dict": {
+                    # required
+                    "normalized_yield": "normalized_yield",
+                    "delay_time": {"column_name": "time", "unit": u.Myr},
+                },
+                "ignore_metallicity": True,
+                "post_convolution_function": postprocessing_multiple_dicts_without_name,
+                "filter_future_events": False,
+            },
+        ]
 
-#         #
-#         self.dummy_data["yield_rate"] = self.dummy_data["probability"]
+        # Check if ValueError is raised
+        with self.assertRaises(ValueError):
+            # convolve
+            convolve(config=self.convolution_config)
 
-#         extra_weights = handle_extra_weights_function(
-#             config=self.convolution_config,
-#             bin_center=0.2,
-#             convolution_instruction=convolution_instruction,
-#             sfr_dict={},
-#             data_dict=self.dummy_data,
-#             output_shape=np.shape([1]),
-#         )
 
-#         #
-#         np.testing.assert_array_equal(extra_weights, np.ones(np.shape([1])))
+if __name__ == "__main__":
+    test_postprocessing_obj = test_postprocessing()
+    test_postprocessing_obj.setUp()
+    # test_postprocessing_obj.test_postprocessing_multiple_dictionaries_with_name()
+    test_postprocessing_obj.test_postprocessing_multiple_dictionaries_without_name()

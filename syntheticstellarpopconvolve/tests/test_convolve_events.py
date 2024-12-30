@@ -113,7 +113,7 @@ class test_extract_event_data(unittest.TestCase):
                 "output_data_name": "dummy",
                 "data_column_dict": {
                     "delay_time": "delay_time",
-                    "yield_rate": "probability",
+                    "normalized_yield": "probability",
                 },
                 "ignore_metallicity": True,
             },
@@ -133,7 +133,7 @@ class test_extract_event_data(unittest.TestCase):
             "output_data_name": "dummy",
             "data_column_dict": {
                 "delay_time": "delay_time",
-                "yield_rate": "probability",
+                "normalized_yield": "probability",
             },
             "ignore_metallicity": True,
         }
@@ -156,7 +156,7 @@ class test_extract_event_data(unittest.TestCase):
             "output_data_name": "dummy",
             "data_column_dict": {
                 "delay_time": {"column_name": "delay_time", "conversion_factor": 2},
-                "yield_rate": "probability",
+                "normalized_yield": "probability",
             },
             "ignore_metallicity": True,
         }
@@ -184,7 +184,7 @@ class test_extract_event_data(unittest.TestCase):
                     "column_name": "delay_time",
                     "conversion_function": lambda x: x**2,
                 },
-                "yield_rate": "probability",
+                "normalized_yield": "probability",
             },
             "ignore_metallicity": True,
         }
@@ -212,7 +212,7 @@ class test_extract_event_data(unittest.TestCase):
                     "column_name": "delay_time",
                     "conversion_function": lambda x: x**2,
                 },
-                "yield_rate": "probability",
+                "normalized_yield": "probability",
             },
             "ignore_metallicity": True,
         }
@@ -313,7 +313,7 @@ class test_event_convolution_function(unittest.TestCase):
                 "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
-                    "yield_rate": "probability",
+                    "normalized_yield": "probability",
                 },
                 "ignore_metallicity": True,
             },
@@ -337,7 +337,7 @@ class test_event_convolution_function(unittest.TestCase):
             "convolution_type": "integrate",
             "data_column_dict": {
                 "delay_time": "delay_time",
-                "yield_rate": "probability",
+                "normalized_yield": "probability",
             },
             "ignore_metallicity": True,
         }
@@ -357,7 +357,7 @@ class test_event_convolution_function(unittest.TestCase):
 
         #
         convolution_result = event_convolution_function(
-            bin_center=0.5 * u.yr,
+            convolution_time_bin_center=0.5 * u.yr,
             job_dict={"sfr_dict": sfr_dict},
             config=self.convolution_config,
             convolution_instruction=normal_convolution_instructions,
@@ -366,17 +366,22 @@ class test_event_convolution_function(unittest.TestCase):
 
         #
         np.testing.assert_array_equal(
-            convolution_result["convolution_result"]["yield"],
+            convolution_result["convolution_results"]["yield"],
             np.array([1, 2, 3, 4.0]) * (1.0 / u.yr / u.Gpc**3),
         )
 
     def test_event_convolution_function_post_convolution_simple(self):
         def simple_post_convolution_function(
-            config, job_dict, sfr_dict, data_dict, result_dict, convolution_instruction
+            config,
+            job_dict,
+            sfr_dict,
+            data_dict,
+            convolution_results,
+            convolution_instruction,
         ):
-            result_dict["yield"] = result_dict["yield"] * 0
+            convolution_results["yield"] = convolution_results["yield"] * 0
 
-            return result_dict
+            return convolution_results
 
         #
         normal_convolution_instructions = {
@@ -386,7 +391,7 @@ class test_event_convolution_function(unittest.TestCase):
             "convolution_type": "integrate",
             "data_column_dict": {
                 "delay_time": "delay_time",
-                "yield_rate": "probability",
+                "normalized_yield": "probability",
             },
             "ignore_metallicity": True,
             "post_convolution_function": simple_post_convolution_function,
@@ -401,15 +406,19 @@ class test_event_convolution_function(unittest.TestCase):
         sfr_dict = self.convolution_config["SFR_info"]
 
         #
+        convolution_time_bin_center = 0.5 * u.yr
         convolution_result = event_convolution_function(
-            bin_center=0.5 * u.yr,
-            job_dict={"sfr_dict": sfr_dict},
+            convolution_time_bin_center=convolution_time_bin_center,
+            job_dict={
+                "sfr_dict": sfr_dict,
+                "convolution_time_bin_center": convolution_time_bin_center,
+            },
             config=self.convolution_config,
             convolution_instruction=normal_convolution_instructions,
             data_dict=data_dict,
         )
 
-        yield_result = convolution_result["convolution_result"]["yield"]
+        yield_result = convolution_result["convolution_results"]["yield"]
 
         #
         np.testing.assert_array_equal(

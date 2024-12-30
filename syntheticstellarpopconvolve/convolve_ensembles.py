@@ -70,10 +70,10 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
         ensemble=ensemble
     )
 
-    result_dict = {"yield": stripped_endpoints}
+    convolution_results = {"yield": stripped_endpoints}
 
     #
-    num_systems_before = len(result_dict[list(result_dict.keys())[0]])
+    num_systems_before = len(convolution_results[list(convolution_results.keys())[0]])
 
     #############
     # call hook
@@ -83,13 +83,21 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
         sfr_dict=sfr_dict,
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
-        result_dict=result_dict,
+        convolution_results=convolution_results,
         name=name,
     )
 
     #############
     # check output
-    num_systems_after = len(result_dict[list(result_dict.keys())[0]])
+
+    # Abort when its a list
+    if isinstance(convolution_results, list):
+        raise ValueError(
+            "Currently returning multiple convolution_results after calling the post-convolution function is not supported for convolution of ensemble-based results."
+        )
+
+    # if its a dict, check the length
+    num_systems_after = len(convolution_results[list(convolution_results.keys())[0]])
 
     #
     if num_systems_before != num_systems_after:
@@ -100,7 +108,7 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
         )
 
     #
-    num_output_entries = len(result_dict.keys())
+    num_output_entries = len(convolution_results.keys())
 
     if num_output_entries > 1:
         raise ValueError(
@@ -112,7 +120,7 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
     ################
     # re-attach the updated data to the ensemble
     # TODO: allow the result dict to contain more data than just 1 number.
-    attach_endpoints(ensemble=ensemble, endpoint_array=result_dict["yield"])
+    attach_endpoints(ensemble=ensemble, endpoint_array=convolution_results["yield"])
 
     return ensemble
 
@@ -1238,7 +1246,7 @@ def extract_ensemble_data(config, convolution_instruction):
 
 
 def ensemble_handle_SFR_multiplication(
-    bin_center,
+    convolution_time_bin_center,
     job_dict,
     config,
     convolution_instruction,
@@ -1258,7 +1266,7 @@ def ensemble_handle_SFR_multiplication(
     #
     config["logger"].debug(
         "Convolving ensemble data with SFR rate at convolution bin {} with data_dict: {} and multiplying by {} ({})".format(
-            bin_center, data_dict, extra_value, extra_value_dict
+            convolution_time_bin_center, data_dict, extra_value, extra_value_dict
         )
     )
 
@@ -1275,7 +1283,7 @@ def ensemble_handle_SFR_multiplication(
     #############
     digitized_sfr_rates = calculate_digitized_sfr_rates(
         config=config,
-        convolution_time_bin_center=bin_center,
+        convolution_time_bin_center=convolution_time_bin_center,
         data_dict=data_dict,
         sfr_dict=job_dict["sfr_dict"],
     )
@@ -1298,7 +1306,7 @@ def ensemble_handle_SFR_multiplication(
 
 
 def ensemble_convolve_ensemble(
-    bin_center,
+    convolution_time_bin_center,
     job_dict,
     config,
     convolution_instruction,
@@ -1435,7 +1443,7 @@ def ensemble_convolve_ensemble(
             if depth >= deepest_data_layer_depth:
                 # multiplication with SFR-related things here
                 ensemble[key] = ensemble_handle_SFR_multiplication(
-                    bin_center=bin_center,
+                    convolution_time_bin_center=convolution_time_bin_center,
                     job_dict=job_dict,
                     config=config,
                     convolution_instruction=convolution_instruction,
@@ -1446,7 +1454,7 @@ def ensemble_convolve_ensemble(
             else:
                 # call self with increased depth
                 ensemble[key] = ensemble_convolve_ensemble(
-                    bin_center=bin_center,
+                    convolution_time_bin_center=convolution_time_bin_center,
                     job_dict=job_dict,
                     config=config,
                     convolution_instruction=convolution_instruction,
@@ -1490,7 +1498,7 @@ def extract_units_from_endpoints(endpoints):
 
 
 def ensemble_convolution_function(
-    bin_center, job_dict, config, convolution_instruction, data_dict
+    convolution_time_bin_center, job_dict, config, convolution_instruction, data_dict
 ):
     """
     Function for the multiprocessing worker to convolve ensemble-based data.
@@ -1511,7 +1519,7 @@ def ensemble_convolution_function(
         #
         config["logger"].debug(
             "Convolving ensemble-based data {} for bin_center {}".format(
-                convolution_instruction["input_data_name"], bin_center
+                convolution_instruction["input_data_name"], convolution_time_bin_center
             )
         )
 
@@ -1540,7 +1548,7 @@ def ensemble_convolution_function(
             ensemble=ensemble,
             convolution_instruction=convolution_instruction,
             config=config,
-            bin_center=bin_center,
+            convolution_time_bin_center=convolution_time_bin_center,
             job_dict=job_dict,
             data_dict=data_dict,
         )
@@ -1563,7 +1571,7 @@ def ensemble_convolution_function(
         stripped_endpoints = extract_units_from_endpoints(endpoints=stripped_endpoints)
 
         # put back the units
-        stripped_endpoints = stripped_endpoints * config["yield_rate_unit"]
+        stripped_endpoints = stripped_endpoints * config["normalized_yield_unit"]
 
         #
         convolution_result = {"yield": stripped_endpoints}
@@ -1571,7 +1579,7 @@ def ensemble_convolution_function(
         if job_dict["job_number"] == 0:
             convolution_result["stripped_ensemble"] = stripped_ensemble
 
-        return {"convolution_result": convolution_result}
+        return {"convolution_results": convolution_result}
 
     else:
         raise ValueError(

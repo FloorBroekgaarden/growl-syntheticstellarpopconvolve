@@ -141,25 +141,25 @@ class test_convolution_with_ensemble(unittest.TestCase):
 
             #
             arr_ = output_hdf5_file[
-                "output_data/ensemble/dummy/dummy/convolved_array/0.5 yr"
+                "output_data/ensemble/dummy/dummy/convolution_results/0.5 yr"
             ]["yield"]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/ensemble/dummy/dummy/convolved_array/1.5 yr"
+                "output_data/ensemble/dummy/dummy/convolution_results/1.5 yr"
             ]["yield"][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/ensemble/dummy/dummy/convolved_array/2.5 yr"
+                "output_data/ensemble/dummy/dummy/convolution_results/2.5 yr"
             ]["yield"][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 0])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/ensemble/dummy/dummy/convolved_array/3.5 yr"
+                "output_data/ensemble/dummy/dummy/convolution_results/3.5 yr"
             ]["yield"][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 0, 0])))
 

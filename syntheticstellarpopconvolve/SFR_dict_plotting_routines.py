@@ -1,95 +1,95 @@
-"""
-Functionality to plot the content of a SFR dict
+def load_mpl_rc():
+    import matplotlib as mpl
 
-TODO: handle units properly
-"""
-
-import astropy.units as u
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-
-from syntheticstellarpopconvolve.general_functions import calculate_bincenters
-
-
-def plot_SFR_dict(config, SFR_dict, fig=None, return_fig=False):
-    """ """
-
-    ####
-    #
-    if fig is None:
-        fig = plt.figure(figsize=(20, 20))
-
-    axes_dict = {}
-
-    #
-    gs = fig.add_gridspec(nrows=2, ncols=1)
-
-    if "metallicity_distribution_array" in SFR_dict:
-
-        # create axes
-        axes_dict["ax_starformation_rate"] = fig.add_subplot(gs[:1, :])
-        axes_dict["ax_metallicity_distribution"] = fig.add_subplot(gs[1:, :])
-    else:
-        axes_dict["ax_starformation_rate"] = fig.add_subplot(gs[:, :])
-
-    ############
-    # Plot sfr array
-    if config["time_type"] == "lookback_time":
-        time_array = calculate_bincenters(sfr_dict["lookback_time_bin_edges"])
-    elif config["time_type"] == "redshift":
-        time_array = calculate_bincenters(sfr_dict["redshift_bin_edges"])
-    else:
-        raise ValueError(
-            "either 'lookback_time' or 'redshift' has to be present in the sfr_dict"
-        )
-
-    #
-    axes_dict["ax_starformation_rate"].plot(
-        time_array, sfr_dict["starformation_rate_array"]
+    # https://matplotlib.org/users/customizing.html
+    mpl.rc(
+        "axes",
+        labelweight="normal",
+        linewidth=2,
+        labelsize=30,
+        grid=True,
+        titlesize=40,
+        facecolor="white",
     )
 
-    #
-    if return_fig:
-        return fig, axes_dict
-    plt.show()
+    mpl.rc("savefig", dpi=100)
 
+    mpl.rc("lines", linewidth=4, color="g", markeredgewidth=2)
 
-# from syntheticstellarpopconvolve.general_functions import (
-#     calculate_bincenters,
-# )
+    mpl.rc(
+        "ytick",
+        **{
+            "labelsize": 30,
+            "color": "k",
+            "left": True,
+            "right": True,
+            "major.size": 12,
+            "major.width": 2,
+            "minor.size": 6,
+            "minor.width": 2,
+            "major.pad": 12,
+            "minor.visible": True,
+            "direction": "inout",
+        },
+    )
 
-# def plot_sfr(sfr_dict, fig=None, return_fig=False):  # DH0001
-#     """
-#     Function to plot a starformation distribution
-#     """
+    mpl.rc(
+        "xtick",
+        **{
+            "labelsize": 30,
+            "top": True,
+            "bottom": True,
+            "major.size": 12,
+            "major.width": 2,
+            "minor.size": 6,
+            "minor.width": 2,
+            "major.pad": 12,
+            "minor.visible": True,
+            "direction": "inout",
+        },
+    )
 
-#     # TODO: if only the SFR array is present, plot that
+    mpl.rc("legend", frameon=False, fontsize=30, title_fontsize=30)
 
-#     ############
-#     # Plot sfr array
-#     if "lookback_time" in sfr_dict:
-#         time_array = calculate_bincenters(sfr_dict["lookback_time_bin_edges"])
-#     elif "redshift" in sfr_dict:
-#         time_array = calculate_bincenters(sfr_dict["redshift_bin_edges"])
-#     else:
-#         raise ValueError(
-#             "either 'lookback_time' or 'redshift' has to be present in the sfr_dict"
-#         )
+    mpl.rc("contour", negative_linestyle="solid")
 
-#     ax_sfr.plot(time_array, sfr_dict["starformation_array"])
+    mpl.rc(
+        "figure",
+        figsize=[16, 16],
+        titlesize=30,
+        dpi=100,
+        facecolor="white",
+        edgecolor="white",
+        frameon=True,
+        max_open_warning=10,
+        # autolayout=True
+    )
 
-#     ###########
-#     # Plot mssfr grid
+    mpl.rc(
+        "legend",
+        fontsize=20,
+        handlelength=2,
+        loc="best",
+        fancybox=False,
+        numpoints=2,
+        framealpha=None,
+        scatterpoints=3,
+        edgecolor="inherit",
+    )
 
+    mpl.rc("savefig", dpi="figure", facecolor="white", edgecolor="white")
 
-if __name__ == "__main__":
+    mpl.rc("grid", color="b0b0b0", alpha=0.5)
 
-    # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
-    sfr_dict = {}
-    sfr_dict["lookback_time_bin_edges"] = (np.arange(3, 6, 1) * u.Gyr).to(u.yr)
-    sfr_dict["starformation_rate_array"] = (
-        0.25 * np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
-    )  # example of a constant star-formation rate. this could be anything of course.
+    mpl.rc("image", cmap="viridis")
 
-    plot_SFR_dict(config={"time_type": "lookback_time"}, SFR_dict=sfr_dict)
+    mpl.rc(
+        "font",
+        # weight='bold',
+        serif="Palatino",
+        size=20,
+    )
+
+    mpl.rc("errorbar", capsize=2)
+
+    mpl.rc("mathtext", default="sf")

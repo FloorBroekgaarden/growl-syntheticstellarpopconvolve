@@ -109,7 +109,7 @@ class test_extract_population_settings(unittest.TestCase):
                 "output_data_name": "dummy",
                 "data_column_dict": {
                     "delay_time": "delay_time",
-                    "yield_rate": "probability",
+                    "normalized_yield": "probability",
                 },
                 "ignore_metallicity": True,
             },

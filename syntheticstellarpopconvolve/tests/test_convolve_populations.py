@@ -4,7 +4,6 @@ Testcases for convolve_populations file
 
 import copy
 import json
-import logging
 import os
 import unittest
 
@@ -13,7 +12,6 @@ import h5py
 import numpy as np
 import pandas as pd
 import pkg_resources
-from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 
 from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
@@ -154,7 +152,7 @@ class test_generate_data_dict(unittest.TestCase):
                 "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
-                    "yield_rate": "probability",
+                    "normalized_yield": "probability",
                 },
                 "ignore_metallicity": True,
             },
@@ -176,7 +174,7 @@ class test_generate_data_dict(unittest.TestCase):
             "output_data_name": "dummy",
             "data_column_dict": {
                 "delay_time": "delay_time",
-                "yield_rate": "probability",
+                "normalized_yield": "probability",
             },
             "ignore_metallicity": True,
         }

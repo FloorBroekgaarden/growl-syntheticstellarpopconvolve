@@ -60,7 +60,7 @@ class test_check_convolution_instruction(unittest.TestCase):
             "output_data_name": "output_event_data",
             "convolution_type": "integrate",
             "ignore_metallicity": True,
-            "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
+            "data_column_dict": {"delay_time": "delay", "normalized_yield": "rate"},
         }
 
         self.ensemble_convolution_instruction = {
@@ -92,7 +92,7 @@ class test_check_convolution_instruction(unittest.TestCase):
         event_convolution_instruction_missing_key = {
             "input_data_type": "event",
             "input_data_name": "event_data",
-            "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
+            "data_column_dict": {"delay_time": "delay", "normalized_yield": "rate"},
         }
         with self.assertRaises(ValueError):
             check_convolution_instruction(
@@ -119,7 +119,7 @@ class test_check_convolution_instruction(unittest.TestCase):
             "input_data_name": "event_data",
             "output_data_name": "output_event_data",
             "convolution_type": "integrate",
-            "data_column_dict": {"delay_time": "delay", "yield_rate": "rate"},
+            "data_column_dict": {"delay_time": "delay", "normalized_yield": "rate"},
         }
         with self.assertRaises(ValueError):
             check_convolution_instruction(

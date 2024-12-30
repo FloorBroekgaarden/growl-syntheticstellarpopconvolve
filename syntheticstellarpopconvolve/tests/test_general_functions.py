@@ -232,7 +232,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
                 "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
-                    "yield_rate": "probability",
+                    "normalized_yield": "probability",
                 },
                 "ignore_metallicity": True,
             },

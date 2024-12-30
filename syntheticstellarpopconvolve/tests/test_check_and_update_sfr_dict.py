@@ -35,10 +35,10 @@ class test_pad_sfr_dict(unittest.TestCase):
             "cosmology": cosmo,
         }  # Example config
         self.sfr_dict = {
-            "lookback_time_bin_edges": np.array([1, 2, 3]),
-            "redshift_bin_edges": np.array([0.1, 0.2, 0.3]),
+            "lookback_time_bin_edges": np.array([1, 2, 3, 4]),
+            "redshift_bin_edges": np.array([0.1, 0.2, 0.3, 0.4]),
             "starformation_rate_array": np.array([10, 20, 30]),
-            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
             "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]),
         }
 
@@ -48,7 +48,7 @@ class test_pad_sfr_dict(unittest.TestCase):
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_lookback_time_bin_edges"],
-                np.array([1 - 1e13, 1, 2, 3, 3 + 1e13]),
+                np.array([1 - 1e13, 1, 2, 3, 4, 4 + 1e13]),
             )
         )
         self.assertTrue("padded_starformation_rate_array" in padded_sfr_dict)
@@ -66,7 +66,7 @@ class test_pad_sfr_dict(unittest.TestCase):
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_redshift_bin_edges"],
-                np.array([0.1 - 1e13, 0.1, 0.2, 0.3, 0.3 + 1e13]),
+                np.array([0.1 - 1e13, 0.1, 0.2, 0.3, 0.4, 0.4 + 1e13]),
             )
         )
         self.assertTrue("padded_starformation_rate_array" in padded_sfr_dict)
@@ -84,7 +84,7 @@ class test_pad_sfr_dict(unittest.TestCase):
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_metallicity_bin_edges"],
-                np.array([1e-20, 0.01, 0.1, 0.2, 1]),
+                np.array([1e-20, 0.01, 0.1, 0.2, 0.3, 1]),
             )
         )
 
@@ -119,10 +119,12 @@ class test_check_sfr_dict(unittest.TestCase):
     def setUp(self):
         self.sfr_dict = {
             "name": "test_sfr_dict",
-            "lookback_time_bin_edges": np.array([1, 2, 3]) * 1e9 * u.yr,
+            "lookback_time_bin_edges": np.array([1, 2, 3, 4]) * 1e9 * u.yr,
             "starformation_rate_array": np.array([10, 20, 30]) * u.Msun / u.yr,
-            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
-            "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]),
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
+            "metallicity_distribution_array": np.array(
+                [[1, 2, 3], [4, 5, 6], [5, 6, 7]]
+            ),
         }
 
         self.config = default_convolution_config
@@ -210,18 +212,6 @@ class test_check_sfr_dict(unittest.TestCase):
             )
 
     def test_check_sfr_dict_redshift_wrong_bin_edges(self):
-        # self.sfr_dict['lookback_time_bin_edges']
-
-        # self.sfr_dict = {
-        #     "name": "test_sfr_dict",
-        #     "lookback_time_bin_edges": np.array([1, 2, 3]) * 1e9 * u.yr,
-        #     "starformation_array": np.array([10, 20, 30]),
-        #     "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
-        #     "metallicity_weighted_starformation_array": np.array(
-        #         [[1, 2, 3], [4, 5, 6]]
-        #     ),
-        # }
-
         requires_name = True
         requires_metallicity_info = True
         time_type = "redshift"
@@ -236,7 +226,7 @@ class test_check_sfr_dict(unittest.TestCase):
             )
 
     def test_check_sfr_dict_redshift_correct_bin_edges(self):
-        self.sfr_dict["redshift_bin_edges"] = np.array([0, 1, 2])
+        self.sfr_dict["redshift_bin_edges"] = np.array([0, 1, 2, 4])
 
         requires_name = True
         requires_metallicity_info = True
@@ -249,3 +239,9 @@ class test_check_sfr_dict(unittest.TestCase):
             time_type=time_type,
             config=self.config,
         )
+
+
+if __name__ == "__main__":
+    test_pad_sfr_dict_obj = test_pad_sfr_dict()
+    test_pad_sfr_dict_obj.setUp()
+    test_pad_sfr_dict_obj.test_pad_sfr_dict_lookback_time()

@@ -74,7 +74,7 @@ def check_convolution_instruction(convolution_instruction, config):
                 config=convolution_instruction["data_column_dict"],
                 required_list=[
                     "delay_time",
-                    "yield_rate",
+                    "normalized_yield",
                 ],
             )
 

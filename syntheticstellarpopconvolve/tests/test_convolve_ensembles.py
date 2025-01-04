@@ -446,12 +446,14 @@ class test_convolve_ensemble_by_integration(unittest.TestCase):
         )
 
         sfr_dict = self.convolution_config["SFR_info"]
+        import logging
 
+        self.convolution_config["logger"].setLevel(logging.DEBUG)
         time_bin_info_dict = {
             "bin_number": 0,
-            "bin_center": 0.5 * u.Gyr,
+            "bin_center": 0.5 * u.yr,
             "bin_edge_lower": 0,
-            "bin_size": 1 * u.Gyr,
+            "bin_size": 1 * u.yr,
             "bin_type": "convolution time",
             "time_type": self.convolution_config["time_type"],
         }
@@ -483,7 +485,7 @@ class test_convolve_ensemble_by_integration(unittest.TestCase):
 
         #
         self.assertTrue("convolution_results" in result_dict)
-
+        print(result_dict["convolution_results"]["yield"])
         np.testing.assert_array_equal(
             result_dict["convolution_results"]["yield"],
             np.array([1, 1, 2, 2, 3, 3, 4, 4]) * (1.0 / u.yr / u.Gpc**3),
@@ -495,6 +497,9 @@ class test_convolve_ensemble_by_integration(unittest.TestCase):
             result_dict["convolution_results"]["stripped_ensemble"]
             == {"dummy": expected_stripped_ensemble}
         )
+        import logging
+
+        self.convolution_config["logger"].setLevel(logging.CRITICAL)
 
 
 class test_ensemble_marginalise_layer(unittest.TestCase):
@@ -1391,4 +1396,7 @@ class test_get_ensemble_structure(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
+    test_convolve_ensemble_by_integration_obj = test_convolve_ensemble_by_integration()
+    test_convolve_ensemble_by_integration_obj.setUp()
+    test_convolve_ensemble_by_integration_obj.test_normal()

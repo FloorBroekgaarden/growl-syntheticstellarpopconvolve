@@ -9,15 +9,14 @@ import multiprocessing
 import os
 import pickle
 import traceback
+import warnings
 
 import h5py
 import setproctitle
-import warning
 
-# from syntheticstellarpopconvolve.convolve_custom_data import (
-#     custom_convolution_function,
-#     extract_custom_data,
-# )
+from syntheticstellarpopconvolve.convolve_custom_data import (  # custom_convolution_function,
+    extract_custom_data,
+)
 from syntheticstellarpopconvolve.convolve_ensembles import (
     convolve_ensemble_by_integration,
     extract_ensemble_data,
@@ -335,7 +334,7 @@ def convolution_worker_handle_convolution_choice(
         )
 
     elif convolution_instruction["convolution_type"] == "on-the-fly":
-        warning.warn("On-the-fly convolution is currently not supported")
+        warnings.warn("On-the-fly convolution is currently not supported")
 
         ##########
         #
@@ -528,7 +527,7 @@ def generate_data_dict(config, convolution_instruction):
     extractor_functions = {
         "event": extract_event_data,
         "ensemble": extract_ensemble_data,
-        # "custom": extract_custom_data,
+        "custom": extract_custom_data,
     }
 
     #

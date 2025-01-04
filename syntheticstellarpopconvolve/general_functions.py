@@ -198,7 +198,11 @@ def calculate_digitized_sfr_rates(
     )
 
     # Get indices for birth redshift
-    config["logger"].debug("Calculating digitized origin-time indices")
+    config["logger"].debug(
+        "Calculating digitized origin-time indices with origin time array {} and bin center {}".format(
+            origin_time_array, convolution_time_bin_center
+        )
+    )
 
     digitized_time_indices = (
         np.digitize(
@@ -230,10 +234,15 @@ def calculate_digitized_sfr_rates(
         # use JUST the SFR, not the metallicity dependent one
 
         # Calculate rates
-        config["logger"].debug("Calculating absolute SFR rates")
+        config["logger"].debug(
+            "Calculating absolute SFR rates with padded sfr rate array {} and time indicates {}".format(
+                sfr_dict["padded_starformation_rate_array"], digitized_time_indices
+            )
+        )
         digitised_sfr_rates = sfr_dict["padded_starformation_rate_array"][
             digitized_time_indices
         ]
+        config["logger"].debug("Found sfr rates {}".format(digitised_sfr_rates))
 
     #
 

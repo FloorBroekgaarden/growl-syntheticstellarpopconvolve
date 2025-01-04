@@ -23,3 +23,6 @@ https://keepachangelog.com/en/0.3.0/
     - [feature/multiple_return_dicts]:
         - provided support for the return of multiple convolution_result dicts after the post-convolution function call. Useful for splitting results into different sets.
         - changed the name for the internal field from yield-rate to normalized-yield, and other internal name changes.
+    [feature/convolution-on-the-fly]:
+        - Added support for generic call to external code to generate and evolve systems on-the-fly
+        - restructured and moved much logic to convolve_populations.py

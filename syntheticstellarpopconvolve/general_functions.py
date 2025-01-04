@@ -235,6 +235,8 @@ def calculate_digitized_sfr_rates(
             digitized_time_indices
         ]
 
+    #
+
     # handle multiplication by bin-size
     # TODO: clean and handle implementation
     # TODO: make sure that padded_time_binsizes exists.

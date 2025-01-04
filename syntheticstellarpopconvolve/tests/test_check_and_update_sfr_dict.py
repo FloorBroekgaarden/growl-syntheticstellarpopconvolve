@@ -104,9 +104,13 @@ class test_pad_sfr_dict(unittest.TestCase):
         self.assertTrue(
             "padded_metallicity_weighted_starformation_rate_array" in padded_sfr_dict
         )
-        expected_array = np.array(
-            [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 4, 5, 6, 0], [0, 0, 0, 0, 0]]
-        ) * np.array([0, 10, 20, 30, 0])
+        expected_array = (
+            np.array(
+                [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 4, 5, 6, 0], [0, 0, 0, 0, 0]]
+            )
+            * np.array([0, 10, 20, 30, 0])
+            * np.diff(padded_sfr_dict["padded_metallicity_bin_edges"])
+        )
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_metallicity_weighted_starformation_rate_array"],

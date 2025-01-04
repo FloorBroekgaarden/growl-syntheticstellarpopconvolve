@@ -47,7 +47,7 @@ from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
     test_attach_endpoints,
     test_check_if_value_layer,
     test_check_if_value_layer_and_get_layer_iterable,
-    test_ensemble_convolution_function,
+    test_convolve_ensemble_by_integration,
     test_ensemble_handle_marginalisation,
     test_ensemble_handle_SFR_multiplication,
     test_ensemble_marginalise_layer,
@@ -71,7 +71,7 @@ from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
     test_strip_ensemble_endpoints,
 )
 from syntheticstellarpopconvolve.tests.test_convolve_events import (
-    test_event_convolution_function,
+    test_convolve_events_by_integration,
     test_extract_event_data,
 )
 from syntheticstellarpopconvolve.tests.test_convolve_populations import (

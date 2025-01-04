@@ -237,40 +237,36 @@ def update_sfr_dict(sfr_dict, config):
     Function to update the SFR dict
     - provides padding
     - adds redshift shell info
+    - updates metallicity-based info
     """
 
     #
     config["logger"].debug("Updating SFR dict")
 
-    # TODO: signal this better with some flag
+    sfr_dict["include_metallicity_info"] = False
     if "metallicity_distribution_array" in sfr_dict.keys():
-        # construct the combined array
+        sfr_dict["include_metallicity_info"] = True
+
+        # determine centers
+        sfr_dict["metallicity_bin_centers"] = (
+            sfr_dict["metallicity_bin_edges"][1:]
+            + sfr_dict["metallicity_bin_edges"][:-1]
+        ) / 2
+
+        # determine sizes
+        sfr_dict["metallicity_bin_sizes"] = (
+            sfr_dict["metallicity_bin_edges"][1:]
+            - +sfr_dict["metallicity_bin_edges"][:-1]
+        )
+        sfr_dict["metallicity_bin_sizes"] = np.diff(sfr_dict["metallicity_bin_edges"])
+
+        # construct the combined array: multiplies the SFR, dp/dZ, and delta Z
+        # TODO: this needs to be checked quite well
         sfr_dict["metallicity_weighted_starformation_rate_array"] = (
             sfr_dict["starformation_rate_array"]
             * sfr_dict["metallicity_distribution_array"]
+            * sfr_dict["metallicity_bin_sizes"]
         )
-
-        # add bin centers
-        if sfr_dict.get("metallicity_scale", "linear") == "linear":
-            sfr_dict["metallicity_bin_centers"] = (
-                sfr_dict["metallicity_bin_edges"][1:]
-                + sfr_dict["metallicity_bin_edges"][:-1]
-            ) / 2
-        elif sfr_dict.get("metallicity_scale", "linear") == "log10":
-            sfr_dict["metallicity_bin_centers"] = 10 ** (
-                (
-                    np.log10(sfr_dict["metallicity_bin_edges"][1:])
-                    + np.log10(sfr_dict["metallicity_bin_edges"][:-1])
-                )
-                / 2
-            )
-        elif sfr_dict.get("metallicity_scale", "linear") == "log":
-            sfr_dict["metallicity_bin_centers"] = np.exp(
-                (
-                    np.log(sfr_dict["metallicity_bin_edges"][1:])
-                    + np.log(sfr_dict["metallicity_bin_edges"][:-1]) / 2
-                )
-            )
 
     # add bin centers
     if config["time_type"] == "lookback_time":

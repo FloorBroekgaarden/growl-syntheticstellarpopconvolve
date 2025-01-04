@@ -84,7 +84,7 @@ class test_extract_arguments(unittest.TestCase):
 ####
 # Define
 def postprocessing_multiple_dicts(
-    config, job_dict, sfr_dict, data_dict, convolution_results, convolution_instruction
+    config, sfr_dict, data_dict, convolution_results, convolution_instruction
 ):
     """
     Post-convolution function to handle integrating the systems forward in time and finding those that end up in the LISA waveband.
@@ -125,11 +125,10 @@ def postprocessing_multiple_dicts(
 
 
 def postprocessing_multiple_dicts_with_name(
-    config, job_dict, sfr_dict, data_dict, convolution_results, convolution_instruction
+    config, sfr_dict, data_dict, convolution_results, convolution_instruction
 ):
     convolution_results = postprocessing_multiple_dicts(
         config=config,
-        job_dict=job_dict,
         sfr_dict=sfr_dict,
         data_dict=data_dict,
         convolution_results=convolution_results,
@@ -143,11 +142,10 @@ def postprocessing_multiple_dicts_with_name(
 
 
 def postprocessing_multiple_dicts_without_name(
-    config, job_dict, sfr_dict, data_dict, convolution_results, convolution_instruction
+    config, sfr_dict, data_dict, convolution_results, convolution_instruction
 ):
     convolution_results = postprocessing_multiple_dicts(
         config=config,
-        job_dict=job_dict,
         sfr_dict=sfr_dict,
         data_dict=data_dict,
         convolution_results=convolution_results,

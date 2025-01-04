@@ -21,7 +21,7 @@ from syntheticstellarpopconvolve.convolve_ensembles import (
     attach_endpoints,
     check_if_value_layer,
     check_if_value_layer_and_get_layer_iterable,
-    ensemble_convolution_function,
+    convolve_ensemble_by_integration,
     ensemble_handle_marginalisation,
     ensemble_handle_SFR_multiplication,
     ensemble_marginalise_layer,
@@ -268,9 +268,18 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
 
         sfr_dict = self.convolution_config["SFR_info"]
 
+        time_bin_info_dict = {
+            "bin_number": 0,
+            "bin_center": 0.5 * u.Gyr,
+            "bin_edge_lower": 0,
+            "bin_size": 1 * u.Gyr,
+            "bin_type": "convolution time",
+            "time_type": self.convolution_config["time_type"],
+        }
+
         ensemble = ensemble_handle_SFR_multiplication(
-            convolution_time_bin_center=0.5 * u.Gyr,
-            job_dict={"sfr_dict": sfr_dict, "job_number": 0},
+            sfr_dict=sfr_dict,
+            time_bin_info_dict=time_bin_info_dict,
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
                 0
@@ -296,9 +305,18 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
 
         sfr_dict = self.convolution_config["SFR_info"]
 
+        time_bin_info_dict = {
+            "bin_number": 0,
+            "bin_center": 0.5 * u.Gyr,
+            "bin_edge_lower": 0,
+            "bin_size": 1 * u.Gyr,
+            "bin_type": "convolution time",
+            "time_type": self.convolution_config["time_type"],
+        }
+
         ensemble = ensemble_handle_SFR_multiplication(
-            convolution_time_bin_center=0.5 * u.Gyr,
-            job_dict={"sfr_dict": sfr_dict, "job_number": 0},
+            sfr_dict=sfr_dict,
+            time_bin_info_dict=time_bin_info_dict,
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
                 0
@@ -314,7 +332,7 @@ class test_ensemble_handle_SFR_multiplication(unittest.TestCase):
         self.assertTrue(ensemble == expected_ensemble)
 
 
-class test_ensemble_convolution_function(unittest.TestCase):
+class test_convolve_ensemble_by_integration(unittest.TestCase):
     def setUp(self):
         #
         input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
@@ -429,10 +447,19 @@ class test_ensemble_convolution_function(unittest.TestCase):
 
         sfr_dict = self.convolution_config["SFR_info"]
 
+        time_bin_info_dict = {
+            "bin_number": 0,
+            "bin_center": 0.5 * u.Gyr,
+            "bin_edge_lower": 0,
+            "bin_size": 1 * u.Gyr,
+            "bin_type": "convolution time",
+            "time_type": self.convolution_config["time_type"],
+        }
+
         #
-        result_dict = ensemble_convolution_function(
-            convolution_time_bin_center=0.5 * u.yr,
-            job_dict={"sfr_dict": sfr_dict, "job_number": 0},
+        result_dict = convolve_ensemble_by_integration(
+            sfr_dict=sfr_dict,
+            time_bin_info_dict=time_bin_info_dict,
             config=self.convolution_config,
             convolution_instruction=self.convolution_config["convolution_instructions"][
                 0

@@ -508,6 +508,20 @@ def is_time_unit(parameter):
         return False
 
 
+def is_mass_unit(parameter):
+    """
+    Function to check if a parameter has time-units
+    """
+
+    try:
+        parameter.to(u.kg)
+        return True
+    except u.core.UnitConversionError:
+        return False
+    except AttributeError:
+        return False
+
+
 def has_unit(parameter, fail_on_dimensionless=True):
     """
     Function to check if a parameter has any unit assigned to it

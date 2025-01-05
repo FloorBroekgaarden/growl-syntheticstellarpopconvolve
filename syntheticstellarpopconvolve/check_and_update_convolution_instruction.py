@@ -51,12 +51,17 @@ def check_convolution_instruction(convolution_instruction, config):
     # required for all
     check_required(
         config=convolution_instruction,
-        required_list=["input_data_type", "input_data_name", "output_data_name"],
+        required_list=["input_data_name", "output_data_name"],
     )
 
     ###################
     # checks for particular types of configurations
     if convolution_instruction["convolution_type"] == "integrate":
+
+        check_required(
+            config=convolution_instruction,
+            required_list=["input_data_type"],
+        )
 
         ################
         # check event-specific instructions
@@ -124,6 +129,19 @@ def check_convolution_instruction(convolution_instruction, config):
     elif convolution_instruction["convolution_type"] == "sample":
         check_required(
             config=convolution_instruction,
+            required_list=["input_data_type"],
+        )
+
+        ###########
+        # custom structure instructions
+        if convolution_instruction["input_data_type"] != "event":
+            # TODO:
+            raise ValueError(
+                "input data other than event-type data currently not supported when sampling"
+            )
+
+        check_required(
+            config=convolution_instruction,
             required_list=[
                 "data_column_dict",
             ],
@@ -138,13 +156,12 @@ def check_convolution_instruction(convolution_instruction, config):
             ],
         )
 
-        ###########
-        # custom structure instructions
-        if convolution_instruction["input_data_type"] != "event":
-            # TODO:
-            raise ValueError(
-                "input data other than event-type data currently not supported when sampling"
-            )
+    elif convolution_instruction["convolution_type"] == "on-the-fly":
+
+        check_required(
+            config=convolution_instruction,
+            required_list=["on_the_fly_function"],
+        )
 
     else:
         raise ValueError(

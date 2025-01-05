@@ -12,6 +12,7 @@ what do we need:
 
 """
 
+from syntheticstellarpopconvolve.general_functions import is_mass_unit
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     extract_arguments,
     handle_post_convolution_function,
@@ -69,9 +70,15 @@ def handle_call_on_the_fly_function(
     bin_size = time_bin_info_dict["bin_number"]
     bin_lower_edge = time_bin_info_dict["bin_lower_edge"]
     sfr = sfr_dict["starformation_rate_array"][bin_number]
-    total_star_formation_in_bin = (
-        sfr * bin_size
-    )  # TODO: consider forcing this to be a time-like unit
+    total_star_formation_in_bin = sfr * bin_size
+
+    # Check if the total star formation is a mass-type value
+    if not is_mass_unit(total_star_formation_in_bin):
+        raise ValueError(
+            "The total star formation in current bin ({}) is not of a mass-type unit. Something wrong with either the sfr ({}) or the time-bin size ({})".format(
+                total_star_formation_in_bin, sfr, bin_size
+            )
+        )
 
     #
     config["logger"].warning(

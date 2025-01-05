@@ -43,6 +43,7 @@ lookback time to the systems (taken randomly between the bin edges)
 
 import numpy as np
 
+from syntheticstellarpopconvolve.general_functions import is_mass_unit
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     handle_post_convolution_function,
 )
@@ -203,12 +204,21 @@ def calculate_total_star_formation_in_bin(
     star_formation_rate_in_lookback_time_bin = sfr_dict["starformation_rate_array"][
         time_bin_info_dict["bin_number"]
     ]
-    # TODO: log
 
     #
     total_star_formation_in_lookback_time_bin = (
         star_formation_rate_in_lookback_time_bin * lookback_time_bin_size
     )
+
+    # Check if the total star formation is a mass-type value
+    if not is_mass_unit(total_star_formation_in_lookback_time_bin):
+        raise ValueError(
+            "The total star formation in current bin ({}) is not of a mass-type unit. Something wrong with either the sfr ({}) or the time-bin size ({})".format(
+                total_star_formation_in_lookback_time_bin,
+                star_formation_rate_in_lookback_time_bin,
+                lookback_time_bin_size,
+            )
+        )
 
     config["logger"].warning(
         "Lower time bin {} upper time bin {} total mass formed {}".format(

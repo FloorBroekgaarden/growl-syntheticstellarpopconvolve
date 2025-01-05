@@ -282,56 +282,57 @@ def convolution_worker_handle_convolution_choice(
 
     ################
     # Event-convolution by integration:
-    if (
-        convolution_instruction["input_data_type"] == "event"
-        and convolution_instruction["convolution_type"] == "integrate"
-    ):
-        ##########
-        #
-        convolution_results = convolve_events_by_integration(
-            config=config,
-            sfr_dict=sfr_dict,
-            data_dict=data_dict,
-            time_bin_info_dict=time_bin_info_dict,
-            convolution_instruction=convolution_instruction,
-        )
+    if "input_data_type" in convolution_instruction:
+        if (
+            convolution_instruction["input_data_type"] == "event"
+            and convolution_instruction["convolution_type"] == "integrate"
+        ):
+            ##########
+            #
+            convolution_results = convolve_events_by_integration(
+                config=config,
+                sfr_dict=sfr_dict,
+                data_dict=data_dict,
+                time_bin_info_dict=time_bin_info_dict,
+                convolution_instruction=convolution_instruction,
+            )
 
-    elif (
-        convolution_instruction["input_data_type"] == "event"
-        and convolution_instruction["convolution_type"] == "sample"
-    ):
-        ##########
-        #
-        convolution_results = convolve_events_by_sampling(
-            config=config,
-            sfr_dict=sfr_dict,
-            data_dict=data_dict,
-            time_bin_info_dict=time_bin_info_dict,
-            convolution_instruction=convolution_instruction,
-        )
+        elif (
+            convolution_instruction["input_data_type"] == "event"
+            and convolution_instruction["convolution_type"] == "sample"
+        ):
+            ##########
+            #
+            convolution_results = convolve_events_by_sampling(
+                config=config,
+                sfr_dict=sfr_dict,
+                data_dict=data_dict,
+                time_bin_info_dict=time_bin_info_dict,
+                convolution_instruction=convolution_instruction,
+            )
 
-    elif (
-        convolution_instruction["input_data_type"] == "ensemble"
-        and convolution_instruction["convolution_type"] == "integrate"
-    ):
+        elif (
+            convolution_instruction["input_data_type"] == "ensemble"
+            and convolution_instruction["convolution_type"] == "integrate"
+        ):
 
-        ##########
-        #
-        convolution_results = convolve_ensemble_by_integration(
-            config=config,
-            sfr_dict=sfr_dict,
-            convolution_instruction=convolution_instruction,
-            time_bin_info_dict=time_bin_info_dict,
-            data_dict=data_dict,
-        )
+            ##########
+            #
+            convolution_results = convolve_ensemble_by_integration(
+                config=config,
+                sfr_dict=sfr_dict,
+                convolution_instruction=convolution_instruction,
+                time_bin_info_dict=time_bin_info_dict,
+                data_dict=data_dict,
+            )
 
-    elif (
-        convolution_instruction["input_data_type"] == "ensemble"
-        and convolution_instruction["convolution_type"] == "sample"
-    ):
-        raise ValueError(
-            "sampling convolution with ensemble-based data is currently not supported"
-        )
+        elif (
+            convolution_instruction["input_data_type"] == "ensemble"
+            and convolution_instruction["convolution_type"] == "sample"
+        ):
+            raise ValueError(
+                "sampling convolution with ensemble-based data is currently not supported"
+            )
 
     elif convolution_instruction["convolution_type"] == "on-the-fly":
         warnings.warn("On-the-fly convolution is currently not supported")
@@ -343,7 +344,6 @@ def convolution_worker_handle_convolution_choice(
             sfr_dict=sfr_dict,
             convolution_instruction=convolution_instruction,
             time_bin_info_dict=time_bin_info_dict,
-            data_dict=data_dict,
         )
     else:
         raise ValueError(
@@ -530,6 +530,11 @@ def generate_data_dict(config, convolution_instruction):
         "custom": extract_custom_data,
     }
 
+    # on the fly sampling generates its own data
+    if "convolution_type" in convolution_instruction:
+        if convolution_instruction["convolution_type"] == "on-the-fly":
+            return config, {}, convolution_instruction
+
     #
     config["logger"].debug(
         "Generating data_dict using the extractor function for {}: {}".format(
@@ -537,11 +542,6 @@ def generate_data_dict(config, convolution_instruction):
             extractor_functions[convolution_instruction["input_data_type"]].__name__,
         )
     )
-
-    # on the fly sampling generates its own data
-    if "convolution_type" in convolution_instruction:
-        if convolution_instruction["convolution_type"] == "on-the-fly":
-            return config, {}, convolution_instruction
 
     # otherwise extract
     config, data_dict, convolution_instruction = extractor_functions[
@@ -571,7 +571,7 @@ def multiprocess_convolution(config, convolution_instruction, sfr_dict):  # DH00
     # Set up the manager object that can share info between processes
     manager = multiprocessing.Manager()
     job_queue = manager.Queue(config["max_job_queue_size"])
-    error_queue = manager.Queue(len(config["convolution_time_bin_edges"]))
+    error_queue = manager.Queue(config["max_job_queue_size"])
 
     # Create process instances
     processes = []
@@ -608,7 +608,7 @@ def multiprocess_convolution(config, convolution_instruction, sfr_dict):  # DH00
         result_type, result_value, tb_string, worker_id = error_queue.get()
         if result_type == "exception":
             amended_args = tuple(
-                [f"{result_value.args[0]}\n{tb_string}", *result_value.args[1:]]
+                [f"{result_value.args[0]}\n{str(tb_string)}", *result_value.args[1:]]
             )
             result_value.args = amended_args
             raise result_value

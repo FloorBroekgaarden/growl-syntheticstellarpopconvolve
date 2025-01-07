@@ -34,133 +34,11 @@ def extract_arguments(func, arg_dict):
     return combined_args
 
 
-# def handle_extra_weights_function(
-#     config,
-#     bin_center,
-#     convolution_instruction,
-#     sfr_dict,
-#     data_dict,
-#     output_shape,
-# ):
-#     """
-#     Function to handle the calculation of a set of extra weights that
-#     will be applied to the systems / sub-ensemble
-
-#     TODO: function calls like this can be generalized
-#     """
-
-#     # set default
-#     extra_weights = np.ones(output_shape)
-
-#     # handle calculation extra weights
-#     if convolution_instruction.get("extra_weights_function", None) is not None:
-#         # Construct what parameters are available for the extra function
-#         available_parameters = {
-#             "config": config,
-#             "time_value": bin_center,
-#             "convolution_instruction": convolution_instruction,
-#             "sfr_dict": sfr_dict,
-#             "data_dict": data_dict,
-#             **convolution_instruction.get(
-#                 "extra_weights_function_additional_parameters", {}
-#             ),  #
-#         }
-
-#         # Make sure we extract the correct things from the available parameters
-#         extra_weights_function_args = extract_arguments(
-#             func=convolution_instruction["extra_weights_function"],
-#             arg_dict=available_parameters,
-#         )
-
-#         #
-#         config["logger"].debug(
-#             "Calculating extra weights using function {} and arguments {}".format(
-#                 convolution_instruction["extra_weights_function"].__name__,
-#                 extra_weights_function_args,
-#             )
-#         )
-
-#         # Call extra function and calculate extra weights (with something like detection probability)
-#         extra_weights = convolution_instruction["extra_weights_function"](
-#             **extra_weights_function_args
-#         )
-#         if extra_weights is None:
-#             raise ValueError(
-#                 "The extra function did not return a correct set of extra weights"
-#             )
-
-#     if extra_weights.shape != output_shape:
-#         raise ValueError(
-#             "Desired output shape does not match the shape of the extra weights"
-#         )
-
-#     return extra_weights
-
-
-# def handle_position_sampling_function(
-#     config,
-#     job_dict,
-#     sfr_dict,
-#     data_dict,
-#     convolution_instruction,
-#     sampled_data_dict,
-#     position_sampling_function,
-# ):
-#     """
-#     Function to handle position sampling function call
-
-#     TODO: function calls like this can be generalized
-#     TODO: have the function just update the sampled_data_dict instead
-#     """
-
-#     if position_sampling_function is not None:
-
-#         # Construct what parameters are available for the extra function
-#         available_parameters = {
-#             "config": config,
-#             "job_dict": job_dict,
-#             "sfr_dict": sfr_dict,
-#             "data_dict": data_dict,
-#             "sampled_data_dict": sampled_data_dict,
-#             "time_value": job_dict["convolution_time_bin_center"],
-#             "convolution_instruction": convolution_instruction,
-#             **convolution_instruction.get(
-#                 "position_sampling_function_extra_parameters", {}
-#             ),
-#         }
-
-#         # Make sure we extract the correct things from the available parameters
-#         position_sampling_function_args = extract_arguments(
-#             func=position_sampling_function,
-#             arg_dict=available_parameters,
-#         )
-
-#         #
-#         config["logger"].debug(
-#             "Calculating positions using function {} and arguments {}".format(
-#                 convolution_instruction["position_sampling_function"].__name__,
-#                 position_sampling_function_args,
-#             )
-#         )
-
-#         # Call position function
-#         positions = position_sampling_function(**position_sampling_function_args)
-#         if positions is None:
-#             raise ValueError(
-#                 "The position sampling function did not return a correct set of positions"
-#             )
-
-#         # add to dict
-#         sampled_data_dict["positions"] = positions
-
-#     return sampled_data_dict
-
-
 def handle_post_convolution_function(
     config,
-    job_dict,
     sfr_dict,
     data_dict,
+    time_bin_info_dict,
     convolution_instruction,
     convolution_results,
     name,
@@ -176,9 +54,6 @@ def handle_post_convolution_function(
     Another example is to integrate systems through a gravitational
     potential based on the sampled position and a certain integration
     time.
-
-    TODO: post_convolution_function does not have to be an
-    argument. Can be extracted from the convolution_instruction itself
     """
 
     post_convolution_function = convolution_instruction.get(
@@ -190,11 +65,10 @@ def handle_post_convolution_function(
         # Construct what parameters are available for the extra function
         available_parameters = {
             "config": config,
-            "job_dict": job_dict,
             "sfr_dict": sfr_dict,
             "data_dict": data_dict,
             "convolution_results": convolution_results,
-            "time_value": job_dict["convolution_time_bin_center"],
+            "time_bin_info_dict": time_bin_info_dict,
             "convolution_instruction": convolution_instruction,
             **convolution_instruction.get(
                 "post_convolution_function_extra_parameters", {}
@@ -206,6 +80,12 @@ def handle_post_convolution_function(
             func=post_convolution_function,
             arg_dict=available_parameters,
         )
+
+        # Enforce that certain arguments are present:
+        if "convolution_results" not in post_convolution_function_args:
+            raise ValueError(
+                "`convolution_results` is a required argument in the `post_convolution_function` call."
+            )
 
         #
         config["logger"].debug(
@@ -222,7 +102,7 @@ def handle_post_convolution_function(
         )
 
         ################
-        #
+        # Check shape/type of results
 
         # check if the result is a list
         if isinstance(convolution_results, list):

@@ -39,9 +39,9 @@ from syntheticstellarpopconvolve.post_convolution_hook_routines import (
 
 def convolve_ensemble_integration_post_convolution_hook_wrapper(
     config,
-    job_dict,
     sfr_dict,
     data_dict,
+    time_bin_info_dict,
     convolution_instruction,
     ensemble,
 ):
@@ -79,9 +79,9 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
     # call hook
     handle_post_convolution_function(
         config=config,
-        job_dict=job_dict,
         sfr_dict=sfr_dict,
         data_dict=data_dict,
+        time_bin_info_dict=time_bin_info_dict,
         convolution_instruction=convolution_instruction,
         convolution_results=convolution_results,
         name=name,
@@ -1246,10 +1246,10 @@ def extract_ensemble_data(config, convolution_instruction):
 
 
 def ensemble_handle_SFR_multiplication(
-    convolution_time_bin_center,
-    job_dict,
     config,
     convolution_instruction,
+    sfr_dict,
+    time_bin_info_dict,
     ensemble,
     data_dict,
     extra_value_dict=None,
@@ -1265,10 +1265,16 @@ def ensemble_handle_SFR_multiplication(
 
     #
     config["logger"].debug(
-        "Convolving ensemble data with SFR rate at convolution bin {} with data_dict: {} and multiplying by {} ({})".format(
-            convolution_time_bin_center, data_dict, extra_value, extra_value_dict
+        "Convolving ensemble data with SFR rate at convolution bin {} ({}) with data_dict: {} and multiplying by {} ({})".format(
+            time_bin_info_dict["bin_number"],
+            time_bin_info_dict["bin_center"],
+            data_dict,
+            extra_value,
+            extra_value_dict,
         )
     )
+
+    # TODO: put below in a dedicated function
 
     ##############
     # to re-use the event-based functionality we should cast all the data in the data_dict into numpy arrays
@@ -1283,9 +1289,9 @@ def ensemble_handle_SFR_multiplication(
     #############
     digitized_sfr_rates = calculate_digitized_sfr_rates(
         config=config,
-        convolution_time_bin_center=convolution_time_bin_center,
+        convolution_time_bin_center=time_bin_info_dict["bin_center"],
         data_dict=data_dict,
-        sfr_dict=job_dict["sfr_dict"],
+        sfr_dict=sfr_dict,
     )
 
     # Multiply ensemble with SFR and extra value
@@ -1295,8 +1301,8 @@ def ensemble_handle_SFR_multiplication(
     # Handle post-convolution
     ensemble = convolve_ensemble_integration_post_convolution_hook_wrapper(
         config=config,
-        job_dict=job_dict,
-        sfr_dict=job_dict["sfr_dict"],
+        sfr_dict=sfr_dict,
+        time_bin_info_dict=time_bin_info_dict,
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
         ensemble=ensemble,
@@ -1306,10 +1312,10 @@ def ensemble_handle_SFR_multiplication(
 
 
 def ensemble_convolve_ensemble(
-    convolution_time_bin_center,
-    job_dict,
     config,
+    sfr_dict,
     convolution_instruction,
+    time_bin_info_dict,
     ensemble,
     depth=0,
     data_dict=None,
@@ -1443,10 +1449,10 @@ def ensemble_convolve_ensemble(
             if depth >= deepest_data_layer_depth:
                 # multiplication with SFR-related things here
                 ensemble[key] = ensemble_handle_SFR_multiplication(
-                    convolution_time_bin_center=convolution_time_bin_center,
-                    job_dict=job_dict,
                     config=config,
+                    sfr_dict=sfr_dict,
                     convolution_instruction=convolution_instruction,
+                    time_bin_info_dict=time_bin_info_dict,
                     ensemble=ensemble[key],
                     data_dict=data_dict,
                     extra_value_dict=extra_value_dict,
@@ -1454,9 +1460,9 @@ def ensemble_convolve_ensemble(
             else:
                 # call self with increased depth
                 ensemble[key] = ensemble_convolve_ensemble(
-                    convolution_time_bin_center=convolution_time_bin_center,
-                    job_dict=job_dict,
+                    sfr_dict=sfr_dict,
                     config=config,
+                    time_bin_info_dict=time_bin_info_dict,
                     convolution_instruction=convolution_instruction,
                     ensemble=ensemble[key],
                     depth=depth + 1,
@@ -1497,8 +1503,8 @@ def extract_units_from_endpoints(endpoints):
     return np.array(endpoints) * units[0]
 
 
-def ensemble_convolution_function(
-    convolution_time_bin_center, job_dict, config, convolution_instruction, data_dict
+def convolve_ensemble_by_integration(
+    time_bin_info_dict, config, convolution_instruction, data_dict, sfr_dict
 ):
     """
     Function for the multiprocessing worker to convolve ensemble-based data.
@@ -1514,76 +1520,77 @@ def ensemble_convolution_function(
     Note: ensemble convolution only supports convolution by integration at this point.
     """
 
-    if convolution_instruction["convolution_type"] == "integrate":
-
-        #
-        config["logger"].debug(
-            "Convolving ensemble-based data {} for bin_center {}".format(
-                convolution_instruction["input_data_name"], convolution_time_bin_center
-            )
+    #
+    config["logger"].debug(
+        "Convolving ensemble-based data {} for bin_center {}".format(
+            convolution_instruction["input_data_name"], time_bin_info_dict["bin_center"]
         )
+    )
 
-        # pre-convolution preparation
-        ensemble = data_dict["ensemble_data"]
-        data_layer_dict = convolution_instruction["data_layer_dict"]
+    # ##########
+    # #
+    # config["logger"].debug("Worker {}".format(job_dict['worker_ID']) +
+    #     "Ensemble convolution by integration: {} bin center: {}: Calculating {} rates".format(
+    #         bin_type,
+    #         bin_center,
+    #         convolution_instruction["input_data_name"],
+    #     )
+    # )
 
-        # check if we want to supply a fixed metallicity
-        data_dict = {}
-        if "metallicity_value" in convolution_instruction:
-            data_dict["metallicity"] = convolution_instruction["metallicity_value"]
+    # pre-convolution preparation
+    ensemble = data_dict["ensemble_data"]
+    data_layer_dict = convolution_instruction["data_layer_dict"]
 
-        # add some extra things to the convolution instruction TODO this can be placed elsewhere? TODO: what the difference between max_depth and deepest_data_layer_depth?
-        convolution_instruction["deepest_data_layer_depth"] = (
-            get_deepest_data_layer_depth(data_layer_dict=data_layer_dict)
-        )
-        convolution_instruction["inverted_data_layer_dict"] = invert_data_layer_dict(
-            data_layer_dict=data_layer_dict
-        )
-        convolution_instruction["data_layer_values"] = get_data_layer_dict_values(
-            data_layer_dict=data_layer_dict
-        )
+    # check if we want to supply a fixed metallicity
+    data_dict = {}
+    if "metallicity_value" in convolution_instruction:
+        data_dict["metallicity"] = convolution_instruction["metallicity_value"]
 
-        # convolution
-        ensemble = ensemble_convolve_ensemble(
-            ensemble=ensemble,
-            convolution_instruction=convolution_instruction,
-            config=config,
-            convolution_time_bin_center=convolution_time_bin_center,
-            job_dict=job_dict,
-            data_dict=data_dict,
-        )
+    # add some extra things to the convolution instruction TODO this can be placed elsewhere? TODO: what the difference between max_depth and deepest_data_layer_depth?
+    convolution_instruction["deepest_data_layer_depth"] = get_deepest_data_layer_depth(
+        data_layer_dict=data_layer_dict
+    )
+    convolution_instruction["inverted_data_layer_dict"] = invert_data_layer_dict(
+        data_layer_dict=data_layer_dict
+    )
+    convolution_instruction["data_layer_values"] = get_data_layer_dict_values(
+        data_layer_dict=data_layer_dict
+    )
 
-        # marginalisation
-        config, ensemble, convolution_instruction = ensemble_handle_marginalisation(
-            config=config,
-            ensemble=ensemble,
-            convolution_instruction=convolution_instruction,
-            is_pre_conv=False,
-        )
+    # convolution
+    ensemble = ensemble_convolve_ensemble(
+        ensemble=ensemble,
+        sfr_dict=sfr_dict,
+        convolution_instruction=convolution_instruction,
+        config=config,
+        time_bin_info_dict=time_bin_info_dict,
+        data_dict=data_dict,
+    )
 
-        # detach endpoints from ensemble
-        stripped_ensemble, stripped_endpoints, found_units = strip_ensemble_endpoints(
-            ensemble=ensemble
-        )
+    # marginalisation
+    config, ensemble, convolution_instruction = ensemble_handle_marginalisation(
+        config=config,
+        ensemble=ensemble,
+        convolution_instruction=convolution_instruction,
+        is_pre_conv=False,
+    )
 
-        # extract units from array (or rather, make it an array with a unit, instead of a array of values with units)
-        # if found_units:
-        stripped_endpoints = extract_units_from_endpoints(endpoints=stripped_endpoints)
+    # detach endpoints from ensemble
+    stripped_ensemble, stripped_endpoints, found_units = strip_ensemble_endpoints(
+        ensemble=ensemble
+    )
 
-        # put back the units
-        stripped_endpoints = stripped_endpoints * config["normalized_yield_unit"]
+    # extract units from array (or rather, make it an array with a unit, instead of a array of values with units)
+    # if found_units:
+    stripped_endpoints = extract_units_from_endpoints(endpoints=stripped_endpoints)
 
-        #
-        convolution_result = {"yield": stripped_endpoints}
+    # put back the units
+    stripped_endpoints = stripped_endpoints * config["normalized_yield_unit"]
 
-        if job_dict["job_number"] == 0:
-            convolution_result["stripped_ensemble"] = stripped_ensemble
+    #
+    convolution_result = {"yield": stripped_endpoints}
 
-        return {"convolution_results": convolution_result}
+    if time_bin_info_dict["bin_number"] == 0:
+        convolution_result["stripped_ensemble"] = stripped_ensemble
 
-    else:
-        raise ValueError(
-            "Convolution type '{}' not supported".format(
-                convolution_instruction["convolution_type"]
-            )
-        )
+    return {"convolution_results": convolution_result}

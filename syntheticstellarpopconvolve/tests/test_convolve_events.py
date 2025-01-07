@@ -18,7 +18,7 @@ from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.convolve_events import (
-    event_convolution_function,
+    convolve_events_by_integration,
     extract_event_data,
 )
 from syntheticstellarpopconvolve.general_functions import temp_dir
@@ -226,7 +226,7 @@ class test_extract_event_data(unittest.TestCase):
             )
 
 
-class test_event_convolution_function(unittest.TestCase):
+class test_convolve_events_by_integration(unittest.TestCase):
     """
     TODO: make a more complicated post convolution hook function test
     """
@@ -328,7 +328,7 @@ class test_event_convolution_function(unittest.TestCase):
         #
         prepare_output_file(config=self.convolution_config)
 
-    def test_event_convolution_function_normal(self):
+    def test_convolve_events_by_integration_normal(self):
         #
         normal_convolution_instructions = {
             "input_data_type": "event",
@@ -348,17 +348,22 @@ class test_event_convolution_function(unittest.TestCase):
             convolution_instruction=normal_convolution_instructions,
         )
 
-        # #
-        # sfr_dict = update_sfr_dict(
-        #     sfr_dict=self.convolution_config["SFR_info"], config=self.convolution_config
-        # )
-
+        #
         sfr_dict = self.convolution_config["SFR_info"]
 
+        time_bin_info_dict = {
+            "bin_number": 0,
+            "bin_center": 0.5 * u.yr,
+            "bin_edge_lower": 0,
+            "bin_size": 1 * u.yr,
+            "bin_type": "convolution time",
+            "time_type": self.convolution_config["time_type"],
+        }
+
         #
-        convolution_result = event_convolution_function(
-            convolution_time_bin_center=0.5 * u.yr,
-            job_dict={"sfr_dict": sfr_dict},
+        convolution_result = convolve_events_by_integration(
+            time_bin_info_dict=time_bin_info_dict,
+            sfr_dict=sfr_dict,
             config=self.convolution_config,
             convolution_instruction=normal_convolution_instructions,
             data_dict=data_dict,
@@ -370,10 +375,9 @@ class test_event_convolution_function(unittest.TestCase):
             np.array([1, 2, 3, 4.0]) * (1.0 / u.yr / u.Gpc**3),
         )
 
-    def test_event_convolution_function_post_convolution_simple(self):
+    def test_convolve_events_by_integration_post_convolution_simple(self):
         def simple_post_convolution_function(
             config,
-            job_dict,
             sfr_dict,
             data_dict,
             convolution_results,
@@ -405,14 +409,19 @@ class test_event_convolution_function(unittest.TestCase):
 
         sfr_dict = self.convolution_config["SFR_info"]
 
+        time_bin_info_dict = {
+            "bin_number": 0,
+            "bin_center": 0.5 * u.yr,
+            "bin_edge_lower": 0,
+            "bin_size": 1 * u.yr,
+            "bin_type": "convolution time",
+            "time_type": self.convolution_config["time_type"],
+        }
+
         #
-        convolution_time_bin_center = 0.5 * u.yr
-        convolution_result = event_convolution_function(
-            convolution_time_bin_center=convolution_time_bin_center,
-            job_dict={
-                "sfr_dict": sfr_dict,
-                "convolution_time_bin_center": convolution_time_bin_center,
-            },
+        convolution_result = convolve_events_by_integration(
+            time_bin_info_dict=time_bin_info_dict,
+            sfr_dict=sfr_dict,
             config=self.convolution_config,
             convolution_instruction=normal_convolution_instructions,
             data_dict=data_dict,

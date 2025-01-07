@@ -29,18 +29,17 @@ def update_convolution_config(config):
     #
     config["logger"].debug("Updating configuration")
 
-    #########
-    # Calculate some extra convolution-bin info if needed
-    # requires_convolution_bin_info = any(
-    #     [
-    #         convolution_instruction["convolution_type"] == "integrate"
-    #         for convolution_instruction in config["convolution_instructions"]
-    #     ]
-    # )
+    ########
+    # Calculate some extra convolution-bin info if needed (the other two dont need any convolution-bin info)
+    requires_convolution_bin_info = any(
+        [
+            convolution_instruction["convolution_type"] == "integrate"
+            for convolution_instruction in config["convolution_instructions"]
+        ]
+    )
 
     #
-    if config["time_type"] == "lookback_time":
-        # if requires_convolution_bin_info:
+    if requires_convolution_bin_info and config["time_type"] == "lookback_time":
         config["convolution_lookback_time_bin_centers"] = (
             config["convolution_lookback_time_bin_edges"][1:]
             + config["convolution_lookback_time_bin_edges"][:-1]
@@ -65,9 +64,6 @@ def update_convolution_config(config):
                 config["convolution_lookback_time_bin_sizes"],
             )
         )
-
-    else:
-        raise ValueError("issue")
 
     return config
 

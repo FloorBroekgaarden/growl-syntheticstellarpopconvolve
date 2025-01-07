@@ -26,8 +26,8 @@ def check_input_file(config):
     if "config" not in input_file.keys():
         raise ValueError("Please provide a 'config' group in the input hdf5file.")
 
-    # check if the config group contains information about the population (i.e. binary_c(-python)) config.
-    if "population" not in input_file["config"].keys():
-        raise ValueError(
-            "Please provide a 'config/population' dataset in the input hdf5file."
-        )
+    # # check if the config group contains information about the population (i.e. binary_c(-python)) config.
+    # if "population" not in input_file["config"].keys():
+    #     raise ValueError(
+    #         "Please provide a 'config/population' dataset in the input hdf5file."
+    #     )

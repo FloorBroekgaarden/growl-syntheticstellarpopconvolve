@@ -198,7 +198,11 @@ def calculate_digitized_sfr_rates(
     )
 
     # Get indices for birth redshift
-    config["logger"].debug("Calculating digitized origin-time indices")
+    config["logger"].debug(
+        "Calculating digitized origin-time indices with origin time array {} and bin center {}".format(
+            origin_time_array, convolution_time_bin_center
+        )
+    )
 
     digitized_time_indices = (
         np.digitize(
@@ -230,10 +234,17 @@ def calculate_digitized_sfr_rates(
         # use JUST the SFR, not the metallicity dependent one
 
         # Calculate rates
-        config["logger"].debug("Calculating absolute SFR rates")
+        config["logger"].debug(
+            "Calculating absolute SFR rates with padded sfr rate array {} and time indicates {}".format(
+                sfr_dict["padded_starformation_rate_array"], digitized_time_indices
+            )
+        )
         digitised_sfr_rates = sfr_dict["padded_starformation_rate_array"][
             digitized_time_indices
         ]
+        config["logger"].debug("Found sfr rates {}".format(digitised_sfr_rates))
+
+    #
 
     # handle multiplication by bin-size
     # TODO: clean and handle implementation
@@ -370,7 +381,7 @@ def generate_group_name(convolution_instruction, sfr_dict):
         elements.append(sfr_dict["name"])
 
     #
-    elements.append(convolution_instruction["input_data_type"])
+    elements.append(convolution_instruction.get("input_data_type", "none"))
     elements.append(convolution_instruction["input_data_name"])
     elements.append(convolution_instruction["output_data_name"])
 
@@ -490,6 +501,20 @@ def is_time_unit(parameter):
 
     try:
         parameter.to(u.yr)
+        return True
+    except u.core.UnitConversionError:
+        return False
+    except AttributeError:
+        return False
+
+
+def is_mass_unit(parameter):
+    """
+    Function to check if a parameter has time-units
+    """
+
+    try:
+        parameter.to(u.kg)
         return True
     except u.core.UnitConversionError:
         return False

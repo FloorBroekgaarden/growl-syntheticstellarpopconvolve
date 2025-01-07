@@ -1,26 +1,33 @@
 """
 Main file to handle the convolution of populations
+
+TODO: stop passing job_dict to everything. I don't entirely like passing the job dict as well as the separated dicts. I'd rather be explicit and not rely on some all-containing dict..
 """
 
 import json
 import multiprocessing
 import os
 import pickle
+import traceback
+import warnings
 
 import h5py
 import setproctitle
 
-from syntheticstellarpopconvolve.convolve_custom_data import (
-    custom_convolution_function,
+from syntheticstellarpopconvolve.convolve_custom_data import (  # custom_convolution_function,
     extract_custom_data,
 )
 from syntheticstellarpopconvolve.convolve_ensembles import (
-    ensemble_convolution_function,
+    convolve_ensemble_by_integration,
     extract_ensemble_data,
 )
 from syntheticstellarpopconvolve.convolve_events import (
-    event_convolution_function,
+    convolve_events_by_integration,
     extract_event_data,
+)
+from syntheticstellarpopconvolve.convolve_on_the_fly import convolve_on_the_fly
+from syntheticstellarpopconvolve.convolve_stochastically import (
+    convolve_events_by_sampling,
 )
 from syntheticstellarpopconvolve.general_functions import (
     JsonCustomEncoder,
@@ -28,38 +35,6 @@ from syntheticstellarpopconvolve.general_functions import (
     get_tmp_dir,
     has_unit,
 )
-
-CONVOLUTION_FUNCTION_DICT = {
-    "event": event_convolution_function,
-    "ensemble": ensemble_convolution_function,
-    "custom": custom_convolution_function,
-}
-
-# class Process(multiprocessing.Process):
-#     """
-#     Class which returns child Exceptions to Parent.
-#     https://stackoverflow.com/a/33599967/4992248
-#     """
-
-#     def __init__(self, *args, **kwargs):
-#         multiprocessing.Process.__init__(self, *args, **kwargs)
-#         self._pconn, self._cconn = multiprocessing.Pipe()
-#         self._exception = None
-
-#     def run(self):
-#         try:
-#             multiprocessing.Process.run(self)
-#             self._cconn.send(None)
-#         except Exception as e:
-#             tb = traceback.format_exc()
-#             self._cconn.send((e, tb))
-#             # raise e  # You can still rise this exception if you need to
-
-#     @property
-#     def exception(self):
-#         if self._pconn.poll():
-#             self._exception = self._pconn.recv()
-#         return self._exception
 
 
 def handle_storing_convolution_results(config, grp, data, convolution_results):
@@ -76,7 +51,7 @@ def handle_storing_convolution_results(config, grp, data, convolution_results):
             # Create group
             current_time_bin_grp = grp.create_group(
                 "convolution_results/{}/{}".format(
-                    convolution_result["name"], str(data["convolution_time_bin_center"])
+                    convolution_result["name"], str(data["bin_center"])
                 )
             )
 
@@ -84,7 +59,7 @@ def handle_storing_convolution_results(config, grp, data, convolution_results):
             # handle storing entries and units
             config["logger"].debug(
                 "Storing convolution results {} of bin-center {}".format(
-                    convolution_result["name"], str(data["convolution_time_bin_center"])
+                    convolution_result["name"], str(data["bin_center"])
                 )
             )
 
@@ -99,14 +74,14 @@ def handle_storing_convolution_results(config, grp, data, convolution_results):
         ##########
         # Create group
         current_time_bin_grp = grp.create_group(
-            "convolution_results/{}".format(str(data["convolution_time_bin_center"]))
+            "convolution_results/{}".format(str(data["bin_center"]))
         )
 
         ############
         # handle storing entries and units
         config["logger"].debug(
             "Storing convolution results of bin-center {}".format(
-                str(data["convolution_time_bin_center"])
+                str(data["bin_center"])
             )
         )
 
@@ -284,6 +259,104 @@ def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
                 os.remove(full_path)
 
 
+def convolution_worker_handle_convolution_choice(
+    config, job_dict, sfr_dict, convolution_instruction, data_dict
+):
+    """
+    Function to handle the convolution choice
+    """
+
+    # -----------------------------------------------------------------------
+    # Handle the convolution depending on which type of data exists. They
+    # all contain the same structure.
+    #
+    # The resulting dictionary contains at
+    # least the results of the convolution (i.e. an array of 'rates' or
+    # total yields), and potentially more, depending on what each function
+    # returns. ensemble convolution for example can return a stripped
+    # ensemble
+    #
+
+    #
+    time_bin_info_dict = job_dict["time_bin_info_dict"]
+
+    ################
+    # Event-convolution by integration:
+    if "input_data_type" in convolution_instruction:
+        if (
+            convolution_instruction["input_data_type"] == "event"
+            and convolution_instruction["convolution_type"] == "integrate"
+        ):
+            ##########
+            #
+            convolution_results = convolve_events_by_integration(
+                config=config,
+                sfr_dict=sfr_dict,
+                data_dict=data_dict,
+                time_bin_info_dict=time_bin_info_dict,
+                convolution_instruction=convolution_instruction,
+            )
+
+        elif (
+            convolution_instruction["input_data_type"] == "event"
+            and convolution_instruction["convolution_type"] == "sample"
+        ):
+            ##########
+            #
+            convolution_results = convolve_events_by_sampling(
+                config=config,
+                sfr_dict=sfr_dict,
+                data_dict=data_dict,
+                time_bin_info_dict=time_bin_info_dict,
+                convolution_instruction=convolution_instruction,
+            )
+
+        elif (
+            convolution_instruction["input_data_type"] == "ensemble"
+            and convolution_instruction["convolution_type"] == "integrate"
+        ):
+
+            ##########
+            #
+            convolution_results = convolve_ensemble_by_integration(
+                config=config,
+                sfr_dict=sfr_dict,
+                convolution_instruction=convolution_instruction,
+                time_bin_info_dict=time_bin_info_dict,
+                data_dict=data_dict,
+            )
+
+        elif (
+            convolution_instruction["input_data_type"] == "ensemble"
+            and convolution_instruction["convolution_type"] == "sample"
+        ):
+            raise ValueError(
+                "sampling convolution with ensemble-based data is currently not supported"
+            )
+
+    elif convolution_instruction["convolution_type"] == "on-the-fly":
+        warnings.warn("On-the-fly convolution is currently not supported")
+
+        ##########
+        #
+        convolution_results = convolve_on_the_fly(
+            config=config,
+            sfr_dict=sfr_dict,
+            convolution_instruction=convolution_instruction,
+            time_bin_info_dict=time_bin_info_dict,
+        )
+    else:
+        raise ValueError(
+            "Unsupported choice of input-data type ({}) and convolution-type ({})".format(
+                convolution_instruction["input_data_type"],
+                convolution_instruction["convolution_type"],
+            )
+        )
+    # TODO: add custom type convolution
+
+    return convolution_results
+
+
 def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
     """
     Function that handles running the job
@@ -301,72 +374,60 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
             return None
 
         # Unpack info
-        convolution_time_bin_center = job_dict["convolution_time_bin_center"]
         convolution_instruction = job_dict["convolution_instruction"]
-
         data_dict = job_dict["data_dict"]
+        time_bin_info_dict = job_dict["time_bin_info_dict"]
+        sfr_dict = job_dict["sfr_dict"]
+
+        job_dict["worker_ID"] = worker_ID
 
         ##########
         # Set up output dict
         output_dict = {}
 
-        ##########
-        #
-        config["logger"].debug(
-            "Worker {}: {} bin center: {}: Calculating {} {} rates".format(
-                worker_ID,
-                (
-                    "convolution time"
-                    if convolution_instruction["convolution_type"] == "integrate"
-                    else "starformation time"
-                ),
-                convolution_time_bin_center,
-                convolution_instruction["input_data_type"],
-                convolution_instruction["input_data_name"],
-            )
-        )
-
-        # -----------------------------------------------------------------------
-        # Handle the convolution depending on which type of data exists. They
-        # all contain the same structure.
-        #
-        # The resulting dictionary contains at
-        # least the results of the convolution (i.e. an array of 'rates' or
-        # total yields), and potentially more, depending on what each function
-        # returns. ensemble convolution for example can return a stripped
-        # ensemble
-        #
-
-        # run convolution with the appropriate function
         try:
-            convolution_results = CONVOLUTION_FUNCTION_DICT[
-                convolution_instruction["input_data_type"]
-            ](
-                convolution_time_bin_center=convolution_time_bin_center,
-                job_dict=job_dict,
+            # TODO: add log that contains info about the worker id etc
+
+            ##############
+            # run convolution
+            convolution_results = convolution_worker_handle_convolution_choice(
                 config=config,
+                job_dict=job_dict,
+                sfr_dict=sfr_dict,
                 convolution_instruction=convolution_instruction,
                 data_dict=data_dict,
             )
 
+            ##############
             # Construct dictionary that is stored in the pickle files
-            output_dict["convolution_time_bin_center"] = convolution_time_bin_center
+            output_dict["bin_center"] = time_bin_info_dict["bin_center"]
             output_dict["convolution_instruction"] = convolution_instruction
             output_dict = {
                 **output_dict,
                 "convolution_results": convolution_results["convolution_results"],
             }
 
-            #
+            ##############
+            # Store info
             with open(
                 os.path.join(
-                    job_dict["output_dir"], "{}.p".format(convolution_time_bin_center)
+                    job_dict["output_dir"], "{}.p".format(output_dict["bin_center"])
                 ),
                 "wb",
             ) as f:
                 pickle.dump(output_dict, f)
+
+        ##############
+        # handle errors
         except Exception as e:
-            error_queue.put(("exception", e, worker_ID))
+            error_queue.put(
+                (
+                    "exception",
+                    e,
+                    "".join(traceback.format_tb(e.__traceback__)),
+                    worker_ID,
+                )
+            )
 
 
 def convolution_queue_filler(  # DH0001
@@ -387,14 +448,29 @@ def convolution_queue_filler(  # DH0001
     """
 
     ######
-    # Determine bins to loop over (integrate = backward conv, sampling = forward conv)
+    # Determine bins to loop over (integrate = backward conv, sampling = forward conv, on-the-fly forward conv)
+    # backward conv loops over convolution bins
+    # forward conv loops over sfr bins
     if convolution_instruction["convolution_type"] == "integrate":
+        bin_type = "convolution time"
         zipped_bin_data = zip(
-            config["convolution_time_bin_centers"], config["convolution_time_bin_sizes"]
+            config["convolution_time_bin_centers"],
+            config["convolution_time_bin_sizes"],
+            config["convolution_time_bin_edges"][:-1],
         )
     elif convolution_instruction["convolution_type"] == "sample":
+        bin_type = "star formation time"
         zipped_bin_data = zip(
-            config["convolution_time_bin_centers"], config["convolution_time_bin_sizes"]
+            sfr_dict["time_bin_centers"],
+            sfr_dict["time_bin_sizes"],
+            sfr_dict["time_bin_edges"][:-1],
+        )
+    elif convolution_instruction["convolution_type"] == "on-the-fly":
+        bin_type = "star formation time"
+        zipped_bin_data = zip(
+            sfr_dict["time_bin_centers"],
+            sfr_dict["time_bin_sizes"],
+            sfr_dict["time_bin_edges"][:-1],
         )
     else:
         raise ValueError("convolution type not supported")
@@ -404,13 +480,23 @@ def convolution_queue_filler(  # DH0001
     for bin_number, (
         bin_center,
         bin_size,
+        bin_edge_lower,
     ) in enumerate(zipped_bin_data):
+
+        # store current bin info, which is different in different cases.
+        time_bin_info_dict = {
+            "bin_number": bin_number,
+            "bin_center": bin_center,
+            "bin_edge_lower": bin_edge_lower,
+            "bin_size": bin_size,
+            "bin_type": bin_type,
+            "time_type": config["time_type"],
+        }
+
         # Set up job dict
         job_dict = {
             "job_number": bin_number,
-            "convolution_time_bin_center": bin_center,
-            "convolution_time_bin_size": bin_size,
-            "bin_number": bin_number,
+            "time_bin_info_dict": time_bin_info_dict,
             "sfr_dict": sfr_dict,
             "convolution_instruction": convolution_instruction,
             "data_dict": data_dict,
@@ -426,11 +512,6 @@ def convolution_queue_filler(  # DH0001
 
         # Put job in queue
         job_queue.put(job_dict)
-
-        # # check if something is wrong with any of the processes
-        # for p in processes:
-        #     if p.exception:
-        #         print("EXCEPTION RAISED")
 
     # Signal stop to workers
     config["logger"].debug("Sending job termination signals")
@@ -449,6 +530,11 @@ def generate_data_dict(config, convolution_instruction):
         "custom": extract_custom_data,
     }
 
+    # on the fly sampling generates its own data
+    if "convolution_type" in convolution_instruction:
+        if convolution_instruction["convolution_type"] == "on-the-fly":
+            return config, {}, convolution_instruction
+
     #
     config["logger"].debug(
         "Generating data_dict using the extractor function for {}: {}".format(
@@ -457,7 +543,7 @@ def generate_data_dict(config, convolution_instruction):
         )
     )
 
-    #
+    # otherwise extract
     config, data_dict, convolution_instruction = extractor_functions[
         convolution_instruction["input_data_type"]
     ](config=config, convolution_instruction=convolution_instruction)
@@ -485,7 +571,7 @@ def multiprocess_convolution(config, convolution_instruction, sfr_dict):  # DH00
     # Set up the manager object that can share info between processes
     manager = multiprocessing.Manager()
     job_queue = manager.Queue(config["max_job_queue_size"])
-    error_queue = manager.Queue(len(config["convolution_time_bin_edges"]))
+    error_queue = manager.Queue(config["max_job_queue_size"])
 
     # Create process instances
     processes = []
@@ -519,8 +605,12 @@ def multiprocess_convolution(config, convolution_instruction, sfr_dict):  # DH00
 
     # Pass errors
     if not error_queue.empty():
-        result_type, result_value, worker_id = error_queue.get()
+        result_type, result_value, tb_string, worker_id = error_queue.get()
         if result_type == "exception":
+            amended_args = tuple(
+                [f"{result_value.args[0]}\n{str(tb_string)}", *result_value.args[1:]]
+            )
+            result_value.args = amended_args
             raise result_value
 
 

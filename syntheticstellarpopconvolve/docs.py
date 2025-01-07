@@ -1,5 +1,9 @@
 import copy
 
+import astropy.units as u
+
+dimensionless_unit = u.m / u.m
+
 
 def build_description_table(table_name, parameter_list, description_dict):
     """

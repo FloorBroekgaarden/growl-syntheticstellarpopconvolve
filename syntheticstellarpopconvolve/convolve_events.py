@@ -4,7 +4,6 @@ Functions to convolve events
 
 import pandas as pd
 
-from syntheticstellarpopconvolve.convolve_stochastically import sample_systems_main
 from syntheticstellarpopconvolve.general_functions import (
     calculate_digitized_sfr_rates,
     handle_custom_scaling_or_conversion,
@@ -14,12 +13,12 @@ from syntheticstellarpopconvolve.post_convolution_hook_routines import (
 )
 
 
-def convolve_events_integration_post_convolution_hook_wrapper(
+def convolve_events_by_integration_post_convolution_hook_wrapper(
     config,
-    job_dict,
     sfr_dict,
     data_dict,
     convolution_instruction,
+    time_bin_info_dict,
     convolution_results,
 ):
     """
@@ -46,9 +45,9 @@ def convolve_events_integration_post_convolution_hook_wrapper(
     # call hook
     convolution_results = handle_post_convolution_function(
         config=config,
-        job_dict=job_dict,
         sfr_dict=sfr_dict,
         data_dict=data_dict,
+        time_bin_info_dict=time_bin_info_dict,
         convolution_instruction=convolution_instruction,
         convolution_results=convolution_results,
         name=name,
@@ -154,98 +153,55 @@ def extract_event_data(config, convolution_instruction):
     return config, data_dict, convolution_instruction
 
 
-def event_convolution_function(
-    convolution_time_bin_center, job_dict, config, convolution_instruction, data_dict
+def convolve_events_by_integration(
+    config,
+    sfr_dict,
+    data_dict,
+    time_bin_info_dict,
+    convolution_instruction,
 ):
     """
-    Function for the multiprocessing worker to convolve event-based data.
+    Function to convolve events by integration
 
-    TODO: implement here the call to sampling-based convolution method with event-based data
+    This function uses backward convolution, and 'convolution-time' as the time-bin.
     """
 
-    if convolution_instruction["convolution_type"] == "integrate":
-        sfr_dict = job_dict["sfr_dict"]
-
-        #
-        config["logger"].debug(
-            "Convolving event-based data {} for bin_center {} using integration-based convolution".format(
-                convolution_instruction["input_data_name"], convolution_time_bin_center
-            )
+    #
+    config["logger"].debug(
+        "Convolving event-based data {}->{} for {} bin_center {} using integration-based convolution".format(
+            convolution_instruction["input_data_name"],
+            convolution_instruction["output_data_name"],
+            time_bin_info_dict["bin_type"],
+            time_bin_info_dict["bin_center"],
         )
+    )
 
-        #############
-        # Calculate array-based convolution (i.e. yield/rate times SFR)
-        digitized_sfr_rates = calculate_digitized_sfr_rates(
-            config=config,
-            convolution_time_bin_center=convolution_time_bin_center,
-            data_dict=data_dict,
-            sfr_dict=job_dict["sfr_dict"],
-        )
-        convolved_rate_array = (
-            digitized_sfr_rates
-            * data_dict["normalized_yield"]
-            * config["normalized_yield_unit"]
-        )
+    #############
+    # Calculate array-based convolution (i.e. yield/rate times SFR)
+    digitized_sfr_rates = calculate_digitized_sfr_rates(
+        config=config,
+        convolution_time_bin_center=time_bin_info_dict["bin_center"],
+        data_dict=data_dict,
+        sfr_dict=sfr_dict,
+    )
+    convolved_rate_array = (
+        digitized_sfr_rates
+        * data_dict["normalized_yield"]
+        * config["normalized_yield_unit"]
+    )
 
-        #
-        convolution_results = {"yield": convolved_rate_array}
+    #
+    convolution_results = {"yield": convolved_rate_array}
 
-        ######
-        # Handle post-convolution function
-        convolution_results = convolve_events_integration_post_convolution_hook_wrapper(
-            config=config,
-            job_dict=job_dict,
-            sfr_dict=sfr_dict,
-            data_dict=data_dict,
-            convolution_instruction=convolution_instruction,
-            convolution_results=convolution_results,
-        )
+    ######
+    # Handle post-convolution function
+    convolution_results = convolve_events_by_integration_post_convolution_hook_wrapper(
+        config=config,
+        sfr_dict=sfr_dict,
+        data_dict=data_dict,
+        time_bin_info_dict=time_bin_info_dict,
+        convolution_instruction=convolution_instruction,
+        convolution_results=convolution_results,
+    )
 
-        return {"convolution_results": convolution_results}
-
-    elif convolution_instruction["convolution_type"] == "sample":
-        #
-        starformation_bin_center = convolution_time_bin_center
-
-        #
-        config["logger"].debug(
-            "Convolving event-based data {} for bin_center {} using sampling-based convolution".format(
-                convolution_instruction["input_data_name"], starformation_bin_center
-            )
-        )
-
-        # unpack
-        sfr_dict = job_dict["sfr_dict"]
-        lookback_time_index = job_dict["bin_number"]
-
-        # make sure that this is all checked better at the start
-        include_metallicity = False
-        if "metallicity_weighted_starformation_rate_array" in sfr_dict:
-            include_metallicity = True
-
-        # TODO: allow for sampling with redshift as well
-        sampled_data_dict = sample_systems_main(
-            config=config,
-            sfr_dict=sfr_dict,
-            job_dict=job_dict,
-            data_dict=data_dict,
-            convolution_instruction=convolution_instruction,
-            star_formation_rate_in_lookback_time_bin=sfr_dict[
-                "starformation_rate_array"
-            ][lookback_time_index],
-            lookback_time_bin_lower_edge=sfr_dict["lookback_time_bin_edges"][
-                lookback_time_index
-            ],
-            lookback_time_bin_size=sfr_dict["lookback_time_bin_sizes"][
-                lookback_time_index
-            ],
-            include_metallicity=include_metallicity,
-        )
-
-        return sampled_data_dict
-    else:
-        raise ValueError(
-            "Convolution type '{}' not supported".format(
-                convolution_instruction["convolution_type"]
-            )
-        )
+    return {"convolution_results": convolution_results}

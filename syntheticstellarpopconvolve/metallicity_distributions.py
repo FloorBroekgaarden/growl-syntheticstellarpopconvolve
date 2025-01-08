@@ -107,16 +107,16 @@ def compas_metallicity_distribution(
         :, np.digitize(metallicity_centers, metallicities) - 1
     ]
 
-    ##################################
-    # Calculate the dlogZ (stepsizes) values, adding one to the end.
-    dlogZ_sampled = np.diff(np.log(config["convolution_metallicity_bin_edges"]))
+    # ##################################
+    # # Calculate the dlogZ (stepsizes) values, adding one to the end.
+    # dlogZ_sampled = np.diff(np.log(config["convolution_metallicity_bin_edges"]))
 
-    ##################################
-    # Calculate dP/dlogZ * dlogZ
-    dP = dPdLogZ_for_sampled_metallicities * dlogZ_sampled
+    # ##################################
+    # # Calculate dP/dlogZ * dlogZ
+    # dP = dPdLogZ_for_sampled_metallicities * dlogZ_sampled
 
     #
-    return dP
+    return dPdLogZ_for_sampled_metallicities
 
 
 def mean_metallicity(z, z0, alpha):

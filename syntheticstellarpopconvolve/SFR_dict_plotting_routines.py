@@ -1,5 +1,17 @@
+import copy
+import logging
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import colors
+
+from syntheticstellarpopconvolve.check_and_update_sfr_dict import (
+    check_and_update_sfr_dict,
+)
+
+
 def load_mpl_rc():
-    import matplotlib as mpl
 
     # https://matplotlib.org/users/customizing.html
     mpl.rc(
@@ -93,3 +105,232 @@ def load_mpl_rc():
     mpl.rc("errorbar", capsize=2)
 
     mpl.rc("mathtext", default="sf")
+
+
+def plot_sfr_dict(sfr_dict, time_type, return_axis_dict=False):
+    """
+    Function to plot the star formation rate
+
+    TODO: provide option to remove multiplication by binsize
+    """
+
+    load_mpl_rc()
+
+    # check if there is any metallicity info
+    has_metallicity_info = (
+        "metallicity_bin_edges" in sfr_dict
+        and "metallicity_distribution_array" in sfr_dict
+    )
+
+    # check and update the sfr dict
+    from astropy.cosmology import Planck13 as cosmo  # Planck 2013
+
+    sfr_dict = check_and_update_sfr_dict(
+        sfr_dict=sfr_dict,
+        config={
+            "logger": logging.getLogger(__name__),
+            "time_type": time_type,
+            "cosmology": cosmo,
+        },
+        requires_name=False,
+        requires_metallicity_info=has_metallicity_info,
+        time_type=time_type,
+    )
+
+    ########
+    # Set up figure canvas
+    axis_dict = {}
+    axis_dict["fig"] = plt.figure(figsize=(20, 16 if has_metallicity_info else 6))
+
+    if has_metallicity_info:
+        gs = axis_dict["fig"].add_gridspec(nrows=3, ncols=8)
+
+        axis_dict["ax_sfr"] = axis_dict["fig"].add_subplot(gs[0, :-2])
+        axis_dict["ax_mssfr"] = axis_dict["fig"].add_subplot(gs[1:, :-2])
+        axis_dict["ax_bar"] = axis_dict["fig"].add_subplot(gs[1:, -1])
+    else:
+
+        gs = axis_dict["fig"].add_gridspec(nrows=1, ncols=2)
+
+        axis_dict["ax_sfr"] = axis_dict["fig"].add_subplot(gs[0, :])
+
+    ########
+    # Plot Star Formation Rate (SFR)
+    if (
+        time_type == "lookback_time"
+        and "time_bin_edges" in sfr_dict
+        and "starformation_rate_array" in sfr_dict
+    ):
+        time_bin_edges = sfr_dict["time_bin_centers"]
+        sfr_array = sfr_dict["starformation_rate_array"]
+
+        axis_dict["ax_sfr"].plot(time_bin_edges, sfr_array)
+        axis_dict["ax_sfr"].set_xlabel(
+            "Lookback Time [{}]".format(
+                sfr_dict["time_bin_centers"].unit.to_string("latex")
+            )
+        )
+        axis_dict["ax_sfr"].set_ylabel(
+            "Star Formation Rate\n[{}]".format(
+                sfr_dict["starformation_rate_array"].unit.to_string("latex")
+            )
+        )
+        axis_dict["ax_sfr"].set_title("Star Formation Rate Over Lookback Time")
+    if (
+        time_type == "redshift"
+        and "time_bin_edges" in sfr_dict
+        and "starformation_rate_array" in sfr_dict
+    ):
+        time_bin_edges = sfr_dict["time_bin_centers"]
+        sfr_array = sfr_dict["starformation_rate_array"]
+
+        axis_dict["ax_sfr"].plot(time_bin_edges, sfr_array)
+        axis_dict["ax_sfr"].set_xlabel("Redshift")
+        axis_dict["ax_sfr"].set_ylabel(
+            "Star Formation Rate\n[{}]".format(
+                sfr_dict["starformation_rate_array"].unit.to_string("latex")
+            )
+        )
+        axis_dict["ax_sfr"].set_title("Star Formation Rate Over Lookback Time")
+
+    ########
+    # Plot the metallicity
+    if has_metallicity_info:
+        # Set up the meshgrid that we will use
+        time_mesh, metallicity_mesh = np.meshgrid(
+            sfr_dict["time_bin_centers"], sfr_dict["metallicity_bin_centers"]
+        )
+        print("time_mesh\n", time_mesh)
+        print("metallicity_mesh\n", metallicity_mesh)
+        print(
+            "sfr_dict['metallicity_distribution_array']\n",
+            sfr_dict["metallicity_distribution_array"],
+        )
+        print(
+            "sfr_dict['metallicity_weighted_starformation_rate_array']\n",
+            sfr_dict["metallicity_weighted_starformation_rate_array"],
+        )
+        cmap_metallicity_fraction_hist = copy.copy(plt.cm.jet)
+
+        z_vals = sfr_dict["metallicity_distribution_array"]
+        vmin = z_vals[~np.isnan(z_vals)].min()
+        vmax = z_vals[~np.isnan(z_vals)].max()
+
+        print(vmin, vmax)
+        norm = colors.Normalize(vmin=vmin, vmax=vmax)
+
+        # DIFF_MAX_THRESHOLD = 1
+        # vmin=10 ** (np.log10(vmax) - DIFF_MAX_THRESHOLD)
+
+        # print(vmin, vmax)
+        # norm = colors.LogNorm(
+        #     vmin=vmin, vmax=vmax
+        # )
+
+        if time_type == "lookback_time":
+            _ = axis_dict["ax_mssfr"].pcolormesh(
+                time_mesh.value,
+                metallicity_mesh,
+                z_vals,
+                norm=norm,
+                cmap=cmap_metallicity_fraction_hist,
+                shading="auto",
+                antialiased=True,
+                rasterized=True,
+            )
+
+        if time_type == "redshift":
+            _ = axis_dict["ax_mssfr"].pcolormesh(
+                time_mesh,
+                metallicity_mesh,
+                z_vals,
+                norm=norm,
+                cmap=cmap_metallicity_fraction_hist,
+                shading="auto",
+                antialiased=True,
+                rasterized=True,
+            )
+
+        # make colorbar
+        _ = mpl.colorbar.ColorbarBase(
+            axis_dict["ax_bar"], norm=norm, cmap=cmap_metallicity_fraction_hist
+        )
+        # cbar.ax.set_ylabel(r"Fraction of ZAMS mass")
+        # axis_dict['fig'].colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_metallicity_fraction_hist), ax=axis_dict['ax_bar'])
+
+        #
+        axis_dict["ax_sfr"].set_xlabel("")
+        axis_dict["ax_sfr"].set_xticklabels([])
+        if time_type == "lookback_time":
+            axis_dict["ax_mssfr"].set_xlabel(
+                "Lookback Time [{}]".format(
+                    sfr_dict["time_bin_centers"].unit.to_string("latex")
+                )
+            )
+        if time_type == "redshift":
+            axis_dict["ax_mssfr"].set_xlabel("Redshift")
+
+        axis_dict["ax_mssfr"].set_ylabel("Metallicity [Z]")
+        axis_dict["ax_mssfr"].set_ylim(
+            [
+                sfr_dict["metallicity_bin_edges"].min(),
+                sfr_dict["metallicity_bin_edges"].max(),
+            ]
+        )
+
+    #############
+    #
+    if return_axis_dict:
+        return axis_dict
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+
+    # # Example usage with a sample sfr_dict (fill with actual data to test)
+    # sample_sfr_dict = {
+    #     "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4]) * u.Gyr,
+    #     "starformation_rate_array": np.array([0.5, 0.6, 0.7, 0.8]) * u.Msun/u.yr,
+    #     "metallicity_bin_edges": np.array([0.0, 0.25, 0.5, 1]),
+    #     "metallicity_distribution_array": np.random.rand(4, 3).T,  # Example 2D metallicity distribution
+    # }
+    # plot_sfr_dict(sample_sfr_dict, time_type='lookback_time', return_axis_dict=False)
+    from syntheticstellarpopconvolve.metallicity_distributions import (
+        metallicity_distribution_vanSon2022,
+    )
+    from syntheticstellarpopconvolve.starformation_rate_distributions import (
+        starformation_rate_distribution_vanSon2023,
+    )
+
+    #
+    num_redshifts = 200
+    redshift_bin_edges = np.linspace(0, 8, num_redshifts)
+    redshift_bin_centers = (redshift_bin_edges[1:] + redshift_bin_edges[:-1]) / 2
+
+    #
+    num_metallicities = 200
+    metallicity_bin_edges = np.linspace(-8, 0, num_metallicities)
+    metallicity_bin_centers = (
+        metallicity_bin_edges[1:] + metallicity_bin_edges[:-1]
+    ) / 2
+
+    #
+    sfr = starformation_rate_distribution_vanSon2023(redshift_bin_centers)
+
+    #
+    dpdlogZ = metallicity_distribution_vanSon2022(
+        log_metallicity_centers=metallicity_bin_centers,
+        redshifts=redshift_bin_centers,
+    )
+    print(dpdlogZ)
+
+    sample_sfr_dict = {
+        "redshift_bin_edges": redshift_bin_edges,
+        "starformation_rate_array": sfr,
+        "metallicity_bin_edges": metallicity_bin_edges,
+        "metallicity_distribution_array": dpdlogZ.T,  # Example 2D metallicity distribution
+    }
+
+    # print(dpdlogZ)
+    plot_sfr_dict(sample_sfr_dict, time_type="redshift", return_axis_dict=False)

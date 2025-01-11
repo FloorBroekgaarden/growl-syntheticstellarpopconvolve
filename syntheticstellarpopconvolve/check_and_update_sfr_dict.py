@@ -265,7 +265,7 @@ def update_sfr_dict(sfr_dict, config):
         sfr_dict["metallicity_weighted_starformation_rate_array"] = (
             sfr_dict["starformation_rate_array"]
             * sfr_dict["metallicity_distribution_array"]
-            * sfr_dict["metallicity_bin_sizes"]
+            * sfr_dict["metallicity_bin_sizes"][:, np.newaxis]
         )
 
     # add bin centers

@@ -14,7 +14,7 @@ def compas_log_skew_normal_distribution_metallicity_distribution(
     sigma_0,
     sigma_z,
     alpha,
-    global_logZ_distribution_min=-16,
+    global_logZ_distribution_min=-20,
     global_logZ_distribution_max=0,
     global_logZ_distribution_res=1000,
 ):
@@ -50,15 +50,11 @@ def compas_log_skew_normal_distribution_metallicity_distribution(
         p_draw_metallicity --> float            Probability of drawing a certain metallicity in COMPAS (float because assuming uniform)
     """
 
-    # # for compas we convert to log
-    # min_logZ = np.log(global_Z_distribution_min)
-    # max_logZ = np.log(global_Z_distribution_max)
-
     #
     step_logZ = (
         global_logZ_distribution_max - global_logZ_distribution_min
     ) / global_logZ_distribution_res
-    # print(global_Z_distribution_min, global_Z_distribution_max, step_logZ)
+
     ##################################
     # create a range of metallicities (the x-values, or random variables)
     global_log_metallicities = np.arange(
@@ -66,7 +62,6 @@ def compas_log_skew_normal_distribution_metallicity_distribution(
         global_logZ_distribution_max + step_logZ,
         step_logZ,
     )
-    # metallicities = np.exp(log_metallicities)
 
     ##################################
     # Log-Linear redshift dependence of sigma
@@ -209,7 +204,7 @@ if __name__ == "__main__":
     # compas_log_skew_normal_distribution_metallicity_distribution(redshifts=[0, 1, 2], logZmetallicity_centers=)
 
     dpdlogZ = metallicity_distribution_vanSon2022(
-        metallicities=np.array([0.01, 0.005, 0.002, 0.001]),
+        log_metallicities=np.array([0.01, 0.005, 0.002, 0.001]),
         redshifts=np.array([0, 1, 2]),
     )
     print(dpdlogZ)

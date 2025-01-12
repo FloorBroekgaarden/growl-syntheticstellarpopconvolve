@@ -282,7 +282,7 @@ def calculate_bincenters(array, convert="linear"):
     return bincenters
 
 
-def calculate_edge_values(arr):
+def calculate_bin_edges(arr):
     """
     Function to calculate the edge values given a bunch of centers
     """

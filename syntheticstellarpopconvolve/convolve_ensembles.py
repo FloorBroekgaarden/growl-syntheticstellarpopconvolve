@@ -27,8 +27,8 @@ from syntheticstellarpopconvolve.default_convolution_config import (
     ALLOWED_NUMERICAL_TYPES,
 )
 from syntheticstellarpopconvolve.general_functions import (
+    calculate_bin_edges,
     calculate_digitized_sfr_rates,
-    calculate_edge_values,
     handle_custom_scaling_or_conversion,
     has_unit_dimensionless_okay,
 )
@@ -740,7 +740,7 @@ def get_ensemble_binsizes(config, ensemble, data_layer_dict_entry):
     if calculate_edges_before_transformations:
 
         # calculate edge values
-        edge_values = calculate_edge_values(values)
+        edge_values = calculate_bin_edges(values)
 
         # perform transformations
         transformed_edge_values = np.array(
@@ -767,7 +767,7 @@ def get_ensemble_binsizes(config, ensemble, data_layer_dict_entry):
         )
 
         # calculate edge values
-        transformed_edge_values = calculate_edge_values(transformed_values)
+        transformed_edge_values = calculate_bin_edges(transformed_values)
 
     # calculate binsizes
     binsizes = np.diff(transformed_edge_values)

@@ -38,7 +38,7 @@ def update_convolution_config(config):
         ]
     )
 
-    #
+    # update lookback time info
     if requires_convolution_bin_info and config["time_type"] == "lookback_time":
         config["convolution_lookback_time_bin_centers"] = (
             config["convolution_lookback_time_bin_edges"][1:]
@@ -62,6 +62,29 @@ def update_convolution_config(config):
             "Updated bin data: convolution_lookback_time_bin_centers: {} convolution_lookback_time_bin_sizes: {}".format(
                 config["convolution_lookback_time_bin_centers"],
                 config["convolution_lookback_time_bin_sizes"],
+            )
+        )
+
+    # update redshift info
+    if requires_convolution_bin_info and config["time_type"] == "redshift":
+        config["convolution_redshift_bin_centers"] = (
+            config["convolution_redshift_bin_edges"][1:]
+            + config["convolution_redshift_bin_edges"][:-1]
+        ) / 2
+        config["convolution_redshift_bin_sizes"] = np.diff(
+            config["convolution_redshift_bin_edges"]
+        )
+
+        config["convolution_time_bin_edges"] = config["convolution_redshift_bin_edges"]
+        config["convolution_time_bin_centers"] = config[
+            "convolution_redshift_bin_centers"
+        ]
+        config["convolution_time_bin_sizes"] = config["convolution_redshift_bin_sizes"]
+
+        config["logger"].debug(
+            "Updated bin data: convolution_redshift_bin_centers: {} convolution_redshift_bin_sizes: {}".format(
+                config["convolution_redshift_bin_centers"],
+                config["convolution_redshift_bin_sizes"],
             )
         )
 

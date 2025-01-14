@@ -133,7 +133,7 @@ def store_convolution_result_entries(
     )
 
 
-def pre_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
+def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
     TODO
     """
@@ -185,7 +185,7 @@ def pre_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
     os.makedirs(tmp_dir, exist_ok=True)
 
 
-def post_multiprocessing(config, convolution_instruction, sfr_dict):  # DH0001
+def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
 
     data types:
@@ -550,10 +550,13 @@ def generate_data_dict(config, convolution_instruction):
 
     return config, data_dict, convolution_instruction
 
-
-def multiprocess_convolution(config, convolution_instruction, sfr_dict):  # DH0001
+def handle_multiprocessing_convolution(config, convolution_instruction, sfr_dict): # DH0001
     """
-    Main multiprocess function
+    Main function to handle convolution by multiprocessing
+
+    This allows several cores to handle convolutions at the same time, but in
+    this case the user cannot store persistent information and use the results
+    of the previous convolution.
     """
 
     ###################
@@ -614,6 +617,25 @@ def multiprocess_convolution(config, convolution_instruction, sfr_dict):  # DH00
             raise result_value
 
 
+def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
+    """
+    Main function to handle sequential convolution. 
+
+    This handles the convolution steps in sequence, but also allows the user to provide persistent information and use results of the previous convolution step
+    """
+
+
+
+
+
+    ###################
+    # Set up data_dict: dictionary that contains the arrays or ensembles that are required for the convolution.
+    config, data_dict, convolution_instruction = generate_data_dict(
+        config=config, convolution_instruction=convolution_instruction
+    )
+
+
+
 def convolve_populations(config):
     """
     Main function to handle the convolution of populations
@@ -645,23 +667,32 @@ def convolve_populations(config):
 
             ########
             # Pre multiprocessing calculation
-            pre_multiprocessing(
+            pre_convolution(
                 config=config,
                 convolution_instruction=convolution_instruction,
                 sfr_dict=sfr_dict,
             )
 
-            ########
-            # Pre multiprocessing calculation
-            multiprocess_convolution(
-                config=config,
-                convolution_instruction=convolution_instruction,
-                sfr_dict=sfr_dict,
-            )
+            # handle choice for multiprocessing
+            if config["multiprocessing"] == True:
+                # TODO: move whatever is below to a function
+
+                handle_multiprocessing_convolution(
+                    config=config,
+                    convolution_instruction=convolution_instruction,
+                    sfr_dict=sfr_dict,
+                )
+
+            if config["multiprocessing"] == False:
+                handle_sequential_convolution(
+                    config=config,
+                    convolution_instruction=convolution_instruction,
+                    sfr_dict=sfr_dict,
+                )
 
             ########
             # Post multiprocessing calculation
-            post_multiprocessing(
+            post_convolution(
                 config=config,
                 convolution_instruction=convolution_instruction,
                 sfr_dict=sfr_dict,

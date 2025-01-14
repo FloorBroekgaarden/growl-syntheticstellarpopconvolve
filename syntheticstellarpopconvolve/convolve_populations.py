@@ -187,7 +187,6 @@ def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
 
 def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
-
     data types:
     - yield (integration, events and ensemble): SFR weighted probabilities of each system
     - stripped_ensemble (integration, ensembe): Ensemble with its endpoints stripped off. Will only be stored in the first one and should be used to re-construct the other results
@@ -259,7 +258,7 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
                 os.remove(full_path)
 
 
-def convolution_worker_handle_convolution_choice(
+def handle_convolution_choice(
     config, job_dict, sfr_dict, convolution_instruction, data_dict
 ):
     """
@@ -373,6 +372,8 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
         if job_dict == "STOP":
             return None
 
+        # TODO: most of the parts below are shared with the sequential convolution. Abstract
+
         # Unpack info
         convolution_instruction = job_dict["convolution_instruction"]
         data_dict = job_dict["data_dict"]
@@ -390,7 +391,7 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
 
             ##############
             # run convolution
-            convolution_results = convolution_worker_handle_convolution_choice(
+            convolution_results = handle_convolution_choice(
                 config=config,
                 job_dict=job_dict,
                 sfr_dict=sfr_dict,
@@ -429,22 +430,9 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
                 )
             )
 
-
-def convolution_queue_filler(  # DH0001
-    job_queue,
-    num_cores,
-    config,
-    sfr_dict,
-    convolution_instruction,
-    data_dict,
-    processes,
-):
+def create_bin_iterator(config, convolution_instruction, sfr_dict):
     """
-    Function to handle filling the queue for the multiprocessing
-
-    When the convolution instruction is a sampling-based convolution,
-    we use forward convolution, which loops over starformation bins
-    rather than convolution bins
+    Function to create the bin iterator data
     """
 
     ######
@@ -475,8 +463,35 @@ def convolution_queue_filler(  # DH0001
     else:
         raise ValueError("convolution type not supported")
 
+    return zipped_bin_data
+
+def convolution_queue_filler(  # DH0001
+    job_queue,
+    num_cores,
+    config,
+    sfr_dict,
+    convolution_instruction,
+    data_dict,
+    processes,
+):
+    """
+    Function to handle filling the queue for the multiprocessing
+
+    When the convolution instruction is a sampling-based convolution,
+    we use forward convolution, which loops over starformation bins
+    rather than convolution bins
+    """
+
+    # Set up bin iterator data
+    zipped_bin_data = create_bin_iterator(
+        config=config,
+        convolution_instruction=convolution_instruction,
+        sfr_dict=sfr_dict
+    )
+
     ######
     # Fill the queue with centres
+    # TODO: this loop itself is used in the sequential method as well. Abstract and call either job.put or other
     for bin_number, (
         bin_center,
         bin_size,
@@ -517,7 +532,6 @@ def convolution_queue_filler(  # DH0001
     config["logger"].debug("Sending job termination signals")
     for _ in range(num_cores):
         job_queue.put("STOP")
-
 
 def generate_data_dict(config, convolution_instruction):
     """
@@ -616,7 +630,6 @@ def handle_multiprocessing_convolution(config, convolution_instruction, sfr_dict
             result_value.args = amended_args
             raise result_value
 
-
 def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
     """
     Main function to handle sequential convolution. 
@@ -624,15 +637,128 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
     This handles the convolution steps in sequence, but also allows the user to provide persistent information and use results of the previous convolution step
     """
 
-
-
-
-
     ###################
     # Set up data_dict: dictionary that contains the arrays or ensembles that are required for the convolution.
     config, data_dict, convolution_instruction = generate_data_dict(
         config=config, convolution_instruction=convolution_instruction
     )
+
+    # Set up bin iterator data
+    zipped_bin_data = create_bin_iterator(
+        config=config,
+        convolution_instruction=convolution_instruction,
+        sfr_dict=sfr_dict
+    )
+
+    # #############
+    # 
+    persistent_data = {}
+    previous_convolution_results = None
+
+    # #############
+    # TODO: this loop is shared with the queue filler. abstract
+    # loop over bins
+    for bin_number, (
+        bin_center,
+        bin_size,
+        bin_edge_lower,
+    ) in enumerate(zipped_bin_data):
+
+        # store current bin info, which is different in different cases.
+        time_bin_info_dict = {
+            "bin_number": bin_number,
+            "bin_center": bin_center,
+            "bin_edge_lower": bin_edge_lower,
+            "bin_size": bin_size,
+            "bin_type": bin_type,
+            "time_type": config["time_type"],
+        }
+
+        # Set up job dict
+        job_dict = {
+            "job_number": bin_number,
+            "time_bin_info_dict": time_bin_info_dict,
+            "sfr_dict": sfr_dict,
+            "convolution_instruction": convolution_instruction,
+            "data_dict": data_dict,
+            "output_dir": get_tmp_dir(
+                config=config,
+                convolution_instruction=convolution_instruction,
+                sfr_dict=sfr_dict,
+            ),
+        }
+
+        # #########
+        # Set up output dict
+        output_dict = {}
+
+        # #############
+        # run convolution
+        # TODO: add persistent data to args
+        # TODO: add previous convolution results to args
+        convolution_results = handle_convolution_choice(
+            config=config,
+            job_dict=job_dict,
+            sfr_dict=sfr_dict,
+            convolution_instruction=convolution_instruction,
+            data_dict=data_dict,
+        )
+
+        # Store previous results
+        previous_convolution_results = copy.deepcopy(convolution_results)
+
+        # add persistent data to the convolution_results that is stored
+        if isinstance(persistent_data, dict):
+            convolution_results["convolution_results"] = {
+                **convolution_results["convolution_results"],
+                **persistent_data
+            }
+        else:
+            raise ValueError("persistent_data ({}) should be a dictionary".format(persistent_data))
+
+        # #############
+        # Construct dictionary that is stored in the pickle files
+        output_dict["bin_center"] = time_bin_info_dict["bin_center"]
+        output_dict["convolution_instruction"] = convolution_instruction
+        output_dict = {
+            **output_dict,
+            "convolution_results": convolution_results["convolution_results"],
+        }
+
+        # #############
+        # store information 
+        # TODO: below is copied quite roughly from the multiprocessing version. Should be cleaned
+
+        # Get groupname
+        groupname, _ = generate_group_name(
+            convolution_instruction=convolution_instruction, sfr_dict=sfr_dict
+        )
+        full_groupname = "output_data/" + groupname
+
+        ##########
+        # Unpack
+        if "convolution_results" in output_dict.keys():
+            convolution_results = output_dict["convolution_results"]
+        else:  # TODO: do we want to raise an error or just continue?
+            raise ValueError("No convolution result present in the data")
+
+        #########
+        # Handle storing convolution results
+        with h5py.File(config["output_filename"], "a") as output_hdf5file:
+            config["logger"].debug("Writing results to {}".format(full_groupname))
+
+            # Readout group
+            grp = output_hdf5file[full_groupname]
+
+            handle_storing_convolution_results(
+                config=config,
+                grp=grp,
+                data=output_dict,
+                convolution_results=convolution_results,
+            )
+
+
+
 
 
 

@@ -73,6 +73,8 @@ def handle_post_convolution_function(
             "convolution_results": convolution_results,
             "time_bin_info_dict": time_bin_info_dict,
             "convolution_instruction": convolution_instruction,
+            "persistent_data": persistent_data,
+            "previous_convolution_results": previous_convolution_results,
             **convolution_instruction.get(
                 "post_convolution_function_extra_parameters", {}
             ),

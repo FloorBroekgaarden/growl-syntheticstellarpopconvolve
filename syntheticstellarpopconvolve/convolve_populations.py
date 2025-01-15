@@ -779,7 +779,7 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
                 config=config,
                 grp=grp,
                 bin_center=bin_center,
-                convolution_results=convolution_results,
+                convolution_results=convolution_results["convolution_results"],
             )
 
 

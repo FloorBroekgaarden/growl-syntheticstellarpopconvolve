@@ -29,5 +29,5 @@ https://keepachangelog.com/en/0.3.0/
         - added notebooks
     - [feature/access-previous-result-and-store-persistant-info]:
         - provided support for a sequential convolution, as opposed to multiprocessed
-        - provided support for to pass results of previous convolution in sequential convolution
-        - provided support for a persistent data storage dictionary where the user can store things in
+        - provided support for to pass results of previous convolution in sequential convolution. This is accessible in the post-convolution hook.
+        - provided support for a persistent data storage dictionary where the user can store things in. This is accessible in the post-convolution hook.

@@ -44,9 +44,9 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
     time_bin_info_dict,
     convolution_instruction,
     ensemble,
-    # 
+    #
     persistent_data=None,
-    previous_convolution_results=None
+    previous_convolution_results=None,
 ):
     """
     Function to wrap the post-convolution function call for ensemble-convolution by integration.
@@ -88,9 +88,9 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
         convolution_instruction=convolution_instruction,
         convolution_results=convolution_results,
         name=name,
-        # 
+        #
         persistent_data=persistent_data,
-        previous_convolution_results=previous_convolution_results
+        previous_convolution_results=previous_convolution_results,
     )
 
     #############
@@ -1259,9 +1259,9 @@ def ensemble_handle_SFR_multiplication(
     ensemble,
     data_dict,
     extra_value_dict=None,
-    # 
+    #
     persistent_data=None,
-    previous_convolution_results=None
+    previous_convolution_results=None,
 ):
     """
     Function to handle multiplying the provided ensemble with a.
@@ -1315,9 +1315,9 @@ def ensemble_handle_SFR_multiplication(
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
         ensemble=ensemble,
-        # 
+        #
         persistent_data=persistent_data,
-        previous_convolution_results=previous_convolution_results
+        previous_convolution_results=previous_convolution_results,
     )
 
     return ensemble
@@ -1332,9 +1332,9 @@ def ensemble_convolve_ensemble(
     depth=0,
     data_dict=None,
     extra_value_dict=None,
-    # 
+    #
     persistent_data=None,
-    previous_convolution_results=None
+    previous_convolution_results=None,
 ):
     """
     Recursive function that handles convolving the ensemble.
@@ -1471,9 +1471,9 @@ def ensemble_convolve_ensemble(
                     ensemble=ensemble[key],
                     data_dict=data_dict,
                     extra_value_dict=extra_value_dict,
-                    # 
+                    #
                     persistent_data=persistent_data,
-                    previous_convolution_results=previous_convolution_results
+                    previous_convolution_results=previous_convolution_results,
                 )
             else:
                 # call self with increased depth
@@ -1486,9 +1486,9 @@ def ensemble_convolve_ensemble(
                     depth=depth + 1,
                     data_dict=data_dict,
                     extra_value_dict=extra_value_dict,
-                    # 
+                    #
                     persistent_data=persistent_data,
-                    previous_convolution_results=previous_convolution_results
+                    previous_convolution_results=previous_convolution_results,
                 )
 
     elif isinstance(ensemble, ALLOWED_NUMERICAL_TYPES):
@@ -1530,9 +1530,9 @@ def convolve_ensemble_by_integration(
     convolution_instruction,
     data_dict,
     sfr_dict,
-    # 
+    #
     persistent_data=None,
-    previous_convolution_results=None    
+    previous_convolution_results=None,
 ):
     """
     Function for the multiprocessing worker to convolve ensemble-based data.

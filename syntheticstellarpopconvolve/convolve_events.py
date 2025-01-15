@@ -20,9 +20,9 @@ def convolve_events_by_integration_post_convolution_hook_wrapper(
     convolution_instruction,
     time_bin_info_dict,
     convolution_results,
-    # 
+    #
     persistent_data=None,
-    previous_convolution_results=None
+    previous_convolution_results=None,
 ):
     """
     Function to wrap the post-convolution function call for event-convolution by integration.
@@ -54,9 +54,9 @@ def convolve_events_by_integration_post_convolution_hook_wrapper(
         convolution_instruction=convolution_instruction,
         convolution_results=convolution_results,
         name=name,
-        # 
+        #
         persistent_data=persistent_data,
-        previous_convolution_results=previous_convolution_results
+        previous_convolution_results=previous_convolution_results,
     )
 
     #############
@@ -211,9 +211,9 @@ def convolve_events_by_integration(
         time_bin_info_dict=time_bin_info_dict,
         convolution_instruction=convolution_instruction,
         convolution_results=convolution_results,
-        # 
+        #
         persistent_data=persistent_data,
-        previous_convolution_results=previous_convolution_results
+        previous_convolution_results=previous_convolution_results,
     )
 
     return {"convolution_results": convolution_results}

@@ -4,6 +4,7 @@ Main file to handle the convolution of populations
 TODO: stop passing job_dict to everything. I don't entirely like passing the job dict as well as the separated dicts. I'd rather be explicit and not rely on some all-containing dict..
 """
 
+import copy
 import json
 import multiprocessing
 import os
@@ -80,9 +81,7 @@ def handle_storing_convolution_results(config, grp, convolution_results, bin_cen
         ############
         # handle storing entries and units
         config["logger"].debug(
-            "Storing convolution results of bin-center {}".format(
-                str(bin_center)
-            )
+            "Storing convolution results of bin-center {}".format(str(bin_center))
         )
 
         #
@@ -135,7 +134,7 @@ def store_convolution_result_entries(
 
 def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
-    Function to handle things before a convolution. 
+    Function to handle things before a convolution.
     - Prepare output group structures in hdf5 as far as possible.
     - Stores SFR information in the output group.
     - Creates temporary directories.
@@ -190,11 +189,11 @@ def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
 
 def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
-	Function to handle post-convolution.
+        Function to handle post-convolution.
 
-	Mostly stores tmp pickle files that contain the data 
+        Mostly stores tmp pickle files that contain the data
 
-	TODO: stuff below is not relevant really anymre.
+        TODO: stuff below is not relevant really anymre.
     data types:
     - yield (integration, events and ensemble): SFR weighted probabilities of each system
     - stripped_ensemble (integration, ensembe): Ensemble with its endpoints stripped off. Will only be stored in the first one and should be used to re-construct the other results
@@ -241,8 +240,8 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
         for pickle_file in sorted_content_dir:
             #########
             # check if file is actually pickle file
-            if not pickle_file.endswith('.p'):
-            	continue
+            if not pickle_file.endswith(".p"):
+                continue
 
             #########
             # Load pickled data
@@ -263,7 +262,7 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
                 config=config,
                 grp=grp,
                 convolution_results=convolution_results,
-                bin_center=payload['bin_center']
+                bin_center=payload["bin_center"],
             )
 
             # remove the pickled file
@@ -272,7 +271,13 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
 
 
 def handle_convolution_choice(
-    config, job_dict, sfr_dict, convolution_instruction, data_dict, persistent_data=None, previous_convolution_results=None
+    config,
+    job_dict,
+    sfr_dict,
+    convolution_instruction,
+    data_dict,
+    persistent_data=None,
+    previous_convolution_results=None,
 ):
     """
     Function to handle the convolution choice
@@ -309,7 +314,7 @@ def handle_convolution_choice(
                 convolution_instruction=convolution_instruction,
                 #
                 persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results
+                previous_convolution_results=previous_convolution_results,
             )
 
         elif (
@@ -326,7 +331,7 @@ def handle_convolution_choice(
                 convolution_instruction=convolution_instruction,
                 #
                 persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results
+                previous_convolution_results=previous_convolution_results,
             )
 
         elif (
@@ -344,7 +349,7 @@ def handle_convolution_choice(
                 convolution_instruction=convolution_instruction,
                 #
                 persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results
+                previous_convolution_results=previous_convolution_results,
             )
 
         elif (
@@ -367,7 +372,7 @@ def handle_convolution_choice(
             convolution_instruction=convolution_instruction,
             #
             persistent_data=persistent_data,
-            previous_convolution_results=previous_convolution_results
+            previous_convolution_results=previous_convolution_results,
         )
     else:
         raise ValueError(
@@ -409,7 +414,7 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
 
         ##########
         # Set up output dict
-        output_dict = {}
+        payload = {}
 
         try:
             # TODO: add log that contains info about the worker id etc
@@ -437,11 +442,11 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
             # Store info
             with open(
                 os.path.join(
-                    job_dict["output_dir"], "{}.p".format(output_dict["bin_center"])
+                    job_dict["output_dir"], "{}.p".format(payload["bin_center"])
                 ),
                 "wb",
             ) as f:
-                pickle.dump(output_dict, f)
+                pickle.dump(payload, f)
 
         ##############
         # handle errors
@@ -454,6 +459,7 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
                     worker_ID,
                 )
             )
+
 
 def create_bin_iterator(config, convolution_instruction, sfr_dict):
     """
@@ -488,7 +494,8 @@ def create_bin_iterator(config, convolution_instruction, sfr_dict):
     else:
         raise ValueError("convolution type not supported")
 
-    return zipped_bin_data
+    return zipped_bin_data, bin_type
+
 
 def convolution_queue_filler(  # DH0001
     job_queue,
@@ -508,10 +515,10 @@ def convolution_queue_filler(  # DH0001
     """
 
     # Set up bin iterator data
-    zipped_bin_data = create_bin_iterator(
+    zipped_bin_data, bin_type = create_bin_iterator(
         config=config,
         convolution_instruction=convolution_instruction,
-        sfr_dict=sfr_dict
+        sfr_dict=sfr_dict,
     )
 
     ######
@@ -558,6 +565,7 @@ def convolution_queue_filler(  # DH0001
     for _ in range(num_cores):
         job_queue.put("STOP")
 
+
 def generate_data_dict(config, convolution_instruction):
     """
     Function to generate the data dict.
@@ -589,7 +597,10 @@ def generate_data_dict(config, convolution_instruction):
 
     return config, data_dict, convolution_instruction
 
-def handle_multiprocessing_convolution(config, convolution_instruction, sfr_dict): # DH0001
+
+def handle_multiprocessing_convolution(
+    config, convolution_instruction, sfr_dict
+):  # DH0001
     """
     Main function to handle convolution by multiprocessing
 
@@ -655,9 +666,10 @@ def handle_multiprocessing_convolution(config, convolution_instruction, sfr_dict
             result_value.args = amended_args
             raise result_value
 
+
 def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
     """
-    Main function to handle sequential convolution. 
+    Main function to handle sequential convolution.
 
     This handles the convolution steps in sequence, but also allows the user to provide persistent information and use results of the previous convolution step
     """
@@ -669,14 +681,14 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
     )
 
     # Set up bin iterator data
-    zipped_bin_data = create_bin_iterator(
+    zipped_bin_data, bin_type = create_bin_iterator(
         config=config,
         convolution_instruction=convolution_instruction,
-        sfr_dict=sfr_dict
+        sfr_dict=sfr_dict,
     )
 
     # #############
-    # 
+    #
     persistent_data = {}
     previous_convolution_results = None
 
@@ -723,9 +735,9 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
             sfr_dict=sfr_dict,
             convolution_instruction=convolution_instruction,
             data_dict=data_dict,
-            # 
-			persistent_data=persistent_data,
-			previous_convolution_results=previous_convolution_results,
+            #
+            persistent_data=persistent_data,
+            previous_convolution_results=previous_convolution_results,
         )
 
         # Store previous results
@@ -733,16 +745,20 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
 
         # add persistent data to the convolution_results that is stored
         if persistent_data is not None:
-	        if isinstance(persistent_data, dict):
-	            convolution_results["convolution_results"] = {
-	                **convolution_results["convolution_results"],
-	                **persistent_data
-	            }
-	        else:
-	            raise ValueError("persistent_data ({}) should be a dictionary".format(persistent_data))
+            if isinstance(persistent_data, dict):
+                convolution_results["convolution_results"] = {
+                    **convolution_results["convolution_results"],
+                    **persistent_data,
+                }
+            else:
+                raise ValueError(
+                    "persistent_data ({}) should be a dictionary".format(
+                        persistent_data
+                    )
+                )
 
         # #############
-        # store information 
+        # store information
         # TODO: below is copied quite roughly from the multiprocessing version. Should be cleaned
 
         # Get groupname
@@ -765,6 +781,7 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
                 bin_center=bin_center,
                 convolution_results=convolution_results,
             )
+
 
 def convolve_populations(config):
     """
@@ -804,7 +821,7 @@ def convolve_populations(config):
             )
 
             # handle choice for multiprocessing
-            if config["multiprocessing"] == True:
+            if config["multiprocessing"] is True:
                 # TODO: move whatever is below to a function
 
                 handle_multiprocessing_convolution(
@@ -812,8 +829,7 @@ def convolve_populations(config):
                     convolution_instruction=convolution_instruction,
                     sfr_dict=sfr_dict,
                 )
-
-            if config["multiprocessing"] == False:
+            else:
                 handle_sequential_convolution(
                     config=config,
                     convolution_instruction=convolution_instruction,

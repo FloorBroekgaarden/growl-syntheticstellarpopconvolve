@@ -42,9 +42,9 @@ def handle_post_convolution_function(
     convolution_instruction,
     convolution_results,
     name,
-    # 
+    #
     persistent_data=None,
-    previous_convolution_results=None
+    previous_convolution_results=None,
 ):
     """
     Function to handle post-convolution function call.

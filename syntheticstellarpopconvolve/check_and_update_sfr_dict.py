@@ -262,6 +262,16 @@ def update_sfr_dict(sfr_dict, config):
 
         # construct the combined array: multiplies the SFR, dp/dZ, and delta Z
         # TODO: this needs to be checked quite well
+
+        # print(sfr_dict["starformation_rate_array"].shape)
+        # print(sfr_dict["metallicity_distribution_array"].shape)
+        # print(sfr_dict["metallicity_bin_sizes"].shape)
+
+        # print(sfr_dict["metallicity_distribution_array"])
+        # print(sfr_dict["starformation_rate_array"] * sfr_dict["metallicity_distribution_array"])
+        # print(sfr_dict["starformation_rate_array"] * sfr_dict["metallicity_distribution_array"] * sfr_dict["metallicity_bin_sizes"])
+        # print(sfr_dict["starformation_rate_array"] * sfr_dict["metallicity_distribution_array"] * sfr_dict["metallicity_bin_sizes"])
+
         sfr_dict["metallicity_weighted_starformation_rate_array"] = (
             sfr_dict["starformation_rate_array"]
             * sfr_dict["metallicity_distribution_array"]

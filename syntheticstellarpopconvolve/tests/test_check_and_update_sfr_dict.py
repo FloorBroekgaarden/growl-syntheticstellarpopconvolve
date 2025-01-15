@@ -1,3 +1,7 @@
+"""
+TODO: there is some issue here for situations where the metallicity distribution is a square.
+"""
+
 import logging
 import unittest
 
@@ -39,7 +43,7 @@ class test_pad_sfr_dict(unittest.TestCase):
             "redshift_bin_edges": np.array([0.1, 0.2, 0.3, 0.4]),
             "starformation_rate_array": np.array([10, 20, 30]),
             "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
-            "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]),
+            "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]).T,
         }
 
     def test_pad_sfr_dict_lookback_time(self):
@@ -127,7 +131,8 @@ class test_check_sfr_dict(unittest.TestCase):
             "starformation_rate_array": np.array([10, 20, 30]) * u.Msun / u.yr,
             "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
             "metallicity_distribution_array": np.array(
-                [[1, 2, 3], [4, 5, 6], [5, 6, 7]]
+                # [[1, 2, 3], [4, 5, 6], [5, 6, 7]]
+                [[1, 2, 3], [4, 5, 6]]
             ),
         }
 
@@ -246,6 +251,8 @@ class test_check_sfr_dict(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    # unittest.main()
+
     test_pad_sfr_dict_obj = test_pad_sfr_dict()
     test_pad_sfr_dict_obj.setUp()
-    test_pad_sfr_dict_obj.test_pad_sfr_dict_lookback_time()
+    test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity()

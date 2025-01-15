@@ -37,7 +37,7 @@ from syntheticstellarpopconvolve.general_functions import (
 )
 
 
-def handle_storing_convolution_results(config, grp, data, convolution_results):
+def handle_storing_convolution_results(config, grp, convolution_results, bin_center):
     """
     Function to manage the storing of the convolution results
     """
@@ -51,7 +51,7 @@ def handle_storing_convolution_results(config, grp, data, convolution_results):
             # Create group
             current_time_bin_grp = grp.create_group(
                 "convolution_results/{}/{}".format(
-                    convolution_result["name"], str(data["bin_center"])
+                    convolution_result["name"], str(bin_center)
                 )
             )
 
@@ -59,7 +59,7 @@ def handle_storing_convolution_results(config, grp, data, convolution_results):
             # handle storing entries and units
             config["logger"].debug(
                 "Storing convolution results {} of bin-center {}".format(
-                    convolution_result["name"], str(data["bin_center"])
+                    convolution_result["name"], str(bin_center)
                 )
             )
 
@@ -74,14 +74,14 @@ def handle_storing_convolution_results(config, grp, data, convolution_results):
         ##########
         # Create group
         current_time_bin_grp = grp.create_group(
-            "convolution_results/{}".format(str(data["bin_center"]))
+            "convolution_results/{}".format(str(bin_center))
         )
 
         ############
         # handle storing entries and units
         config["logger"].debug(
             "Storing convolution results of bin-center {}".format(
-                str(data["bin_center"])
+                str(bin_center)
             )
         )
 
@@ -135,7 +135,10 @@ def store_convolution_result_entries(
 
 def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
-    TODO
+    Function to handle things before a convolution. 
+    - Prepare output group structures in hdf5 as far as possible.
+    - Stores SFR information in the output group.
+    - Creates temporary directories.
     """
 
     ########
@@ -187,6 +190,11 @@ def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
 
 def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
+	Function to handle post-convolution.
+
+	Mostly stores tmp pickle files that contain the data 
+
+	TODO: stuff below is not relevant really anymre.
     data types:
     - yield (integration, events and ensemble): SFR weighted probabilities of each system
     - stripped_ensemble (integration, ensembe): Ensemble with its endpoints stripped off. Will only be stored in the first one and should be used to re-construct the other results
@@ -223,7 +231,7 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
         grp = output_hdf5file[full_groupname]
 
         ###########
-        # loop over all files in the pickle
+        # loop over all pickle files that contain data
         content_dir = os.listdir(tmp_dir)
 
         sorted_content_dir = sorted(
@@ -232,15 +240,20 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
         )
         for pickle_file in sorted_content_dir:
             #########
+            # check if file is actually pickle file
+            if not pickle_file.endswith('.p'):
+            	continue
+
+            #########
             # Load pickled data
             full_path = os.path.join(tmp_dir, pickle_file)
             with open(full_path, "rb") as picklefile:
-                data = pickle.load(picklefile)
+                payload = pickle.load(picklefile)
 
             ##########
             # Unpack
-            if "convolution_results" in data.keys():
-                convolution_results = data["convolution_results"]
+            if "convolution_results" in payload.keys():
+                convolution_results = payload["convolution_results"]
             else:  # TODO: do we want to raise an error or just continue?
                 raise ValueError("No convolution result present in the data")
 
@@ -249,8 +262,8 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
             handle_storing_convolution_results(
                 config=config,
                 grp=grp,
-                data=data,
                 convolution_results=convolution_results,
+                bin_center=payload['bin_center']
             )
 
             # remove the pickled file
@@ -259,7 +272,7 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
 
 
 def handle_convolution_choice(
-    config, job_dict, sfr_dict, convolution_instruction, data_dict
+    config, job_dict, sfr_dict, convolution_instruction, data_dict, persistent_data=None, previous_convolution_results=None
 ):
     """
     Function to handle the convolution choice
@@ -294,6 +307,9 @@ def handle_convolution_choice(
                 data_dict=data_dict,
                 time_bin_info_dict=time_bin_info_dict,
                 convolution_instruction=convolution_instruction,
+                #
+                persistent_data=persistent_data,
+                previous_convolution_results=previous_convolution_results
             )
 
         elif (
@@ -308,6 +324,9 @@ def handle_convolution_choice(
                 data_dict=data_dict,
                 time_bin_info_dict=time_bin_info_dict,
                 convolution_instruction=convolution_instruction,
+                #
+                persistent_data=persistent_data,
+                previous_convolution_results=previous_convolution_results
             )
 
         elif (
@@ -320,9 +339,12 @@ def handle_convolution_choice(
             convolution_results = convolve_ensemble_by_integration(
                 config=config,
                 sfr_dict=sfr_dict,
-                convolution_instruction=convolution_instruction,
-                time_bin_info_dict=time_bin_info_dict,
                 data_dict=data_dict,
+                time_bin_info_dict=time_bin_info_dict,
+                convolution_instruction=convolution_instruction,
+                #
+                persistent_data=persistent_data,
+                previous_convolution_results=previous_convolution_results
             )
 
         elif (
@@ -341,8 +363,11 @@ def handle_convolution_choice(
         convolution_results = convolve_on_the_fly(
             config=config,
             sfr_dict=sfr_dict,
-            convolution_instruction=convolution_instruction,
             time_bin_info_dict=time_bin_info_dict,
+            convolution_instruction=convolution_instruction,
+            #
+            persistent_data=persistent_data,
+            previous_convolution_results=previous_convolution_results
         )
     else:
         raise ValueError(
@@ -401,10 +426,10 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
 
             ##############
             # Construct dictionary that is stored in the pickle files
-            output_dict["bin_center"] = time_bin_info_dict["bin_center"]
-            output_dict["convolution_instruction"] = convolution_instruction
-            output_dict = {
-                **output_dict,
+            payload["bin_center"] = time_bin_info_dict["bin_center"]
+            payload["convolution_instruction"] = convolution_instruction
+            payload = {
+                **payload,
                 "convolution_results": convolution_results["convolution_results"],
             }
 
@@ -688,10 +713,6 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
             ),
         }
 
-        # #########
-        # Set up output dict
-        output_dict = {}
-
         # #############
         # run convolution
         # TODO: add persistent data to args
@@ -702,28 +723,23 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
             sfr_dict=sfr_dict,
             convolution_instruction=convolution_instruction,
             data_dict=data_dict,
+            # 
+			persistent_data=persistent_data,
+			previous_convolution_results=previous_convolution_results,
         )
 
         # Store previous results
         previous_convolution_results = copy.deepcopy(convolution_results)
 
         # add persistent data to the convolution_results that is stored
-        if isinstance(persistent_data, dict):
-            convolution_results["convolution_results"] = {
-                **convolution_results["convolution_results"],
-                **persistent_data
-            }
-        else:
-            raise ValueError("persistent_data ({}) should be a dictionary".format(persistent_data))
-
-        # #############
-        # Construct dictionary that is stored in the pickle files
-        output_dict["bin_center"] = time_bin_info_dict["bin_center"]
-        output_dict["convolution_instruction"] = convolution_instruction
-        output_dict = {
-            **output_dict,
-            "convolution_results": convolution_results["convolution_results"],
-        }
+        if persistent_data is not None:
+	        if isinstance(persistent_data, dict):
+	            convolution_results["convolution_results"] = {
+	                **convolution_results["convolution_results"],
+	                **persistent_data
+	            }
+	        else:
+	            raise ValueError("persistent_data ({}) should be a dictionary".format(persistent_data))
 
         # #############
         # store information 
@@ -734,13 +750,6 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
             convolution_instruction=convolution_instruction, sfr_dict=sfr_dict
         )
         full_groupname = "output_data/" + groupname
-
-        ##########
-        # Unpack
-        if "convolution_results" in output_dict.keys():
-            convolution_results = output_dict["convolution_results"]
-        else:  # TODO: do we want to raise an error or just continue?
-            raise ValueError("No convolution result present in the data")
 
         #########
         # Handle storing convolution results
@@ -753,14 +762,9 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
             handle_storing_convolution_results(
                 config=config,
                 grp=grp,
-                data=output_dict,
+                bin_center=bin_center,
                 convolution_results=convolution_results,
             )
-
-
-
-
-
 
 def convolve_populations(config):
     """

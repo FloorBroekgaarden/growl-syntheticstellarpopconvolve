@@ -42,7 +42,7 @@ class test_pad_sfr_dict(unittest.TestCase):
             "lookback_time_bin_edges": np.array([1, 2, 3, 4]),
             "redshift_bin_edges": np.array([0.1, 0.2, 0.3, 0.4]),
             "starformation_rate_array": np.array([10, 20, 30]),
-            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
             "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]).T,
         }
 
@@ -88,7 +88,7 @@ class test_pad_sfr_dict(unittest.TestCase):
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_metallicity_bin_edges"],
-                np.array([1e-20, 0.01, 0.1, 0.2, 0.3, 1]),
+                np.array([1e-20, 0.01, 0.1, 0.2, 1]),
             )
         )
 
@@ -96,7 +96,7 @@ class test_pad_sfr_dict(unittest.TestCase):
         self.assertTrue("padded_metallicity_distribution_array" in padded_sfr_dict)
         expected_array = np.array(
             [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 4, 5, 6, 0], [0, 0, 0, 0, 0]]
-        )
+        ).T
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_metallicity_distribution_array"],
@@ -112,15 +112,43 @@ class test_pad_sfr_dict(unittest.TestCase):
             np.array(
                 [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0], [0, 4, 5, 6, 0], [0, 0, 0, 0, 0]]
             )
-            * np.array([0, 10, 20, 30, 0])
-            * np.diff(padded_sfr_dict["padded_metallicity_bin_edges"])
-        )
+            * np.array([0, 10, 20, 30, 0])[np.newaxis, :]
+            * np.diff(padded_sfr_dict["padded_metallicity_bin_edges"])[:, np.newaxis]
+        ).T
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_metallicity_weighted_starformation_rate_array"],
                 expected_array,
             )
         )
+
+    def test_pad_sfr_dict_metallicity_square(self):
+        sfr_dict = {
+            "lookback_time_bin_edges": np.array([1, 2, 3, 4]),
+            "starformation_rate_array": np.array([10, 20, 30]),
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
+            "metallicity_distribution_array": np.array(
+                [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            ).T,
+        }
+
+        sfr_dict = update_sfr_dict(sfr_dict=sfr_dict, config=self.config)
+
+        # TODO: add explicit check for what the content should be
+
+    def test_pad_sfr_dict_metallicity_non_square(self):
+        sfr_dict = {
+            "lookback_time_bin_edges": np.array([1, 2, 3, 4]),
+            "starformation_rate_array": np.array([10, 20, 30]),
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
+            "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]),
+        }
+        print(sfr_dict["starformation_rate_array"].shape)
+        print(sfr_dict["metallicity_distribution_array"].shape)
+
+        sfr_dict = update_sfr_dict(sfr_dict=sfr_dict, config=self.config)
+
+        # TODO: add explicit check for what the content should be
 
 
 class test_check_sfr_dict(unittest.TestCase):
@@ -255,4 +283,5 @@ if __name__ == "__main__":
 
     test_pad_sfr_dict_obj = test_pad_sfr_dict()
     test_pad_sfr_dict_obj.setUp()
-    test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity()
+    test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_square()
+    test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_non_square()

@@ -261,21 +261,10 @@ def update_sfr_dict(sfr_dict, config):
         sfr_dict["metallicity_bin_sizes"] = np.diff(sfr_dict["metallicity_bin_edges"])
 
         # construct the combined array: multiplies the SFR, dp/dZ, and delta Z
-        # TODO: this needs to be checked quite well
-
-        # print(sfr_dict["starformation_rate_array"].shape)
-        # print(sfr_dict["metallicity_distribution_array"].shape)
-        # print(sfr_dict["metallicity_bin_sizes"].shape)
-
-        # print(sfr_dict["metallicity_distribution_array"])
-        # print(sfr_dict["starformation_rate_array"] * sfr_dict["metallicity_distribution_array"])
-        # print(sfr_dict["starformation_rate_array"] * sfr_dict["metallicity_distribution_array"] * sfr_dict["metallicity_bin_sizes"])
-        # print(sfr_dict["starformation_rate_array"] * sfr_dict["metallicity_distribution_array"] * sfr_dict["metallicity_bin_sizes"])
-
         sfr_dict["metallicity_weighted_starformation_rate_array"] = (
-            sfr_dict["starformation_rate_array"]
+            sfr_dict["starformation_rate_array"][:, np.newaxis]
+            * sfr_dict["metallicity_bin_sizes"][np.newaxis, :]
             * sfr_dict["metallicity_distribution_array"]
-            * sfr_dict["metallicity_bin_sizes"][:, np.newaxis]
         )
 
     # add bin centers

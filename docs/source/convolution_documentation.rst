@@ -107,6 +107,18 @@ Convolution-config options
 
        Default value:
           False
+   * - multiprocessing
+     - Description:
+          Flag whether to enable multiprocessing. True for multiprocessing, which allows faster convolution but does not allow the use of the previous convolution results and the persistent data. False for sequential convolution, which is slower but previous convolution results and the persistent data is available here.
+
+       Default value:
+          True
+   * - normalized_yield_unit
+     - Description:
+          Unit used for the normalized-yield data. NOTE: currently it is not possible to override this through the data_dict column or layer entries.
+
+       Default value:
+          1.0 1 / solMass
    * - num_cores
      - Description:
           Number of cores to use to do the convolution.
@@ -191,12 +203,6 @@ Convolution-config options
 
        Default value:
           True
-   * - yield_rate_unit
-     - Description:
-          Unit used for the yield-rate data. NOTE: currently it is not possible to override this thoruh the data_dict column or layer entries.
-
-       Default value:
-          1.0 1 / solMass
 
 
 Convolution-instruction options
@@ -211,7 +217,7 @@ Convolution-instruction options
      - Description
    * - convolution_type
      - Description:
-          Method of convolution. The two choices are as follows. 'integrate': Convolution by integration uses backward convolution to multiply the normalized_yield of the systems with the starformation rate at the time the system would be born, given the delay time and the target event time. This is particularly useful when you are just interested in the (transient) event. 'sample': Convolution by sampling uses forward convolution to 'sample' systems according to the yield () and assigns an event-time based on the delay time and the birth time. This is particularly useful if you want to post-process systems after they are born/the event occurs, like integrating the orbit of double compact object forward in time due to gravitational wave radiation (see LISA project example in `examples/notebook_usecases`).
+          Method of convolution. The three choices are as follows. 'integrate': Convolution by integration uses backward convolution to multiply the normalized_yield of the systems with the starformation rate at the time the system would be born, given the delay time and the target event time. This is particularly useful when you are just interested in the (transient) event. 'sample': Convolution by sampling uses forward convolution to 'sample' systems according to the yield () and assigns an event-time based on the delay time and the birth time. This is particularly useful if you want to post-process systems after they are born/the event occurs, like integrating the orbit of double compact object forward in time due to gravitational wave radiation (see LISA project example in `examples/notebook_usecases`). 'on-the-fly': Convolution by simulating the systems on-the-fly. Requires a method that uses the total mass in star formation, and optionally the metallicity distribution, combined with a population synthesis code, to evolve systems on the fly.
 
        Default value:
           integrate

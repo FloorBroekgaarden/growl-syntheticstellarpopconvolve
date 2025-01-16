@@ -229,7 +229,11 @@ def calculate_digitized_sfr_rates(
         config["logger"].debug("Calculating metallicity weighted SFR rates")
         digitised_sfr_rates = sfr_dict[
             "padded_metallicity_weighted_starformation_rate_array"
-        ][metallicity_indices, digitized_time_indices]
+        ][
+            digitized_time_indices, metallicity_indices
+        ]  # NOTE: ensure that time indices select the time-dimension
+        # ][metallicity_indices, digitized_time_indices]
+
     else:
         # use JUST the SFR, not the metallicity dependent one
 

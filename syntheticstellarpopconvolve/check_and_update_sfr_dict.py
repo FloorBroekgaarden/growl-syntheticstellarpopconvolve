@@ -379,12 +379,12 @@ def check_sfr_dict(
 
         # check if length in the metallicity direction is correct:
         if (
-            not sfr_dict["metallicity_distribution_array"].shape[0]
+            not sfr_dict["metallicity_distribution_array"].shape[1]
             == len(sfr_dict["metallicity_bin_edges"]) - 1
         ):
             raise ValueError(
-                "Please ensure the length of the `metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `metallicity_bin_edges` ({})".format(
-                    sfr_dict["metallicity_distribution_array"].shape[0],
+                "Please ensure the length of the `metallicity_distribution_array.shape[1]` ({}) is one element shorter than the length of `metallicity_bin_edges` ({})".format(
+                    sfr_dict["metallicity_distribution_array"].shape[1],
                     len(sfr_dict["metallicity_bin_edges"]),
                 )
             )
@@ -392,24 +392,24 @@ def check_sfr_dict(
         # check if length in the time direction is correct:
         if time_type == "lookback_time":
             if (
-                not sfr_dict["metallicity_distribution_array"].shape[1]
+                not sfr_dict["metallicity_distribution_array"].shape[0]
                 == len(sfr_dict["lookback_time_bin_edges"]) - 1
             ):
                 raise ValueError(
-                    "Please ensure the length of the metallicity_distribution_array.shape[1]` ({}) is one element shorter than the length of `lookback_time_bin_edges` ({})".format(
-                        sfr_dict["metallicity_distribution_array"].shape[1],
+                    "Please ensure the length of the metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `lookback_time_bin_edges` ({})".format(
+                        sfr_dict["metallicity_distribution_array"].shape[0],
                         len(sfr_dict["lookback_time_bin_edges"]),
                     )
                 )
 
         elif time_type == "redshift":
             if (
-                not sfr_dict["metallicity_distribution_array"].shape[1]
+                not sfr_dict["metallicity_distribution_array"].shape[0]
                 == len(sfr_dict["redshift_bin_edges"]) - 1
             ):
                 raise ValueError(
-                    "Please ensure the length of the metallicity_distribution_array.shape[1]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
-                        sfr_dict["metallicity_distribution_array"].shape[1],
+                    "Please ensure the length of the metallicity_distribution_array.shape[0]` ({}) is one element shorter than the length of `redshift_bin_edges` ({})".format(
+                        sfr_dict["metallicity_distribution_array"].shape[0],
                         len(sfr_dict["redshift_bin_edges"]),
                     )
                 )

@@ -234,10 +234,6 @@ def plot_sfr_dict(
         vmin = z_vals[~np.isnan(z_vals)].min()
         vmax = z_vals[~np.isnan(z_vals)].max()
 
-        print(time_mesh.shape)
-        print(metallicity_mesh.shape)
-        print(z_vals.shape)
-
         if metallicity_distribution_scale == "linear":
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
         elif metallicity_distribution_scale == "log10":

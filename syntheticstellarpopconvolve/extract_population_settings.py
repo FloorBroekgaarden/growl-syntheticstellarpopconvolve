@@ -19,7 +19,7 @@ def extract_population_settings(config):
 
     with h5py.File(config["output_filename"], "r") as output_hdf5file:
 
-        if "population" in output_hdf5file.keys():
+        if "population" in output_hdf5file["config"].keys():
             population_settings = json.loads(output_hdf5file["config/population"][()])
 
             if "binary_c_help_all" in population_settings.keys():

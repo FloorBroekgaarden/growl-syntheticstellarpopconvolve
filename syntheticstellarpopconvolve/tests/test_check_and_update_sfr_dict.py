@@ -141,10 +141,9 @@ class test_pad_sfr_dict(unittest.TestCase):
             "lookback_time_bin_edges": np.array([1, 2, 3, 4]),
             "starformation_rate_array": np.array([10, 20, 30]),
             "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
-            "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]),
+            # "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]),
+            "metallicity_distribution_array": np.array([[1, 2], [3, 4], [5, 6]]),
         }
-        print(sfr_dict["starformation_rate_array"].shape)
-        print(sfr_dict["metallicity_distribution_array"].shape)
 
         sfr_dict = update_sfr_dict(sfr_dict=sfr_dict, config=self.config)
 
@@ -155,12 +154,12 @@ class test_check_sfr_dict(unittest.TestCase):
     def setUp(self):
         self.sfr_dict = {
             "name": "test_sfr_dict",
-            "lookback_time_bin_edges": np.array([1, 2, 3, 4]) * 1e9 * u.yr,
-            "starformation_rate_array": np.array([10, 20, 30]) * u.Msun / u.yr,
+            "lookback_time_bin_edges": np.array([1, 2, 3]) * 1e9 * u.yr,
+            "starformation_rate_array": np.array([10, 20]) * u.Msun / u.yr,
             "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
             "metallicity_distribution_array": np.array(
-                # [[1, 2, 3], [4, 5, 6], [5, 6, 7]]
                 [[1, 2, 3], [4, 5, 6]]
+                # [[1, 2], [3, 4], [5, 6]]
             ),
         }
 
@@ -263,7 +262,7 @@ class test_check_sfr_dict(unittest.TestCase):
             )
 
     def test_check_sfr_dict_redshift_correct_bin_edges(self):
-        self.sfr_dict["redshift_bin_edges"] = np.array([0, 1, 2, 4])
+        self.sfr_dict["redshift_bin_edges"] = np.array([0, 1, 2])
 
         requires_name = True
         requires_metallicity_info = True
@@ -279,9 +278,9 @@ class test_check_sfr_dict(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # unittest.main()
+    unittest.main()
 
-    test_pad_sfr_dict_obj = test_pad_sfr_dict()
-    test_pad_sfr_dict_obj.setUp()
-    test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_square()
-    test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_non_square()
+    # test_pad_sfr_dict_obj = test_pad_sfr_dict()
+    # test_pad_sfr_dict_obj.setUp()
+    # test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_square()
+    # test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_non_square()

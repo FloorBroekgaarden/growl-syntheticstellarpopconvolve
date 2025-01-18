@@ -214,8 +214,11 @@ def plot_sfr_dict(
     if has_metallicity_info:
         # Set up the meshgrid that we will use
         time_mesh, metallicity_mesh = np.meshgrid(
-            sfr_dict["time_bin_centers"], sfr_dict["metallicity_bin_centers"]
+            # sfr_dict["time_bin_centers"], sfr_dict["metallicity_bin_centers"]
+            sfr_dict["time_bin_edges"],
+            sfr_dict["metallicity_bin_edges"],
         )
+
         cmap_metallicity_fraction_hist = (
             copy.copy(plt.cm.jet)
             if metallicity_distribution_cmap is None
@@ -225,14 +228,12 @@ def plot_sfr_dict(
         #
         z_vals = sfr_dict["metallicity_distribution_array"]
         if metallicity_distribution_multiply_by_metallicity_bin_sizes:
-            z_vals = z_vals * sfr_dict["metallicity_bin_sizes"][:, np.newaxis]
+            z_vals = z_vals * sfr_dict["metallicity_bin_sizes"][np.newaxis, :]
         if metallicity_distribution_multiply_by_sfr:
-            z_vals = z_vals * sfr_array.value
-
+            z_vals = z_vals * sfr_array[:, np.newaxis].value
         vmin = z_vals[~np.isnan(z_vals)].min()
         vmax = z_vals[~np.isnan(z_vals)].max()
 
-        # print(vmin, vmax)
         if metallicity_distribution_scale == "linear":
             norm = colors.Normalize(vmin=vmin, vmax=vmax)
         elif metallicity_distribution_scale == "log10":
@@ -246,24 +247,26 @@ def plot_sfr_dict(
             _ = axis_dict["ax_mssfr"].pcolormesh(
                 time_mesh.value,
                 metallicity_mesh,
-                z_vals,
+                z_vals.T,
                 norm=norm,
                 cmap=cmap_metallicity_fraction_hist,
-                shading="auto",
+                # shading="auto",
                 antialiased=True,
                 rasterized=True,
+                shading="flat",
             )
 
         if time_type == "redshift":
             _ = axis_dict["ax_mssfr"].pcolormesh(
                 time_mesh,
                 metallicity_mesh,
-                z_vals,
+                z_vals.T,
                 norm=norm,
                 cmap=cmap_metallicity_fraction_hist,
-                shading="auto",
+                # shading="auto",
                 antialiased=True,
                 rasterized=True,
+                shading="flat",
             )
 
         # make colorbar
@@ -325,16 +328,9 @@ def plot_sfr_dict(
 
 if __name__ == "__main__":
 
-    # # Example usage with a sample sfr_dict (fill with actual data to test)
-    # sample_sfr_dict = {
-    #     "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4]) * u.Gyr,
-    #     "starformation_rate_array": np.array([0.5, 0.6, 0.7, 0.8]) * u.Msun/u.yr,
-    #     "metallicity_bin_edges": np.array([0.0, 0.25, 0.5, 1]),
-    #     "metallicity_distribution_array": np.random.rand(4, 3).T,  # Example 2D metallicity distribution
-    # }
-    # plot_sfr_dict(sample_sfr_dict, time_type='lookback_time', return_axis_dict=False)
     import astropy.units as u
 
+    from syntheticstellarpopconvolve.general_functions import calculate_bincenters
     from syntheticstellarpopconvolve.metallicity_distributions import (
         metallicity_distribution_vanSon2022,
     )
@@ -342,17 +338,15 @@ if __name__ == "__main__":
         starformation_rate_distribution_vanSon2023,
     )
 
-    #
-    num_redshifts = 200
-    redshift_bin_edges = np.linspace(0, 9, num_redshifts)
-    redshift_bin_centers = (redshift_bin_edges[1:] + redshift_bin_edges[:-1]) / 2
+    # Set up redshift bin info
+    num_redshift_bins = 400
+    redshift_bin_edges = np.linspace(0, 8, num_redshift_bins)
+    redshift_bin_centers = calculate_bincenters(redshift_bin_edges)
 
-    #
-    num_metallicities = 300
-    log_metallicity_bin_edges = np.linspace(-12, 0, num_metallicities)
-    log_metallicity_bin_centers = (
-        log_metallicity_bin_edges[1:] + log_metallicity_bin_edges[:-1]
-    ) / 2
+    # Set up metallicity bin info
+    num_metallicity_bins = 500
+    log_metallicity_bin_edges = np.linspace(-12, 0, num_metallicity_bins)
+    log_metallicity_bin_centers = calculate_bincenters(log_metallicity_bin_edges)
 
     #
     sfr = starformation_rate_distribution_vanSon2023(redshift_bin_centers).to(
@@ -365,56 +359,23 @@ if __name__ == "__main__":
         redshifts=redshift_bin_centers,
     )
 
-    sample_sfr_dict = {
+    high_res_sfr_dict = {
         "redshift_bin_edges": redshift_bin_edges,
         "starformation_rate_array": sfr,
         "metallicity_bin_edges": log_metallicity_bin_edges,
-        "metallicity_distribution_array": dpdlogZ.T,  # Example 2D metallicity distribution
+        "metallicity_distribution_array": dpdlogZ,  # We need to transpose!
     }
 
-    dP = dpdlogZ * np.diff(log_metallicity_bin_edges)
-    print(dP.shape)
-    print(np.sum(dP, axis=1))
-
-    # plot_sfr_dict(
-    #     sample_sfr_dict,
-    #     time_type="redshift",
-    #     metallicity_string="logZ",
-    #     metallicity_distribution_multiply_by_metallicity_bin_sizes=True,
-    #     metallicity_distribution_multiply_by_sfr=True,
-    #     metallicity_distribution_scale="log10",
-    #     metallicity_distribution_cmap=copy.copy(plt.cm.viridis),
-    #     return_axis_dict=False,
-    # )
-
-    # #####################
-    # # Convert to linear z
-
-    # metallicity_bin_centers = np.exp(log_metallicity_bin_centers)
-    # metallicity_bin_edges = np.exp(log_metallicity_bin_edges)
-
-    # # convert
-    # dpdZ = dpdlogZ * (1/metallicity_bin_centers)
-
-    # #
-    # sample_sfr_dict = {
-    #     "redshift_bin_edges": redshift_bin_edges,
-    #     "starformation_rate_array": sfr,
-    #     "metallicity_bin_edges": metallicity_bin_edges,
-    #     "metallicity_distribution_array": dpdZ.T,  # Example 2D metallicity distribution
-    # }
-
-    # # print(dpdlogZ)
-    # axis_dict = plot_sfr_dict(
-    #     sample_sfr_dict,
-    #     time_type="redshift",
-    #     metallicity_distribution_multiply_by_metallicity_bin_sizes=True,
-    #     metallicity_distribution_multiply_by_sfr=True,
-    #     metallicity_distribution_scale="log10",
-    #     metallicity_distribution_cmap=copy.copy(plt.cm.viridis),
-    #     return_axis_dict=True,
-    # )
-    # axis_dict['ax_mssfr'].axvline(metallicity_bin_edges[0], color='r')
-    # axis_dict['ax_mssfr'].set_yscale('log')
-
-    # plt.show()
+    axis_dict = plot_sfr_dict(
+        high_res_sfr_dict,
+        time_type="redshift",
+        metallicity_string="logZ",
+        metallicity_distribution_multiply_by_metallicity_bin_sizes=True,
+        metallicity_distribution_multiply_by_sfr=True,
+        metallicity_distribution_scale="log10",
+        metallicity_distribution_cmap=copy.copy(plt.cm.viridis),
+        return_axis_dict=True,
+        figsize=(8, 8),
+        fontsize=12,
+    )
+    plt.show()

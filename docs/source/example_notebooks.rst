@@ -9,5 +9,12 @@ We have a set of notebooks that explain and show the usage of the SSPC features.
     examples/notebook_convolution_tutorial.ipynb
     examples/notebook_convolution_advanced.ipynb
     examples/notebook_convolution_star_formation_functions.ipynb
-
     examples/notebook_convolution_use_cases.ipynb
+    examples/Background.ipynb
+    examples/notebook_tutorial_persistent_data_and_previous_convolution_results.ipynb
+
+    examples/notebook_example_bincodex.ipynb
+    examples/notebook_example_GCE.ipynb
+    examples/notebook_example_GW_merger_rate_density.ipynb
+    examples/notebook_example_LISA_UCB.ipynb
+    examples/notebook_tutorial_convolution_by_sampling.ipynb

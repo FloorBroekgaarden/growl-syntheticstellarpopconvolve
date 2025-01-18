@@ -25,6 +25,18 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
+def extract_unit_dict(output_hdf5_file, key):
+    """
+    FUnction to extract the unit dict from the hdf5 file
+    """
+
+    # convert units
+    unit_dict = json.loads(output_hdf5_file[key].attrs["units"])
+    unit_dict = {key: u.Unit(val) for key, val in unit_dict.items()}
+
+    return unit_dict
+
+
 def get_username():
     """
     Function to get the username of the user that spawned the current process

@@ -88,6 +88,7 @@ setup(
     packages=[
         "syntheticstellarpopconvolve",
         "syntheticstellarpopconvolve.tests",
+        "syntheticstellarpopconvolve.usecase_notebook_utils",
         "syntheticstellarpopconvolve.example_data",
     ],
     # package_data={

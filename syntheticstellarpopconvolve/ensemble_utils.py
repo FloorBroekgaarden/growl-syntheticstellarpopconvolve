@@ -1,3 +1,32 @@
+"""
+File containing utility functions related to ensemble-based data
+"""
+
+import bz2
+import collections
+import copy
+import gzip
+import sys
+import time
+from collections import OrderedDict
+
+import astropy.units as u
+import msgpack
+import numpy as np
+import pandas as pd
+import simplejson
+from halo import Halo
+
+from syntheticstellarpopconvolve.default_convolution_config import (
+    ALLOWED_NUMERICAL_TYPES,
+)
+from syntheticstellarpopconvolve.general_functions import (
+    calculate_bin_edges,
+    handle_custom_scaling_or_conversion,
+    has_unit_dimensionless_okay,
+)
+
+
 def ensemble_compression(filename):  # DH0001
     """
     Return the compression type of the ensemble file, based on its filename extension.
@@ -1129,15 +1158,51 @@ def inflate_ensemble_with_lists_without_named_layers(ensemble_data):
     return combined_list
 
 
+def find_columnames_recursively(ensemble_data, columnnames=None):
+    """
+    Function to find all the column names recursively
+
+    This function should only be called on ensemble datasets that do not have differnt tree structures in them
+
+    The first layer should be a namelayer
+    """
+
+    # get the column name
+    if columnnames is None:
+        new_columnnames = [list(ensemble_data.keys())[0]]
+    else:
+        new_columnnames = columnnames + [list(ensemble_data.keys())[0]]
+
+    # Check if we are in the lowest layer
+    next_layer_keys = list(ensemble_data[new_columnnames[-1]].keys())
+
+    next_next_layer = ensemble_data[new_columnnames[-1]][next_layer_keys[0]]
+
+    # Call itself or return if
+    if isinstance(next_next_layer, (dict, OrderedDict)):
+        return find_columnames_recursively(next_next_layer, columnnames=new_columnnames)
+
+    return new_columnnames
+
+
 def convert_ensemble_to_dataframe(
-    ensemble_data, verbose, contains_named_layers=True, columnames=None
+    ensemble_data, verbose=False, contains_named_layers=True, columnames=None
 ):
-    """ """
+    """
+    Function to inflate an ensemble, which will transform an ensemble (i.e. a nested histogram),
+    into a rectangular representation of the same data in the form of a pandas dataframe.
+
+    This will increase the size of the data by about a factor of 2 (i think),
+    but will make certain operations much easier as we can extract a particular column as a numpy array.
+
+
+    If the dataframe has named-layers, this can be handled by setting `contains_named_layers=True`. If it does not contain named layers, you can provide the column names manually through the columnnames parameter
+
+    The final layer is assumed called 'probability' (used in grid-based pop-synth), but it may be that that layer contains e.g. normalized yield instead.
+    """
 
     # Convert to dataframe
-    if verbose:
-        print("Converting ensemble data to dataframe")
-        start = time.time()
+    start = time.time()
 
     if contains_named_layers:
         try:
@@ -1160,6 +1225,38 @@ def convert_ensemble_to_dataframe(
 
     df.columns = columnames + ["probability"]
 
-    print(df)
+    if verbose:
+        stop = time.time()
+        print("Converting ensemble data to dataframe took {}s".format(stop - start))
 
     return df
+
+
+if __name__ == "__main__":
+    example_ensemble_data = {
+        "a": {
+            "5": {
+                "b": {
+                    "1": 0.5,
+                    "2": 0.5,
+                }
+            },
+            "6": {
+                "b": {
+                    "3": 0.5,
+                    "4": 0.5,
+                }
+            },
+            "7": {
+                "b": {
+                    "8": 0.5,
+                    "9": 0.5,
+                }
+            },
+        }
+    }
+
+    df = convert_ensemble_to_dataframe(
+        example_ensemble_data, contains_named_layers=True
+    )
+    print(df)

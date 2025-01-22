@@ -1,27 +1,19 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-
 """
 Created on Wed Jun  5 18:05:24 2024
 
 @author: alexey
-"""
 
+Several functions in this file are created by Alexey Bobrick and Katie Breivik
+"""
 
 import sys
 
+import astropy.constants as const
+import astropy.units as u
 import numpy as np
 import pandas as pd
 import scipy as sp
 from scipy.interpolate import CubicSpline
-from scipy.optimize import root
-
-sys.path.insert(1, "./PyModules/")
-
-import astropy.constants as const
-import astropy.coordinates as coord
-import astropy.units as u
 
 # Units are kpc, Gyr
 
@@ -413,6 +405,4 @@ def get_period(semimajor_axis, m1, m2):
 
 
 if __name__ == "__main__":
-    import astropy.units as u
-
     get_period(1 * u.au, 1 * u.Msun, 2 * u.Msun)

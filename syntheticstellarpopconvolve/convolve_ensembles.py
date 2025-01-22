@@ -7,30 +7,31 @@ stripping the end-points we should make sure to handle that properly.
 TODO: move the ensemble utils functions to a different place maybe.
 """
 
-import bz2
-import collections
-import copy
-import gzip
 import json
-import sys
-import time
-from collections import OrderedDict
 
-import astropy.units as u
 import h5py
-import msgpack
 import numpy as np
-import simplejson
-from halo import Halo
 
 from syntheticstellarpopconvolve.default_convolution_config import (
     ALLOWED_NUMERICAL_TYPES,
 )
+from syntheticstellarpopconvolve.ensemble_utils import (
+    attach_endpoints,
+    check_if_value_layer_and_get_layer_iterable,
+    ensemble_marginalise_layer,
+    get_data_layer_dict_values,
+    get_deepest_data_layer_depth,
+    get_ensemble_binsizes,
+    invert_data_layer_dict,
+    multiply_ensemble,
+    shift_data_layer,
+    shift_layers_dict,
+    shift_layers_list,
+    strip_ensemble_endpoints,
+)
 from syntheticstellarpopconvolve.general_functions import (
-    calculate_bin_edges,
     calculate_digitized_sfr_rates,
     handle_custom_scaling_or_conversion,
-    has_unit_dimensionless_okay,
 )
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     handle_post_convolution_function,

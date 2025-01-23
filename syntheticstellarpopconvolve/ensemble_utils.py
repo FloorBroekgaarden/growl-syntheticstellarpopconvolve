@@ -1074,6 +1074,9 @@ def inflate_ensemble_with_lists_and_named_layers(ensemble_data):
     """
 
     parameter_name = list(ensemble_data.keys())[0]
+    if isinstance(ensemble_data[parameter_name], ALLOWED_NUMERICAL_TYPES):
+        return [[ensemble_data[parameter_name]]]
+
     next_layer_keys = list(ensemble_data[parameter_name].keys())
     first_of_next_next_layer = ensemble_data[parameter_name][next_layer_keys[0]]
     is_final_layer = not isinstance(first_of_next_next_layer, (dict, OrderedDict))
@@ -1223,7 +1226,10 @@ def convert_ensemble_to_dataframe(
     df = pd.DataFrame(data_list)
     df = df.transpose()
 
-    df.columns = columnames + ["probability"]
+    try:
+        df.columns = columnames + ["probability"]
+    except:
+        df.columns = columnames[1:] + ["probability"]
 
     if verbose:
         stop = time.time()

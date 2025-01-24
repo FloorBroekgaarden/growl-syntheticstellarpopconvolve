@@ -412,7 +412,134 @@ def get_period(semimajor_axis, m1, m2):
     return p.to(u.yr)
 
 
+############
+#
+
+import numpy as np
+from scipy.interpolate import interp1d
+
+
+def precompute_radial_cdf(Hr, num_points=1000, R_max=20):
+    """
+    Precompute the radial CDF and its inverse for efficient sampling.
+    """
+    # Generate a fine grid of R values
+    R_values = np.linspace(0, R_max * Hr, num_points)
+    CDF_values = (1 - np.exp(-R_values / Hr)) - (R_values / Hr) * np.exp(-R_values / Hr)
+
+    # Ensure the CDF is monotonic
+    CDF_values[0] = 0.0  # Explicitly set the minimum CDF value
+    CDF_values[-1] = 1.0  # Explicitly set the maximum CDF value (asymptotic)
+
+    # Create an interpolation function for the inverse CDF
+    inverse_cdf = interp1d(
+        CDF_values, R_values, bounds_error=False, fill_value="extrapolate"
+    )
+    return inverse_cdf
+
+
+def RCDFInv_interpolated(Xir, inverse_cdf):
+    """
+    Use the precomputed inverse CDF to sample R values.
+    """
+    return inverse_cdf(Xir)
+
+
+def zCDFInv(Xiz, Hz):
+    """
+    Vectorized implementation of the inverse CDF for Z.
+    """
+    return -Hz * np.log(1 - Xiz)
+
+
+def Sample1DPop_interpolated(NBin, Hr, Hz, inverse_cdf):
+    """
+    Sample 1D population using precomputed inverse CDF.
+    """
+    RRandSet = np.random.uniform(0, 1, NBin)
+    ZRandSet = np.random.uniform(0, 1, NBin)
+    ZSignSet = np.random.choice([-1, 1], NBin)
+
+    # Use interpolation for RCDFInv
+    RSet = RCDFInv_interpolated(RRandSet, inverse_cdf)
+    ZSet = zCDFInv(ZRandSet, Hz) * ZSignSet
+    ThSet = np.random.uniform(0, 2.0 * np.pi, NBin)
+
+    # Compute Cartesian coordinates
+    XSet = RSet * np.cos(ThSet)
+    YSet = RSet * np.sin(ThSet)
+
+    return np.stack((XSet, YSet, ZSet), axis=1)
+
+
+def sample_distances_interpolated(NBin, Hr, inverse_cdf):
+    """
+    Main function to sample distances using interpolation for the radial CDF.
+    """
+
+    Hz = 0.5  # Vertical scale height
+    galcen_distance = 8.122  # kpc
+
+    # Sample positions
+    positions = Sample1DPop_interpolated(NBin, Hr, Hz, inverse_cdf)
+
+    # Compute relative coordinates and distances
+    XSet_rel = positions[:, 0] - galcen_distance
+    YSet_rel = positions[:, 1]
+    ZSet_rel = positions[:, 2]
+
+    distances = np.sqrt(XSet_rel**2 + YSet_rel**2 + ZSet_rel**2)
+    return distances * u.kpc
+
+
 if __name__ == "__main__":
+    import functools
+
     import astropy.units as u
 
-    get_period(1 * u.au, 1 * u.Msun, 2 * u.Msun)
+    # get_period(1 * u.au, 1 * u.Msun, 2 * u.Msun)
+    ####################
+    #
+
+    Hr = 4  # Radial scale length
+
+    # Precompute the inverse CDF for radial distribution
+    inverse_cdf = precompute_radial_cdf(Hr)
+
+    bound_sample_distances_interpolated = functools.partial(
+        sample_distances_interpolated, inverse_cdf=inverse_cdf
+    )
+
+    import time
+
+    num_system_indices = 100
+    convolution_results = {}
+    num_repeats = 5
+
+    #
+    range_sample_sizes = [
+        10,
+        100,
+        1000,
+        10000,
+        100000,
+        1000000,
+        10000000,
+        # 100000000,
+    ]
+
+    #
+    for sample_size in range_sample_sizes:
+        # sample distances and add those to the result dict
+        start_dist = time.time()
+        for _ in range(num_repeats):
+
+            dist = bound_sample_distances_interpolated(NBin=sample_size)
+            convolution_results["dists"] = dist
+        stop_dist = time.time()
+
+        print(
+            "Distance-sampling {} systems on average took {}s".format(
+                sample_size, (stop_dist - start_dist) / num_repeats
+            )
+        )

@@ -1212,7 +1212,7 @@ def convert_ensemble_to_dataframe(
             columnames = find_columnames_recursively(ensemble_data)
         except:
             columnames = find_columnames_recursively({"ensemble": ensemble_data})
-
+            print(columnames)
         #
         data_list = inflate_ensemble_with_lists_and_named_layers(ensemble_data)
     else:
@@ -1222,6 +1222,8 @@ def convert_ensemble_to_dataframe(
             )
         #
         data_list = inflate_ensemble_with_lists_without_named_layers(ensemble_data)
+
+    print(data_list)
 
     df = pd.DataFrame(data_list)
     df = df.transpose()
@@ -1239,30 +1241,53 @@ def convert_ensemble_to_dataframe(
 
 
 if __name__ == "__main__":
-    example_ensemble_data = {
-        "a": {
-            "5": {
-                "b": {
-                    "1": 0.5,
-                    "2": 0.5,
-                }
-            },
-            "6": {
-                "b": {
-                    "3": 0.5,
-                    "4": 0.5,
-                }
-            },
-            "7": {
-                "b": {
-                    "8": 0.5,
-                    "9": 0.5,
-                }
-            },
-        }
-    }
+    # example_ensemble_data = {
+    #     "a": {
+    #         "5": {
+    #             "b": {
+    #                 "1": 0.5,
+    #                 "2": 0.5,
+    #             }
+    #         },
+    #         "6": {
+    #             "b": {
+    #                 "3": 0.5,
+    #                 "4": 0.5,
+    #             }
+    #         },
+    #         "7": {
+    #             "b": {
+    #                 "8": 0.5,
+    #                 "9": 0.5,
+    #             }
+    #         },
+    #     }
+    # }
 
-    df = convert_ensemble_to_dataframe(
-        example_ensemble_data, contains_named_layers=True
+    # df = convert_ensemble_to_dataframe(
+    #     example_ensemble_data, contains_named_layers=True
+    # )
+    # print(df)
+
+    import json
+
+    import pkg_resources
+
+    # from syntheticstellarpopconvolve.ensemble_utils import inflate_ensemble_with_lists_and_named_layers, convert_ensemble_to_dataframe
+    # load the data
+    example_ensemble_filename = pkg_resources.resource_filename(
+        "syntheticstellarpopconvolve", "example_data/example_ensemble.json"
     )
-    print(df)
+    with open(example_ensemble_filename, "r") as f_ensemble:
+        ensemble = json.loads(f_ensemble.read())
+    # print(ensemble['ensemble']['Xyield'])
+
+    # Xyield = ensemble['ensemble']
+
+    inflated_ensemble = convert_ensemble_to_dataframe(
+        ensemble_data=ensemble["ensemble"],
+        verbose=False,
+        contains_named_layers=True,
+        columnames=None,
+    )
+    print(inflated_ensemble)

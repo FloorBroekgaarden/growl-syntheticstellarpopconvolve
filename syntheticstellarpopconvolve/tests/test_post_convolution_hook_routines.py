@@ -257,13 +257,13 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
             indices_1 = output_hdf5_file[
                 "output_data/event/dummy/dummy/convolution_results/set_1/0.5 Gyr/indices"
             ][()]
-            self.assertTrue(len(indices_1) == 2)
+            self.assertTrue(len(indices_1) == 4464)
 
             #
             indices_2 = output_hdf5_file[
                 "output_data/event/dummy/dummy/convolution_results/set_2/0.5 Gyr/indices"
             ][()]
-            self.assertTrue(len(indices_2) == 198)
+            self.assertTrue(len(indices_2) == 536)
 
     def test_postprocessing_multiple_dictionaries_without_name(self):
 
@@ -294,5 +294,5 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
 if __name__ == "__main__":
     test_postprocessing_obj = test_postprocessing()
     test_postprocessing_obj.setUp()
-    # test_postprocessing_obj.test_postprocessing_multiple_dictionaries_with_name()
+    test_postprocessing_obj.test_postprocessing_multiple_dictionaries_with_name()
     test_postprocessing_obj.test_postprocessing_multiple_dictionaries_without_name()

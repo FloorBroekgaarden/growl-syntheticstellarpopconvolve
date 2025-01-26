@@ -41,6 +41,7 @@ bin, and the normalized yields of the systems. We then assign a birth
 lookback time to the systems (taken randomly between the bin edges)
 """
 
+import astropy.units as u
 import numpy as np
 
 from syntheticstellarpopconvolve.general_functions import is_mass_unit
@@ -140,6 +141,8 @@ def add_event_lookback_time_and_filter(
 ):
     """
     Function to add the event lookback time to the data
+
+    TODO: ensure same units
     """
 
     if "delay_time" not in data_dict.keys():
@@ -149,21 +152,23 @@ def add_event_lookback_time_and_filter(
     config["logger"].warning("Adding event lookback time.")
 
     # extract data
-    event_delay_times = data_dict["delay_time"]
+    event_delay_times = data_dict["delay_time"].to(u.yr)
 
     # select the event delay-times of the actual sampled systems
     event_delay_times_of_sampled_systems = event_delay_times[
         sampled_data_dict["indices"]
     ]
 
+    #
+    formation_lookback_times = sampled_data_dict["formation_lookback_times"].to(u.yr)
+
     # calculate event lookback times
     event_lookback_times = (
-        sampled_data_dict["formation_lookback_times"]
-        - event_delay_times_of_sampled_systems
+        formation_lookback_times - event_delay_times_of_sampled_systems
     )
 
     # store in dict
-    sampled_data_dict["event_lookback_times"] = event_lookback_times
+    sampled_data_dict["event_lookback_times"] = event_lookback_times.to(u.yr)
 
     # filter out future events
     if convolution_instruction.get("filter_future_events", True):

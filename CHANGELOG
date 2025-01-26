@@ -31,3 +31,6 @@ https://keepachangelog.com/en/0.3.0/
         - provided support for a sequential convolution, as opposed to multiprocessed
         - provided support for to pass results of previous convolution in sequential convolution. This is accessible in the post-convolution hook.
         - provided support for a persistent data storage dictionary where the user can store things in. This is accessible in the post-convolution hook.
+    - [feature/inflate_ensemble]:
+        - moved all the ensemble-operation related functionality to `ensemble_utils.py`
+        - provided functionality to inflate ensemble which allows the user to use initially ensemble-based data like event-based data

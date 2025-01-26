@@ -27,8 +27,8 @@ from syntheticstellarpopconvolve.default_convolution_config import (
     ALLOWED_NUMERICAL_TYPES,
 )
 from syntheticstellarpopconvolve.general_functions import (
+    calculate_bin_edges,
     calculate_digitized_sfr_rates,
-    calculate_edge_values,
     handle_custom_scaling_or_conversion,
     has_unit_dimensionless_okay,
 )
@@ -44,6 +44,9 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
     time_bin_info_dict,
     convolution_instruction,
     ensemble,
+    #
+    persistent_data=None,
+    previous_convolution_results=None,
 ):
     """
     Function to wrap the post-convolution function call for ensemble-convolution by integration.
@@ -85,6 +88,9 @@ def convolve_ensemble_integration_post_convolution_hook_wrapper(
         convolution_instruction=convolution_instruction,
         convolution_results=convolution_results,
         name=name,
+        #
+        persistent_data=persistent_data,
+        previous_convolution_results=previous_convolution_results,
     )
 
     #############
@@ -740,7 +746,7 @@ def get_ensemble_binsizes(config, ensemble, data_layer_dict_entry):
     if calculate_edges_before_transformations:
 
         # calculate edge values
-        edge_values = calculate_edge_values(values)
+        edge_values = calculate_bin_edges(values)
 
         # perform transformations
         transformed_edge_values = np.array(
@@ -767,7 +773,7 @@ def get_ensemble_binsizes(config, ensemble, data_layer_dict_entry):
         )
 
         # calculate edge values
-        transformed_edge_values = calculate_edge_values(transformed_values)
+        transformed_edge_values = calculate_bin_edges(transformed_values)
 
     # calculate binsizes
     binsizes = np.diff(transformed_edge_values)
@@ -1253,6 +1259,9 @@ def ensemble_handle_SFR_multiplication(
     ensemble,
     data_dict,
     extra_value_dict=None,
+    #
+    persistent_data=None,
+    previous_convolution_results=None,
 ):
     """
     Function to handle multiplying the provided ensemble with a.
@@ -1306,6 +1315,9 @@ def ensemble_handle_SFR_multiplication(
         data_dict=data_dict,
         convolution_instruction=convolution_instruction,
         ensemble=ensemble,
+        #
+        persistent_data=persistent_data,
+        previous_convolution_results=previous_convolution_results,
     )
 
     return ensemble
@@ -1320,6 +1332,9 @@ def ensemble_convolve_ensemble(
     depth=0,
     data_dict=None,
     extra_value_dict=None,
+    #
+    persistent_data=None,
+    previous_convolution_results=None,
 ):
     """
     Recursive function that handles convolving the ensemble.
@@ -1456,6 +1471,9 @@ def ensemble_convolve_ensemble(
                     ensemble=ensemble[key],
                     data_dict=data_dict,
                     extra_value_dict=extra_value_dict,
+                    #
+                    persistent_data=persistent_data,
+                    previous_convolution_results=previous_convolution_results,
                 )
             else:
                 # call self with increased depth
@@ -1468,6 +1486,9 @@ def ensemble_convolve_ensemble(
                     depth=depth + 1,
                     data_dict=data_dict,
                     extra_value_dict=extra_value_dict,
+                    #
+                    persistent_data=persistent_data,
+                    previous_convolution_results=previous_convolution_results,
                 )
 
     elif isinstance(ensemble, ALLOWED_NUMERICAL_TYPES):
@@ -1504,7 +1525,14 @@ def extract_units_from_endpoints(endpoints):
 
 
 def convolve_ensemble_by_integration(
-    time_bin_info_dict, config, convolution_instruction, data_dict, sfr_dict
+    time_bin_info_dict,
+    config,
+    convolution_instruction,
+    data_dict,
+    sfr_dict,
+    #
+    persistent_data=None,
+    previous_convolution_results=None,
 ):
     """
     Function for the multiprocessing worker to convolve ensemble-based data.
@@ -1546,7 +1574,9 @@ def convolve_ensemble_by_integration(
     if "metallicity_value" in convolution_instruction:
         data_dict["metallicity"] = convolution_instruction["metallicity_value"]
 
-    # add some extra things to the convolution instruction TODO this can be placed elsewhere? TODO: what the difference between max_depth and deepest_data_layer_depth?
+    # add some extra things to the convolution instruction
+    # TODO this can be placed elsewhere?
+    # TODO: what the difference between max_depth and deepest_data_layer_depth?
     convolution_instruction["deepest_data_layer_depth"] = get_deepest_data_layer_depth(
         data_layer_dict=data_layer_dict
     )

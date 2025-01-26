@@ -20,9 +20,9 @@ from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.general_functions import (
+    calculate_bin_edges,
     calculate_bincenters,
     calculate_digitized_sfr_rates,
-    calculate_edge_values,
     calculate_origin_time_array,
     check_required,
     generate_group_name,
@@ -395,12 +395,12 @@ class test_calculate_bincenters(unittest.TestCase):
         np.testing.assert_array_equal(bincenters, expected_bincenters)
 
 
-class test_calculate_edge_values(unittest.TestCase):
-    def test_calculate_edge_values(self):
+class test_calculate_bin_edges(unittest.TestCase):
+    def test_calculate_bin_edges(self):
         arr = np.array([1.0, 2, 3, 4, 5])
-        expected_edge_values = np.array([0.5, 1.5, 2.5, 3.5, 4.5, 5.5])
-        edge_values = calculate_edge_values(arr)
-        np.testing.assert_array_equal(edge_values, expected_edge_values)
+        expected_bin_edges = np.array([0.5, 1.5, 2.5, 3.5, 4.5, 5.5])
+        bin_edges = calculate_bin_edges(arr)
+        np.testing.assert_array_equal(bin_edges, expected_bin_edges)
 
 
 class test_pad_function(unittest.TestCase):

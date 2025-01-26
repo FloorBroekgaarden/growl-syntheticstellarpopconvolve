@@ -171,6 +171,11 @@ default_convolution_config_dict = {
     },
     ###################
     # Multiprocessing settings
+    "multiprocessing": {
+        "value": True,
+        "description": "Flag whether to enable multiprocessing. True for multiprocessing, which allows faster convolution but does not allow the use of the previous convolution results and the persistent data. False for sequential convolution, which is slower but previous convolution results and the persistent data is available here.",
+        "validation": int,
+    },
     "num_cores": {
         "value": 1,
         "description": "Number of cores to use to do the convolution",

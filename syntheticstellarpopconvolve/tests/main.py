@@ -95,9 +95,9 @@ from syntheticstellarpopconvolve.tests.test_extract_population_settings import (
     test_extract_population_settings,
 )
 from syntheticstellarpopconvolve.tests.test_general_functions import (
+    test_calculate_bin_edges,
     test_calculate_bincenters,
     test_calculate_digitized_sfr_rates,
-    test_calculate_edge_values,
     test_calculate_origin_time_array,
     test_check_required,
     test_generate_group_name,

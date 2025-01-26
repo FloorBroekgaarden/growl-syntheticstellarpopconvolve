@@ -12,18 +12,22 @@ https://keepachangelog.com/en/0.3.0/
 	- Added option to multiply the SFR by the time relevant time bin (using 'multiply_by_time_binsize' in 'convolution_config')
 
 	* 0.4:
-    [features/stochastic_convolution]:
+    - [features/stochastic_convolution]:
     	- added support for Monte-Carlo sampling-based convolution which currently uses forward convolution. This includes:
     	    - actually sampling instances of the systems
     	    - assigning formation times,
     	    - calculating event lookback times
-	- added functionality to post-process the convolution results ('post_convolution_function'), replacing the extra_weights_function and position sampling function.
-	- Added wrappers for different cases (event-convolution by sampling, event-convolution by integration, ensemble-convolution by integration)
-	- created verification functionality for the convolution instructions, including documentation.
+	    - added functionality to post-process the convolution results ('post_convolution_function'), replacing the extra_weights_function and position sampling function.
+	    - Added wrappers for different cases (event-convolution by sampling, event-convolution by integration, ensemble-convolution by integration)
+	    - created verification functionality for the convolution instructions, including documentation.
     - [feature/multiple_return_dicts]:
         - provided support for the return of multiple convolution_result dicts after the post-convolution function call. Useful for splitting results into different sets.
         - changed the name for the internal field from yield-rate to normalized-yield, and other internal name changes.
-    [feature/convolution-on-the-fly]:
+    - [feature/convolution-on-the-fly]:
         - Added support for generic call to external code to generate and evolve systems on-the-fly
         - restructured and moved much logic to convolve_populations.py
         - added notebooks
+    - [feature/access-previous-result-and-store-persistant-info]:
+        - provided support for a sequential convolution, as opposed to multiprocessed
+        - provided support for to pass results of previous convolution in sequential convolution. This is accessible in the post-convolution hook.
+        - provided support for a persistent data storage dictionary where the user can store things in. This is accessible in the post-convolution hook.

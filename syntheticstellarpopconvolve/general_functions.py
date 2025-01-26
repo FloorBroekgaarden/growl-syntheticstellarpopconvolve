@@ -25,6 +25,18 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
+def extract_unit_dict(output_hdf5_file, key):
+    """
+    FUnction to extract the unit dict from the hdf5 file
+    """
+
+    # convert units
+    unit_dict = json.loads(output_hdf5_file[key].attrs["units"])
+    unit_dict = {key: u.Unit(val) for key, val in unit_dict.items()}
+
+    return unit_dict
+
+
 def get_username():
     """
     Function to get the username of the user that spawned the current process
@@ -229,7 +241,11 @@ def calculate_digitized_sfr_rates(
         config["logger"].debug("Calculating metallicity weighted SFR rates")
         digitised_sfr_rates = sfr_dict[
             "padded_metallicity_weighted_starformation_rate_array"
-        ][metallicity_indices, digitized_time_indices]
+        ][
+            digitized_time_indices, metallicity_indices
+        ]  # NOTE: ensure that time indices select the time-dimension
+        # ][metallicity_indices, digitized_time_indices]
+
     else:
         # use JUST the SFR, not the metallicity dependent one
 
@@ -282,7 +298,7 @@ def calculate_bincenters(array, convert="linear"):
     return bincenters
 
 
-def calculate_edge_values(arr):
+def calculate_bin_edges(arr):
     """
     Function to calculate the edge values given a bunch of centers
     """

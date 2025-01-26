@@ -1052,15 +1052,15 @@ def flatten_data_ensemble1d(input_dict, named_subkey_1=None):
 
     if named_subkey_1 is None:
         data = []
-        for numerical_key_1 in sorted(input_dict):
-            value = input_dict[numerical_key_1]
-            data.append([float(numerical_key_1), float(value)])
+        for key_1 in sorted(input_dict):
+            value = input_dict[key_1]
+            data.append([key_1, float(value)])
         data = np.array(data).T
     else:
         data = []
-        for numerical_key_1 in sorted(input_dict[named_subkey_1]):
-            value = input_dict[named_subkey_1][numerical_key_1]
-            data.append([float(numerical_key_1), float(value)])
+        for key_1 in sorted(input_dict[named_subkey_1]):
+            value = input_dict[named_subkey_1][key_1]
+            data.append([key_1, float(value)])
         data = np.array(data).T
 
     return data
@@ -1178,7 +1178,6 @@ def find_columnames_recursively(ensemble_data, columnnames=None):
 
     # Check if we are in the lowest layer
     next_layer_keys = list(ensemble_data[new_columnnames[-1]].keys())
-
     next_next_layer = ensemble_data[new_columnnames[-1]][next_layer_keys[0]]
 
     # Call itself or return if
@@ -1212,7 +1211,8 @@ def convert_ensemble_to_dataframe(
             columnames = find_columnames_recursively(ensemble_data)
         except:
             columnames = find_columnames_recursively({"ensemble": ensemble_data})
-            print(columnames)
+        print(columnames)
+
         #
         data_list = inflate_ensemble_with_lists_and_named_layers(ensemble_data)
     else:
@@ -1223,8 +1223,8 @@ def convert_ensemble_to_dataframe(
         #
         data_list = inflate_ensemble_with_lists_without_named_layers(ensemble_data)
 
-    print(data_list)
-
+    ##########
+    #
     df = pd.DataFrame(data_list)
     df = df.transpose()
 
@@ -1285,9 +1285,10 @@ if __name__ == "__main__":
     # Xyield = ensemble['ensemble']
 
     inflated_ensemble = convert_ensemble_to_dataframe(
-        ensemble_data=ensemble["ensemble"],
+        ensemble_data=ensemble["ensemble"]["Xyield"],
         verbose=False,
         contains_named_layers=True,
-        columnames=None,
     )
     print(inflated_ensemble)
+
+    print(inflated_ensemble["probability"].to_numpy())

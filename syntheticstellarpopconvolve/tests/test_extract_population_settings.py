@@ -104,7 +104,6 @@ class test_extract_population_settings(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "data_column_dict": {

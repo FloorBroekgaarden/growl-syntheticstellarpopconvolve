@@ -397,7 +397,6 @@ def generate_group_name(convolution_instruction, sfr_dict):
         elements.append(sfr_dict["name"])
 
     #
-    elements.append(convolution_instruction.get("input_data_type", "none"))
     elements.append(convolution_instruction["input_data_name"])
     elements.append(convolution_instruction["output_data_name"])
 

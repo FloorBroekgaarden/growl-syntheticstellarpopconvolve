@@ -92,7 +92,6 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                # "input_data_type": "event",
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -118,7 +117,6 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                # "input_data_type": "event",
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -181,7 +179,6 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                # "input_data_type": "event",
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -223,7 +220,6 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                # "input_data_type": "event",
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -278,7 +274,6 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                # "input_data_type": "event",
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",

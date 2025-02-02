@@ -60,85 +60,27 @@ def check_convolution_instruction(convolution_instruction, config):
 
         check_required(
             config=convolution_instruction,
-            required_list=["input_data_type"],
+            required_list=[
+                "data_column_dict",
+            ],
         )
 
-        ################
-        # check event-specific instructions
-        if convolution_instruction["input_data_type"] == "event":
+        #
+        check_required(
+            config=convolution_instruction["data_column_dict"],
+            required_list=[
+                "delay_time",
+                "normalized_yield",
+            ],
+        )
 
-            check_required(
-                config=convolution_instruction,
-                required_list=[
-                    "data_column_dict",
-                ],
-            )
-
-            #
-            check_required(
-                config=convolution_instruction["data_column_dict"],
-                required_list=[
-                    "delay_time",
-                    "normalized_yield",
-                ],
-            )
-
-            # check how metallicity is treated
-            check_metallicity(
-                convolution_instruction=convolution_instruction,
-                data_key="data_column_dict",
-            )
-
-            # TODO: if a second function is passed along (to calculate the
-            # detectability for example), then lets check if the user also provided
-            # a dictionary that links the function parameter name to the column name
-            # of the correct pandas table.
-
-        ################
-        # check ensemble-specific instructions
-        elif convolution_instruction["input_data_type"] == "ensemble":
-
-            # data
-            check_required(
-                config=convolution_instruction,
-                required_list=[
-                    "data_layer_dict",
-                ],
-            )
-
-            # the data layer dict requires only to have the delay time layer. the yield rate layer iks implied to be the deepest one
-            check_required(
-                config=convolution_instruction["data_layer_dict"],
-                required_list=[
-                    "delay_time",
-                ],
-            )
-
-            # check how metallicity is treated
-            check_metallicity(
-                convolution_instruction=convolution_instruction,
-                data_key="data_layer_dict",
-            )
-
-        ###########
-        # custom structure instructions
-        elif convolution_instruction["input_data_type"] == "custom":
-            # TODO:
-            raise ValueError("Custom input data type not supported yet")
+        # check how metallicity is treated
+        check_metallicity(
+            convolution_instruction=convolution_instruction,
+            data_key="data_column_dict",
+        )
 
     elif convolution_instruction["convolution_type"] == "sample":
-        check_required(
-            config=convolution_instruction,
-            required_list=["input_data_type"],
-        )
-
-        ###########
-        # custom structure instructions
-        if convolution_instruction["input_data_type"] != "event":
-            # TODO:
-            raise ValueError(
-                "input data other than event-type data currently not supported when sampling"
-            )
 
         check_required(
             config=convolution_instruction,

@@ -146,7 +146,6 @@ class test_generate_data_dict(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -169,7 +168,6 @@ class test_generate_data_dict(unittest.TestCase):
 
         #
         normal_convolution_instructions = {
-            "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -273,7 +271,6 @@ class test_generate_data_dict(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "ensemble",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -385,7 +382,6 @@ class test_generate_data_dict(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "custom",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",

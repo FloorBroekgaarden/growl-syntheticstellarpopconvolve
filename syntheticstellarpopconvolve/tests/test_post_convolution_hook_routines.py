@@ -218,7 +218,6 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "sample",
@@ -270,7 +269,6 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "sample",

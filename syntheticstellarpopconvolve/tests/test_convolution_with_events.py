@@ -105,7 +105,6 @@ class test_convolution_with_events(unittest.TestCase):
         #
         convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",

@@ -108,7 +108,6 @@ class test_extract_event_data(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "data_column_dict": {
@@ -128,7 +127,6 @@ class test_extract_event_data(unittest.TestCase):
     def test_extract_event_data_normal(self):
         #
         normal_convolution_instructions = {
-            "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -151,7 +149,6 @@ class test_extract_event_data(unittest.TestCase):
 
     def test_extract_event_data_factor_multiply(self):
         factor_convolution_instruction = {
-            "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -176,7 +173,6 @@ class test_extract_event_data(unittest.TestCase):
         ###########
         # function multiplying
         function_convolution_instruction = {
-            "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -204,7 +200,6 @@ class test_extract_event_data(unittest.TestCase):
         ###########
         # Non existent
         faulty_convolution_instruction = {
-            "input_data_type": "event",
             "input_data_name": "dummy2",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -307,7 +302,6 @@ class test_convolve_events_by_integration(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -331,7 +325,6 @@ class test_convolve_events_by_integration(unittest.TestCase):
     def test_convolve_events_by_integration_normal(self):
         #
         normal_convolution_instructions = {
-            "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "convolution_type": "integrate",
@@ -389,7 +382,6 @@ class test_convolve_events_by_integration(unittest.TestCase):
 
         #
         normal_convolution_instructions = {
-            "input_data_type": "event",
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "convolution_type": "integrate",

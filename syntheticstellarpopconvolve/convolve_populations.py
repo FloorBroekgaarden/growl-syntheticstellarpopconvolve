@@ -15,13 +15,6 @@ import warnings
 import h5py
 import setproctitle
 
-from syntheticstellarpopconvolve.convolve_custom_data import (  # custom_convolution_function,
-    extract_custom_data,
-)
-from syntheticstellarpopconvolve.convolve_ensembles import (
-    convolve_ensemble_by_integration,
-    extract_ensemble_data,
-)
 from syntheticstellarpopconvolve.convolve_events import (
     convolve_events_by_integration,
     extract_event_data,
@@ -299,69 +292,36 @@ def handle_convolution_choice(
 
     ################
     # Event-convolution by integration:
-    if "input_data_type" in convolution_instruction:
-        if (
-            convolution_instruction["input_data_type"] == "event"
-            and convolution_instruction["convolution_type"] == "integrate"
-        ):
-            ##########
+    if convolution_instruction["convolution_type"] == "integrate":
+        ##########
+        #
+        convolution_results = convolve_events_by_integration(
+            config=config,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            time_bin_info_dict=time_bin_info_dict,
+            convolution_instruction=convolution_instruction,
             #
-            convolution_results = convolve_events_by_integration(
-                config=config,
-                sfr_dict=sfr_dict,
-                data_dict=data_dict,
-                time_bin_info_dict=time_bin_info_dict,
-                convolution_instruction=convolution_instruction,
-                #
-                persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results,
-            )
+            persistent_data=persistent_data,
+            previous_convolution_results=previous_convolution_results,
+        )
 
-        elif (
-            convolution_instruction["input_data_type"] == "event"
-            and convolution_instruction["convolution_type"] == "sample"
-        ):
-            ##########
+    elif convolution_instruction["convolution_type"] == "sample":
+        ##########
+        #
+        convolution_results = convolve_events_by_sampling(
+            config=config,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            time_bin_info_dict=time_bin_info_dict,
+            convolution_instruction=convolution_instruction,
             #
-            convolution_results = convolve_events_by_sampling(
-                config=config,
-                sfr_dict=sfr_dict,
-                data_dict=data_dict,
-                time_bin_info_dict=time_bin_info_dict,
-                convolution_instruction=convolution_instruction,
-                #
-                persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results,
-            )
-
-        elif (
-            convolution_instruction["input_data_type"] == "ensemble"
-            and convolution_instruction["convolution_type"] == "integrate"
-        ):
-
-            ##########
-            #
-            convolution_results = convolve_ensemble_by_integration(
-                config=config,
-                sfr_dict=sfr_dict,
-                data_dict=data_dict,
-                time_bin_info_dict=time_bin_info_dict,
-                convolution_instruction=convolution_instruction,
-                #
-                persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results,
-            )
-
-        elif (
-            convolution_instruction["input_data_type"] == "ensemble"
-            and convolution_instruction["convolution_type"] == "sample"
-        ):
-            raise ValueError(
-                "sampling convolution with ensemble-based data is currently not supported"
-            )
+            persistent_data=persistent_data,
+            previous_convolution_results=previous_convolution_results,
+        )
 
     elif convolution_instruction["convolution_type"] == "on-the-fly":
-        warnings.warn("On-the-fly convolution is currently not supported")
+        warnings.warn("On-the-fly convolution is currently not fully tested")
 
         ##########
         #
@@ -376,8 +336,7 @@ def handle_convolution_choice(
         )
     else:
         raise ValueError(
-            "Unsupported choice of input-data type ({}) and convolution-type ({})".format(
-                convolution_instruction["input_data_type"],
+            "Unsupported choice of convolution-type ({})".format(
                 convolution_instruction["convolution_type"],
             )
         )
@@ -571,12 +530,6 @@ def generate_data_dict(config, convolution_instruction):
     Function to generate the data dict.
     """
 
-    extractor_functions = {
-        "event": extract_event_data,
-        "ensemble": extract_ensemble_data,
-        "custom": extract_custom_data,
-    }
-
     # on the fly sampling generates its own data
     if "convolution_type" in convolution_instruction:
         if convolution_instruction["convolution_type"] == "on-the-fly":
@@ -584,16 +537,15 @@ def generate_data_dict(config, convolution_instruction):
 
     #
     config["logger"].debug(
-        "Generating data_dict using the extractor function for {}: {}".format(
-            convolution_instruction["input_data_type"],
-            extractor_functions[convolution_instruction["input_data_type"]].__name__,
+        "Generating data_dict using the extractor function {}".format(
+            extract_event_data.__name__,
         )
     )
 
     # otherwise extract
-    config, data_dict, convolution_instruction = extractor_functions[
-        convolution_instruction["input_data_type"]
-    ](config=config, convolution_instruction=convolution_instruction)
+    config, data_dict, convolution_instruction = extract_event_data(
+        config=config, convolution_instruction=convolution_instruction
+    )
 
     return config, data_dict, convolution_instruction
 
@@ -727,8 +679,6 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
 
         # #############
         # run convolution
-        # TODO: add persistent data to args
-        # TODO: add previous convolution results to args
         convolution_results = handle_convolution_choice(
             config=config,
             job_dict=job_dict,

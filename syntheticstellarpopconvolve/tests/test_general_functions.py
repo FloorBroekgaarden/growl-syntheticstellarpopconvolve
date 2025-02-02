@@ -226,7 +226,6 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -430,7 +429,6 @@ class test_pad_function(unittest.TestCase):
 class test_generate_group_name(unittest.TestCase):
     def setUp(self):
         self.convolution_instruction = {
-            "input_data_type": "image",
             "input_data_name": "input_image",
             "output_data_name": "output_image",
         }
@@ -440,15 +438,15 @@ class test_generate_group_name(unittest.TestCase):
         groupname, elements = generate_group_name(
             self.convolution_instruction, self.sfr_dict
         )
-        expected_groupname = "test_group/image/input_image/output_image"
-        expected_elements = ["test_group", "image", "input_image", "output_image"]
+        expected_groupname = "test_group/input_image/output_image"
+        expected_elements = ["test_group", "input_image", "output_image"]
         self.assertEqual(groupname, expected_groupname)
         self.assertListEqual(elements, expected_elements)
 
     def test_generate_group_name_without_sfr(self):
         groupname, elements = generate_group_name(self.convolution_instruction, {})
-        expected_groupname = "image/input_image/output_image"
-        expected_elements = ["image", "input_image", "output_image"]
+        expected_groupname = "image/output_image"
+        expected_elements = ["image", "output_image"]
         self.assertEqual(groupname, expected_groupname)
         self.assertListEqual(elements, expected_elements)
 
@@ -456,7 +454,6 @@ class test_generate_group_name(unittest.TestCase):
 class test_get_tmp_dir(unittest.TestCase):
     def setUp(self):
         self.convolution_instruction = {
-            "input_data_type": "image",
             "input_data_name": "input_image",
             "output_data_name": "output_image",
         }

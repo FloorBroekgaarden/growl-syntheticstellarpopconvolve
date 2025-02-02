@@ -16,6 +16,20 @@ dimensionless_unit = u.m / u.m
 
 # any relevant option needs to be in here
 default_convolution_instruction_dict = {
+    ########################
+    # Unsorted
+    "contains_binned_data": {
+        "value": False,
+        "description": "Flag to indicate whether the input data is binned (in time). If so, the user should provide additional information",
+        "validation": boolean_int_validation,
+    },
+    "data_time_bin_info": {
+        "value": {},
+        "description": "Dictionary containing data time-bin information when convolving binned data.",
+        "validation": dict,
+    },
+    ########################
+    #
     "ignore_metallicity": {
         "value": True,
         "description": "Flag to ignore any metallicity dependence in the input data and the starformation rate.",
@@ -28,21 +42,13 @@ default_convolution_instruction_dict = {
     },
     "input_data_name": {
         "value": "input_data",
-        "description": "Name of to the current input dataset. Will be used to extract the data from the provided input-hdf5 file (expected in /input_data/<input data type>/<input data name>/), and will be used in the output-data path. See also `input_data_type`.",
+        "description": "Name of to the current input dataset. Will be used to extract the data from the provided input-hdf5 file (expected in /input_data/<input data name>/), and will be used in the output-data path. ",
         "validation": str,
     },
     "output_data_name": {
         "value": "output_data",
         "description": "Name assigned to the current output dataset. Will be used in the output-data path. Can be useful when running a convolution with the same input-data but e.g. with a different post-convolution function.",
         "validation": str,
-    },
-    "input_data_type": {
-        "value": "events",
-        "description": "Type of input data provided to the convolution. Will be used to extract the data from the provided input-hdf5 file (expected in /input_data/<input data type>/<input data name>/), and will be used in the output-data path. See also `input_data_name`. If 'input data type'=='events' the data is assumed to be stored as a pandas dataframe in the hdf5 file. If 'input data type'=='ensemble' the data is assumed to be stored as a json object in the hdf5 file.",
-        "validation": vol.All(
-            str,
-            vol.In(["event", "ensemble", "custom"]),
-        ),
     },
     "convolution_type": {
         "value": "integrate",
@@ -54,22 +60,12 @@ default_convolution_instruction_dict = {
     },
     "data_column_dict": {
         "value": {},
-        "description": "Dictionary containing the mapping between the names of the columns in the pandas dataframe of the input data and the names as they are used in the convolution framework, as `{<framework_data_name>: <pandas_column_name>}`, used when 'input_data_type'=='event'. Mappings for TODO are required. Any extra columns that are provided are accessible by the post-convolution function. Entries in this dictionary can be either names or dictionaries themselves, allowing more advanced functionality. See examples/notebook_convolution_advanced",
+        "description": "Dictionary containing the mapping between the names of the columns in the pandas dataframe of the input data and the names as they are used in the convolution framework, as `{<framework_data_name>: <pandas_column_name>}`. Mappings for TODO are required. Any extra columns that are provided are accessible by the post-convolution function. Entries in this dictionary can be either names or dictionaries themselves, allowing more advanced functionality. See examples/notebook_convolution_advanced",
         "validation": dict,  # TODO: make more specific: dict with string values or dict with dict values
-    },
-    "data_layer_dict": {
-        "value": {},
-        "description": "Dictionary containing the mapping between the names of the layers in the json of the input data and the names as they are used in the convolution framework, as `{<framework_data_name>: <layer-depth>}`, used when 'input_data_type'=='ensemble'. Mappings for TODO are required. Any extra layers that are provided are accessible by the post-convolution function. Entries in this dictionary can be either layer-depths or dictionaries themselves, allowing more advanced functionality. See examples/notebook_convolution_advanced",
-        "validation": dict,  # TODO: make more specific: dict with int values or dict with dict values
-    },
-    "marginalisation_list": {
-        "value": [],
-        "description": "List where the user can indicate layers of the output data to be marginalised away. used when 'input_data_type'=='ensemble'",
-        "validation": list,  # TODO: make more specific: dict with int values or dict with dict values
     },
     "post_convolution_function": {
         "value": None,
-        "description": "Function that performs post-convolution operations on the convolved data, like applying detection probability weights, further integration of systems or just general filtering of the data. Different `convolution_type`s and `input_data_type`s allow for different modifications of the data, in that convolution of `event-based` data by 'sampling' allows TODO. The arguments of this function should be chosen from: 'config', 'time_value', 'convolution_instruction', 'data_dict' and the contents of 'post_convolution_function_extra_parameters'. For more explanation about this function see the convolution notebook.",
+        "description": "Function that performs post-convolution operations on the convolved data, like applying detection probability weights, further integration of systems or just general filtering of the data. Different `convolution_type`s allows for different modifications of the data, in that convolution of `event-based` data by 'sampling' allows TODO. The arguments of this function should be chosen from: 'config', 'time_value', 'convolution_instruction', 'data_dict' and the contents of 'post_convolution_function_extra_parameters'. For more explanation about this function see the convolution notebook.",
         "validation": callable_or_none_validation,
     },
     "post_convolution_function_extra_parameters": {

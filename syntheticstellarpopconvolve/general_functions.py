@@ -252,6 +252,11 @@ def calculate_digitized_sfr_rates_binned_data(
             )
         )[:1]
     ):
+
+        # check if we extend beyond the all of the sfr bins
+        if shifted_left_data_time_bin_edges >= sfr_bin_edges[-1]:
+            continue
+
         # Determine bin overlap fractions
         overlap_fractions = calculate_overlap_fractions(
             shifted_left_time_bin_edge=shifted_left_time_bin_edge,
@@ -305,14 +310,39 @@ def calculate_digitized_sfr_rates_binned_data(
                     "padded_starformation_rate_array"
                 ][sfr_bin_index_like_array]
 
-            # TODO: scale
+            #######
+            # Weight the rates properly
 
-            # add to combined array
-            combined_matching_data_time_bin_sfr_rates += (
+            # Multiply by the fraction that the data time-bin overlaps
+            weighted_matching_data_time_bin_sfr_rates = (
                 matching_data_time_bin_sfr_rates
+                * overlap_fractions["normalized_combined_overlap_array"][sfr_bin_index]
             )
 
-        # TODO: maybe re-weigh?
+            # Multiply by the width of the sfr bin
+            weighted_matching_data_time_bin_sfr_rates *= sfr_bin_sizes[sfr_bin_index]
+
+            # add to combined array for current time-bin
+            combined_matching_data_time_bin_sfr_rates += (
+                weighted_matching_data_time_bin_sfr_rates
+            )
+
+        #############
+        # Calculate capped time bin size. The right edge of the time-bin can extend beyond the final SFR bin
+        capped_data_time_bin_size_i = np.min(
+            data_time_bin_size_i,
+            np.sum(
+                overlap_fractions["normalized_combined_overlap_array"] * sfr_bin_sizes
+            ),
+        )
+
+        #############
+        # re-weight them to make average starformation rate
+        combined_matching_data_time_bin_sfr_rates /= capped_data_time_bin_size_i
+
+        #########
+        # TODO: multiply by data time-bin if we to multiply by bin size
+        # TODO: continue or break when both edges are above the rightmost SFR bin edge
 
         # store data in grand array
         digitised_sfr_rates[matching_data_time_bin_systems] = (

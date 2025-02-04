@@ -25,14 +25,11 @@ def calculate_overlap_fractions(
 ):
     """
     Function to calculate the overlap
+
+    TODO: consider returning only the information of the bins that overlap.
     """
 
     assert shifted_left_time_bin_edge < shifted_right_time_bin_edge
-
-    print("shifted_left_time_bin_edge", shifted_left_time_bin_edge)
-    print("shifted_right_time_bin_edge", shifted_right_time_bin_edge)
-    print("sfr_bin_sizes", sfr_bin_sizes)
-    print("sfr_bin_edges", sfr_bin_edges)
 
     ##############
     # calculate distances
@@ -44,17 +41,13 @@ def calculate_overlap_fractions(
     left_distances[left_distances < 0] = 0
     right_distances[right_distances < 0] = 0
 
-    print(left_distances)
-    print(right_distances)
-
     ##############
     # Construct the combined overlap array
     combined_overlap_array = sfr_bin_sizes.astype(float)
     combined_overlap_array[left_distances == 0] = 0
     combined_overlap_array[right_distances == 0] = 0
-    print(combined_overlap_array)
 
-    #
+    # Handle non-zero entries
     leftmost_nonzero_index = np.nonzero(left_distances)[0][0]
     rightmost_nonzero_index = np.nonzero(right_distances)[0][-1]
 

@@ -66,7 +66,6 @@ class test_convolve_on_the_fly(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
         #

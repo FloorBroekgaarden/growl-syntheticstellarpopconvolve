@@ -31,8 +31,6 @@ class Boilerplate:
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/ensemble")
-            input_hdf5_file.create_group("input_data/event")
             input_hdf5_file.create_group("config")
 
             ###############

@@ -59,7 +59,6 @@
 #             ######################
 #             # Create groups
 #             input_hdf5_file.create_group("input_data")
-#             input_hdf5_file.create_group("input_data/ensemble")
 #             input_hdf5_file.create_group("config")
 
 #             ###############
@@ -82,7 +81,7 @@
 
 #             #
 #             input_hdf5_file.create_dataset(
-#                 "input_data/ensemble/dummy", data=json.dumps(self.dummy_ensemble)
+#                 "input_data/dummy", data=json.dumps(self.dummy_ensemble)
 #             )
 
 #         #
@@ -227,7 +226,6 @@
 #             ######################
 #             # Create groups
 #             input_hdf5_file.create_group("input_data")
-#             input_hdf5_file.create_group("input_data/ensemble")
 #             input_hdf5_file.create_group("config")
 
 #             ###############
@@ -250,7 +248,7 @@
 
 #             #
 #             input_hdf5_file.create_dataset(
-#                 "input_data/ensemble/dummy", data=json.dumps(self.dummy_ensemble)
+#                 "input_data/dummy", data=json.dumps(self.dummy_ensemble)
 #             )
 
 #         #
@@ -405,7 +403,6 @@
 #             ######################
 #             # Create groups
 #             input_hdf5_file.create_group("input_data")
-#             input_hdf5_file.create_group("input_data/ensemble")
 #             input_hdf5_file.create_group("config")
 
 #             ###############
@@ -428,7 +425,7 @@
 
 #             #
 #             input_hdf5_file.create_dataset(
-#                 "input_data/ensemble/dummy", data=json.dumps(self.dummy_ensemble)
+#                 "input_data/dummy", data=json.dumps(self.dummy_ensemble)
 #             )
 
 #         #
@@ -604,7 +601,6 @@
 #             ######################
 #             # Create groups
 #             input_hdf5_file.create_group("input_data")
-#             input_hdf5_file.create_group("input_data/ensemble")
 #             input_hdf5_file.create_group("config")
 
 #             ###############
@@ -627,7 +623,7 @@
 
 #             #
 #             input_hdf5_file.create_dataset(
-#                 "input_data/ensemble/dummy", data=json.dumps(self.dummy_ensemble)
+#                 "input_data/dummy", data=json.dumps(self.dummy_ensemble)
 #             )
 
 #         #

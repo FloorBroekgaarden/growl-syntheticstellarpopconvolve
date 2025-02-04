@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve import convolution_config, convolution_instruction
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
@@ -90,7 +90,6 @@ class test_generate_data_dict(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -113,10 +112,10 @@ class test_generate_data_dict(unittest.TestCase):
 
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
-        self.convolution_config = copy.copy(default_convolution_config)
+        self.convolution_config = copy.copy(convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -146,6 +145,7 @@ class test_generate_data_dict(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -168,6 +168,7 @@ class test_generate_data_dict(unittest.TestCase):
 
         #
         normal_convolution_instructions = {
+            **convolution_instruction,
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -214,7 +215,6 @@ class test_generate_data_dict(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/ensemble")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -237,11 +237,11 @@ class test_generate_data_dict(unittest.TestCase):
 
             #
             input_hdf5_file.create_dataset(
-                "input_data/ensemble/dummy", data=json.dumps(self.dummy_ensemble)
+                "input_data/dummy", data=json.dumps(self.dummy_ensemble)
             )
 
         #
-        self.convolution_config = copy.copy(default_convolution_config)
+        self.convolution_config = copy.copy(convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -271,6 +271,7 @@ class test_generate_data_dict(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -325,7 +326,6 @@ class test_generate_data_dict(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/ensemble")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -348,11 +348,11 @@ class test_generate_data_dict(unittest.TestCase):
 
             #
             input_hdf5_file.create_dataset(
-                "input_data/ensemble/dummy", data=json.dumps(self.dummy_ensemble)
+                "input_data/dummy", data=json.dumps(self.dummy_ensemble)
             )
 
         #
-        self.convolution_config = copy.copy(default_convolution_config)
+        self.convolution_config = copy.copy(convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -382,6 +382,7 @@ class test_generate_data_dict(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",

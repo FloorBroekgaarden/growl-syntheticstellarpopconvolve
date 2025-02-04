@@ -48,7 +48,6 @@ class test_extract_population_settings(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -71,7 +70,7 @@ class test_extract_population_settings(unittest.TestCase):
 
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         self.convolution_config = copy.copy(default_convolution_config)

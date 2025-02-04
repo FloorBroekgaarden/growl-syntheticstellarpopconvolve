@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve import convolution_config, convolution_instruction
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
@@ -52,7 +52,6 @@ class test_extract_event_data(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -75,10 +74,10 @@ class test_extract_event_data(unittest.TestCase):
 
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
-        self.convolution_config = copy.copy(default_convolution_config)
+        self.convolution_config = copy.copy(convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -108,6 +107,7 @@ class test_extract_event_data(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "data_column_dict": {
@@ -127,6 +127,7 @@ class test_extract_event_data(unittest.TestCase):
     def test_extract_event_data_normal(self):
         #
         normal_convolution_instructions = {
+            **convolution_instruction,
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -149,6 +150,7 @@ class test_extract_event_data(unittest.TestCase):
 
     def test_extract_event_data_factor_multiply(self):
         factor_convolution_instruction = {
+            **convolution_instruction,
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -173,6 +175,7 @@ class test_extract_event_data(unittest.TestCase):
         ###########
         # function multiplying
         function_convolution_instruction = {
+            **convolution_instruction,
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -200,6 +203,7 @@ class test_extract_event_data(unittest.TestCase):
         ###########
         # Non existent
         faulty_convolution_instruction = {
+            **convolution_instruction,
             "input_data_name": "dummy2",
             "output_data_name": "dummy",
             "data_column_dict": {
@@ -246,7 +250,6 @@ class test_convolve_events_by_integration(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -269,10 +272,10 @@ class test_convolve_events_by_integration(unittest.TestCase):
 
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
-        self.convolution_config = copy.copy(default_convolution_config)
+        self.convolution_config = copy.copy(convolution_config)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -302,6 +305,7 @@ class test_convolve_events_by_integration(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -325,6 +329,7 @@ class test_convolve_events_by_integration(unittest.TestCase):
     def test_convolve_events_by_integration_normal(self):
         #
         normal_convolution_instructions = {
+            **convolution_instruction,
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "convolution_type": "integrate",
@@ -382,6 +387,7 @@ class test_convolve_events_by_integration(unittest.TestCase):
 
         #
         normal_convolution_instructions = {
+            **convolution_instruction,
             "input_data_name": "dummy",
             "output_data_name": "dummy",
             "convolution_type": "integrate",

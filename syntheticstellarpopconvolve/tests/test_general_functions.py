@@ -170,7 +170,6 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -193,7 +192,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
 
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         self.convolution_config = copy.copy(default_convolution_config)
@@ -463,9 +462,7 @@ class test_get_tmp_dir(unittest.TestCase):
             config={"tmp_dir": TMP_DIR},
             convolution_instruction=self.convolution_instruction,
         )
-        self.assertEqual(
-            tmp_dir, os.path.join(TMP_DIR, "image/input_image/output_image")
-        )
+        self.assertEqual(tmp_dir, os.path.join(TMP_DIR, "input_image/output_image"))
 
 
 if __name__ == "__main__":

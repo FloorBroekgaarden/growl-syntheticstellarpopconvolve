@@ -96,6 +96,7 @@ def extract_event_data(config, convolution_instruction):
     Function to extract the event-type data from the correct table and store the stuff in the correct column.
 
     # TODO: describe properly.
+    # TODO: move to general function
     """
 
     #
@@ -104,7 +105,7 @@ def extract_event_data(config, convolution_instruction):
     #
     event_df = pd.read_hdf(
         config["output_filename"],
-        "/input_data/events/{}".format(convolution_instruction["input_data_name"]),
+        "/input_data/{}".format(convolution_instruction["input_data_name"]),
     )
 
     data_column_dict = convolution_instruction["data_column_dict"]

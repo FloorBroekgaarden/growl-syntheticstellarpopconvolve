@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolve
+from syntheticstellarpopconvolve import convolution_instruction, convolve
 from syntheticstellarpopconvolve.convolve_stochastically import (
     select_dict_entries_with_new_indices,
 )
@@ -210,7 +210,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
 
         # store the data frame in the hdf5file
         wd_binaries.to_hdf(
-            self.convolution_config["input_filename"], key="input_data/events/dummy"
+            self.convolution_config["input_filename"], key="input_data/dummy"
         )
 
     def test_postprocessing_multiple_dictionaries_with_name(self):
@@ -218,6 +218,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "sample",
@@ -242,25 +243,25 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
             self.assertTrue(
                 "set_1"
                 in output_hdf5_file[
-                    "output_data/event/dummy/dummy/convolution_results/"
+                    "output_data/dummy/dummy/convolution_results/"
                 ].keys()
             )
             self.assertTrue(
                 "set_2"
                 in output_hdf5_file[
-                    "output_data/event/dummy/dummy/convolution_results/"
+                    "output_data/dummy/dummy/convolution_results/"
                 ].keys()
             )
 
             #
             indices_1 = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolution_results/set_1/0.5 Gyr/indices"
+                "output_data/dummy/dummy/convolution_results/set_1/0.5 Gyr/indices"
             ][()]
             self.assertTrue(len(indices_1) == 4464)
 
             #
             indices_2 = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolution_results/set_2/0.5 Gyr/indices"
+                "output_data/dummy/dummy/convolution_results/set_2/0.5 Gyr/indices"
             ][()]
             self.assertTrue(len(indices_2) == 536)
 
@@ -269,6 +270,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "sample",
@@ -290,7 +292,9 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
 
 
 if __name__ == "__main__":
-    test_postprocessing_obj = test_postprocessing()
-    test_postprocessing_obj.setUp()
-    test_postprocessing_obj.test_postprocessing_multiple_dictionaries_with_name()
-    test_postprocessing_obj.test_postprocessing_multiple_dictionaries_without_name()
+    unittest.main()
+
+    # test_postprocessing_obj = test_postprocessing()
+    # test_postprocessing_obj.setUp()
+    # test_postprocessing_obj.test_postprocessing_multiple_dictionaries_with_name()
+    # test_postprocessing_obj.test_postprocessing_multiple_dictionaries_without_name()

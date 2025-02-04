@@ -7,7 +7,7 @@ import voluptuous as vol
 from syntheticstellarpopconvolve.default_convolution_instruction import (
     default_convolution_instruction_dict,
 )
-from syntheticstellarpopconvolve.general_functions import check_required
+from syntheticstellarpopconvolve.general_functions import check_required, is_time_unit
 
 
 def check_metallicity(convolution_instruction, data_key):
@@ -21,6 +21,18 @@ def check_metallicity(convolution_instruction, data_key):
                 raise ValueError(
                     "If no metallicity value column / layer is provided, you either need to give 'metallicity_value' or set 'ignore_metallicity' to True"
                 )
+
+
+def check_data_time_bin_info(data_time_bin_info):
+    """
+    Function to check data time bin info dict
+    """
+
+    if "data_time_bin_edges" not in data_time_bin_info:
+        raise ValueError("`data_time_bin_edges` is required in the data_time_bin_info")
+
+    if not is_time_unit(data_time_bin_info["data_time_bin_edges"]):
+        raise ValueError("Please express 'data_time_bin_edges' in units of time")
 
 
 def check_convolution_instruction(convolution_instruction, config):
@@ -69,7 +81,6 @@ def check_convolution_instruction(convolution_instruction, config):
         check_required(
             config=convolution_instruction["data_column_dict"],
             required_list=[
-                "delay_time",
                 "normalized_yield",
             ],
         )
@@ -79,6 +90,41 @@ def check_convolution_instruction(convolution_instruction, config):
             convolution_instruction=convolution_instruction,
             data_key="data_column_dict",
         )
+
+        check_required(
+            config=convolution_instruction,
+            required_list=[
+                "contains_binned_data",
+            ],
+        )
+
+        #
+        if convolution_instruction["contains_binned_data"]:
+            check_required(
+                config=convolution_instruction,
+                required_list=[
+                    "data_time_bin_info",
+                ],
+            )
+
+            check_data_time_bin_info(
+                data_time_bin_info=convolution_instruction["data_time_bin_info"],
+            )
+
+            check_required(
+                config=convolution_instruction["data_column_dict"],
+                required_list=[
+                    "data_time_bin_index",
+                ],
+            )
+
+        else:
+            check_required(
+                config=convolution_instruction["data_column_dict"],
+                required_list=[
+                    "delay_time",
+                ],
+            )
 
     elif convolution_instruction["convolution_type"] == "sample":
 
@@ -93,7 +139,6 @@ def check_convolution_instruction(convolution_instruction, config):
         check_required(
             config=convolution_instruction["data_column_dict"],
             required_list=[
-                # "IDs",
                 "normalized_yield",
             ],
         )

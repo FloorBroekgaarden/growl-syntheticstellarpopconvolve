@@ -1,7 +1,5 @@
 """
 Main file to handle the convolution of populations
-
-TODO: stop passing job_dict to everything. I don't entirely like passing the job dict as well as the separated dicts. I'd rather be explicit and not rely on some all-containing dict..
 """
 
 import copy
@@ -90,8 +88,6 @@ def store_convolution_result_entries(
 ):
     """
     Function to handle storing an entry of the convolution_result
-
-    TODO: handle stripped ensemble better
     """
 
     units_to_store = {}
@@ -114,8 +110,6 @@ def store_convolution_result_entries(
             units_to_store[entry] = entry_data.unit
         # handle storing data without units
         else:
-            if entry == "stripped_ensemble":  # TODO: make this more general
-                entry_data = json.dumps(entry_data)
             current_time_bin_group.create_dataset(entry, data=entry_data)
 
     ###########
@@ -276,23 +270,20 @@ def handle_convolution_choice(
     Function to handle the convolution choice
     """
 
-    # -----------------------------------------------------------------------
-    # Handle the convolution depending on which type of data exists. They
-    # all contain the same structure.
-    #
-    # The resulting dictionary contains at
-    # least the results of the convolution (i.e. an array of 'rates' or
-    # total yields), and potentially more, depending on what each function
-    # returns. ensemble convolution for example can return a stripped
-    # ensemble
-    #
-
     #
     time_bin_info_dict = job_dict["time_bin_info_dict"]
 
     ################
     # Event-convolution by integration:
     if convolution_instruction["convolution_type"] == "integrate":
+        if (
+            convolution_instruction["contains_binned_data"]
+            and convolution_instruction["time_type"] == "redshift"
+        ):
+            raise ValueError(
+                "Convolving binned data with redshift-based time is currently not supported"
+            )
+
         ##########
         #
         convolution_results = convolve_events_by_integration(
@@ -307,6 +298,11 @@ def handle_convolution_choice(
         )
 
     elif convolution_instruction["convolution_type"] == "sample":
+        if convolution_instruction["contains_binned_data"]:
+            raise ValueError(
+                "Convolving binned data with convolution by sampling is currently not supported"
+            )
+
         ##########
         #
         convolution_results = convolve_events_by_sampling(
@@ -322,6 +318,11 @@ def handle_convolution_choice(
 
     elif convolution_instruction["convolution_type"] == "on-the-fly":
         warnings.warn("On-the-fly convolution is currently not fully tested")
+
+        if convolution_instruction["contains_binned_data"]:
+            raise ValueError(
+                "Convolving binned data with convolution by sampling is currently not supported"
+            )
 
         ##########
         #

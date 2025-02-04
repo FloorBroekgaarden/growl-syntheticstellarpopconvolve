@@ -19,6 +19,7 @@ from scipy import interpolate
 from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
     calculate_origin_redshift_array,
 )
+from syntheticstellarpopconvolve.convolve_binned_data import calculate_overlap_fractions
 
 logger = logging.getLogger(__name__)
 
@@ -191,15 +192,138 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
     return origin_time_array
 
 
-def calculate_digitized_sfr_rates(
-    config, convolution_time_bin_center, data_dict, sfr_dict
+def calculate_digitized_sfr_rates_binned_data(
+    config,
+    convolution_instruction,
+    convolution_time_bin_center,
+    data_dict,
+    sfr_dict,
+    data_time_bin_dict,
 ):
     """
-    Function to calculate the digitized rates
+    Function to handle convolving binned data
 
-    TODO: update docstring
-    TODO: more elsewhere
+    This function performs the following steps:
+    - sets up the shifted data-bin edges
+    - loops over each left-right edge pair and determines which SFR bins that edge-pair spans/overlaps with, the fractional overlap etc.
+    - for each left-right edge pair, loops over the overlapping SFR bins
+
+    NOTE: does not support redshift-based convolution
     """
+
+    if config["time_type"] != "lookback_time":
+        raise ValueError("Time-type must be `lookback_time`")
+
+    # unpack time bin info
+    data_time_bin_edges = data_time_bin_dict["data_time_bin_edges"].to(u.yr)
+    data_time_bin_sizes = np.diff(data_time_bin_edges)
+
+    #
+    left_data_time_bin_edges = data_time_bin_edges[:-1]
+    right_data_time_bin_edges = data_time_bin_edges[1:]
+
+    # shift time bin data
+    shifted_left_data_time_bin_edges = (
+        left_data_time_bin_edges + convolution_time_bin_center
+    )
+    shifted_right_data_time_bin_edges = (
+        right_data_time_bin_edges + convolution_time_bin_center
+    )
+
+    # read out sfr info
+    sfr_bin_edges = sfr_dict["time_bin_edges"].to(u.yr)
+    sfr_bin_sizes = np.diff(sfr_bin_edges)
+
+    #
+    digitised_sfr_rates = np.zeros(data_dict["data_time_bin_index"])
+
+    ##########
+    # Loop over the data time-bins
+    for data_time_bin_i, (
+        data_time_bin_size_i,
+        shifted_left_time_bin_edge,
+        shifted_right_time_bin_edge,
+    ) in enumerate(
+        list(
+            zip(
+                data_time_bin_sizes,
+                shifted_left_data_time_bin_edges,
+                shifted_right_data_time_bin_edges,
+            )
+        )[:1]
+    ):
+        # Determine bin overlap fractions
+        overlap_fractions = calculate_overlap_fractions(
+            shifted_left_time_bin_edge=shifted_left_time_bin_edge,
+            shifted_right_time_bin_edge=shifted_right_time_bin_edge,
+            sfr_bin_sizes=sfr_bin_sizes,
+            sfr_bin_edges=sfr_bin_edges,
+        )
+
+        # TODO: calculate weighted average
+        matching_data_time_bin_systems = (
+            data_dict["data_time_bin_index"] == data_time_bin_i
+        )
+
+        ###########
+        # loop over overlapping sfr bins
+        combined_matching_data_time_bin_sfr_rates = np.zeros(
+            len(matching_data_time_bin_systems)
+        )
+        for overlap_bin_i, sfr_bin_index in enumerate(
+            overlap_fractions["non_zero_overlap_with_sfr_bins"]
+        ):
+
+            sfr_bin_index_like_array = np.repeat(
+                sfr_bin_index, len(matching_data_time_bin_systems)
+            )
+
+            #####################
+            # Handle whether we want to specify metallicity as well
+            if "metallicity" in data_dict.keys():
+
+                metallicities = data_dict["metallicity"][matching_data_time_bin_systems]
+
+                #
+                metallicity_indices = (
+                    np.digitize(
+                        metallicities,
+                        bins=sfr_dict["padded_metallicity_bin_edges"],
+                        right=False,
+                    )
+                    - 1
+                )
+
+                # Calculate rates
+                matching_data_time_bin_sfr_rates = sfr_dict[
+                    "metallicity_weighted_starformation_rate_array"
+                ][sfr_bin_index_like_array, metallicity_indices]
+
+            else:
+                # Calculate rates
+                matching_data_time_bin_sfr_rates = sfr_dict[
+                    "padded_starformation_rate_array"
+                ][sfr_bin_index_like_array]
+
+            # TODO: scale
+
+            # add to combined array
+            combined_matching_data_time_bin_sfr_rates += (
+                matching_data_time_bin_sfr_rates
+            )
+
+        # TODO: maybe re-weigh?
+
+        # store data in grand array
+        digitised_sfr_rates[matching_data_time_bin_systems] = (
+            combined_matching_data_time_bin_sfr_rates
+        )
+
+
+def calculate_digitized_sfr_rates_non_binned_data(
+    config, convolution_instruction, convolution_time_bin_center, data_dict, sfr_dict
+):
+    """ """
 
     ###########
     # calculate origin time
@@ -279,6 +403,39 @@ def calculate_digitized_sfr_rates(
 
         # update sfr_rates
         digitised_sfr_rates = digitised_sfr_rates * time_binsizes[time_binsize_indices]
+
+    return digitised_sfr_rates
+
+
+def calculate_digitized_sfr_rates(
+    config, convolution_instruction, convolution_time_bin_center, data_dict, sfr_dict
+):
+    """
+    Function to handle calculation of the digitized rates
+
+    TODO: update docstring
+    TODO: more elsewhere
+    """
+
+    if convolution_instruction["contains_binned_data"]:
+
+        digitised_sfr_rates = calculate_digitized_sfr_rates_binned_data(
+            config,
+            convolution_instruction,
+            convolution_time_bin_center,
+            data_dict,
+            sfr_dict,
+        )
+
+    else:
+
+        digitised_sfr_rates = calculate_digitized_sfr_rates_non_binned_data(
+            config,
+            convolution_instruction,
+            convolution_time_bin_center,
+            data_dict,
+            sfr_dict,
+        )
 
     return digitised_sfr_rates
 

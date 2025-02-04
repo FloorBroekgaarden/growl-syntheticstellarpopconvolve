@@ -10,18 +10,11 @@ Routine that handles calculating the overlap of a time-bin series with the starf
 - calculates overlap fraction of sfr bins
 - calculates fraction of time
 
-TODO: allow using CDF to re-scale
+TODO: allow using CDF to re-scale. Data within the bin may not be distributed uniformly per se.
 """
-
-import math
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-def phi(x):
-    #'Cumulative distribution function for the standard normal distribution'
-    return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
 
 
 def calculate_overlap_fractions(
@@ -34,47 +27,63 @@ def calculate_overlap_fractions(
     Function to calculate the overlap
     """
 
+    assert shifted_left_time_bin_edge < shifted_right_time_bin_edge
+
+    print("shifted_left_time_bin_edge", shifted_left_time_bin_edge)
+    print("shifted_right_time_bin_edge", shifted_right_time_bin_edge)
+    print("sfr_bin_sizes", sfr_bin_sizes)
+    print("sfr_bin_edges", sfr_bin_edges)
+
     ##############
     # calculate distances
     left_distances = sfr_bin_edges[1:] - shifted_left_time_bin_edge
     right_distances = shifted_right_time_bin_edge - sfr_bin_edges[:-1]
-    # print('left_distances', left_distances)
-    # print('right_distances', right_distances)
 
     ##############
     # mask by negatives
     left_distances[left_distances < 0] = 0
     right_distances[right_distances < 0] = 0
 
-    # print("Masked negatives")
-    # print('left_distances', left_distances)
-    # print('right_distances', right_distances)
+    print(left_distances)
+    print(right_distances)
 
     ##############
     # Construct the combined overlap array
     combined_overlap_array = sfr_bin_sizes.astype(float)
     combined_overlap_array[left_distances == 0] = 0
     combined_overlap_array[right_distances == 0] = 0
-    combined_overlap_array[np.nonzero(left_distances)[0][0]] = left_distances[
-        np.nonzero(left_distances)[0][0]
-    ]
-    combined_overlap_array[np.nonzero(right_distances)[0][-1]] = right_distances[
-        np.nonzero(right_distances)[0][-1]
-    ]  #
-    # print("Time-bin {} overlap fraction with SFR_bins:\n\t{}".format(time_bin_i, combined_overlap_array))
+    print(combined_overlap_array)
+
+    #
+    leftmost_nonzero_index = np.nonzero(left_distances)[0][0]
+    rightmost_nonzero_index = np.nonzero(right_distances)[0][-1]
+
+    # If they are the same, that means they both fall in the same bin
+    if leftmost_nonzero_index == rightmost_nonzero_index:
+        nonzero_index = leftmost_nonzero_index  # they're the same
+
+        # if both lie in the same bin, then its just the distance between the two data-time bin edges
+        combined_overlap_array[nonzero_index] = (
+            shifted_right_time_bin_edge - shifted_left_time_bin_edge
+        )
+    else:
+        combined_overlap_array[leftmost_nonzero_index] = left_distances[
+            leftmost_nonzero_index
+        ]
+        combined_overlap_array[rightmost_nonzero_index] = right_distances[
+            rightmost_nonzero_index
+        ]
 
     ##############
     # normalize to fraction of the sfr bin
     normalized_combined_overlap_array = combined_overlap_array / sfr_bin_sizes
-    # print("Time-bin {} normalized overlap fraction with SFR_bins:\n\t{}".format(time_bin_i, normalized_combined_overlap_array))
 
     ##############
     # get fraction of time-bin
     time_bin_fraction = combined_overlap_array / time_bin_size_i
-    # print("Time-bin {} time bin fraction\n\t{}".format(time_bin_i, time_bin_fraction))
 
     ##############
-    # calcualte cumulative fraction to allow re-weighting with in-bin expected distribution
+    # calculate cumulative fraction to allow re-weighting with in-bin expected distribution
     cumulative_time_bin_fraction = np.cumsum(time_bin_fraction)
 
     ##############
@@ -93,12 +102,17 @@ def calculate_overlap_fractions(
 if __name__ == "__main__":
 
     #
-    shift = 2.6
+    data_time_bin_info = {
+        "data_time_bin_edges": np.arange(0, 2, 1),
+    }
 
-    sfr_bin_edges = np.arange(0, 20, 2)
+    #
+    shift = 5.6
+
+    sfr_bin_edges = np.arange(0, 20, 5)
     sfr_bin_sizes = np.diff(sfr_bin_edges)
 
-    time_bin_edges = np.arange(0, 100, 5)
+    time_bin_edges = data_time_bin_info["data_time_bin_edges"]
     time_bin_sizes = np.diff(time_bin_edges)
 
     #
@@ -108,9 +122,9 @@ if __name__ == "__main__":
     shifted_left_time_bin_edges = left_time_bin_edges + shift
     shifted_right_time_bin_edges = right_time_bin_edges + shift
 
-    print("sfr_bin_edges", sfr_bin_edges)
-    print("shifted_left_time_bin_edges", shifted_left_time_bin_edges)
-    print("shifted_right_time_bin_edges", shifted_right_time_bin_edges)
+    # print("sfr_bin_edges", sfr_bin_edges)
+    # print("shifted_left_time_bin_edges", shifted_left_time_bin_edges)
+    # print("shifted_right_time_bin_edges", shifted_right_time_bin_edges)
 
     ##########
     # Loop over the data time-bins
@@ -128,10 +142,10 @@ if __name__ == "__main__":
         )[:1]
     ):
 
-        print("time bin", time_bin_i)
-        print("time bin size", time_bin_size_i)
-        print("shifted_left_time_bin_edge", shifted_left_time_bin_edge)
-        print("shifted_right_time_bin_edge", shifted_right_time_bin_edge)
+        # print("time bin", time_bin_i)
+        # print("time bin size", time_bin_size_i)
+        # print("shifted_left_time_bin_edge", shifted_left_time_bin_edge)
+        # print("shifted_right_time_bin_edge", shifted_right_time_bin_edge)
 
         #
         overlap_fractions = calculate_overlap_fractions(
@@ -140,6 +154,8 @@ if __name__ == "__main__":
             sfr_bin_sizes=sfr_bin_sizes,
             sfr_bin_edges=sfr_bin_edges,
         )
+
+        print(overlap_fractions)
 
         # ##
         # #
@@ -162,8 +178,6 @@ if __name__ == "__main__":
         #     )
 
         #     # TODO: calculate sfr in those bins (incl metallicity)
-
-        quit()
 
     plt.plot(sfr_bin_edges, np.ones(sfr_bin_edges.shape), "bo")
     plt.plot(

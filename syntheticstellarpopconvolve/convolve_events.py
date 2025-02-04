@@ -187,11 +187,14 @@ def convolve_events_by_integration(
 
     #############
     # Calculate array-based convolution (i.e. yield/rate times SFR)
-    digitized_sfr_rates = calculate_digitized_sfr_rates(
-        config=config,
-        convolution_time_bin_center=time_bin_info_dict["bin_center"],
-        data_dict=data_dict,
-        sfr_dict=sfr_dict,
+    digitized_sfr_rates = (
+        calculate_digitized_sfr_rates(  # TODO: consider renaming this function
+            config=config,
+            convolution_instruction=convolution_instruction,
+            convolution_time_bin_center=time_bin_info_dict["bin_center"],
+            data_dict=data_dict,
+            sfr_dict=sfr_dict,
+        )
     )
     convolved_rate_array = (
         digitized_sfr_rates

@@ -15,7 +15,10 @@ def check_metallicity(convolution_instruction, data_key):
     Function to check the metallicity
     """
 
-    if "ignore_metallicity" not in convolution_instruction.keys():
+    if (
+        "ignore_metallicity" not in convolution_instruction.keys()
+        or convolution_instruction["ignore_metallicity"] is False
+    ):
         if "metallicity" not in convolution_instruction.get(data_key, {}).keys():
             if "metallicity_value" not in convolution_instruction.keys():
                 raise ValueError(

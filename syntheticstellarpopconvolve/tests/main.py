@@ -55,6 +55,9 @@ from syntheticstellarpopconvolve.tests.test_convolve_events import (
     test_convolve_events_by_integration,
     test_extract_event_data,
 )
+from syntheticstellarpopconvolve.tests.test_convolve_on_the_fly import (
+    test_convolve_on_the_fly,
+)
 from syntheticstellarpopconvolve.tests.test_convolve_populations import (
     test_generate_data_dict,
 )

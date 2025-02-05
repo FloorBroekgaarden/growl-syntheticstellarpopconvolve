@@ -15,7 +15,10 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve import (
+    default_convolution_config,
+    default_convolution_instruction,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
@@ -225,6 +228,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -252,6 +256,9 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
             convolution_time_bin_center=0.5 * 1e9 * u.yr,
             data_dict={"delay_time": np.array([-1, 1, 2, 3, 100]) * 1e9 * u.yr},
             sfr_dict=self.convolution_config["SFR_info"],
+            convolution_instruction=self.convolution_config["convolution_instructions"][
+                0
+            ],
         )
         output_unit = u.Msun / u.yr / u.Gpc**3
 
@@ -444,8 +451,8 @@ class test_generate_group_name(unittest.TestCase):
 
     def test_generate_group_name_without_sfr(self):
         groupname, elements = generate_group_name(self.convolution_instruction, {})
-        expected_groupname = "image/output_image"
-        expected_elements = ["image", "output_image"]
+        expected_groupname = "input_image/output_image"
+        expected_elements = ["input_image", "output_image"]
         self.assertEqual(groupname, expected_groupname)
         self.assertListEqual(elements, expected_elements)
 

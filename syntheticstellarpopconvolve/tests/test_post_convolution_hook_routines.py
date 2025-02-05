@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolution_instruction, convolve
+from syntheticstellarpopconvolve import convolve, default_convolution_instruction
 from syntheticstellarpopconvolve.convolve_stochastically import (
     select_dict_entries_with_new_indices,
 )
@@ -218,7 +218,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                **convolution_instruction,
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "sample",
@@ -270,7 +270,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                **convolution_instruction,
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "sample",
@@ -293,8 +293,3 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
 
 if __name__ == "__main__":
     unittest.main()
-
-    # test_postprocessing_obj = test_postprocessing()
-    # test_postprocessing_obj.setUp()
-    # test_postprocessing_obj.test_postprocessing_multiple_dictionaries_with_name()
-    # test_postprocessing_obj.test_postprocessing_multiple_dictionaries_without_name()

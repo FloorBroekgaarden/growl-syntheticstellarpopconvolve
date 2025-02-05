@@ -3,6 +3,7 @@ Unit tests for convolution on the fly
 """
 
 import copy
+import logging
 import os
 import unittest
 
@@ -10,7 +11,11 @@ import astropy.units as u
 import h5py
 import numpy as np
 
-from syntheticstellarpopconvolve import convolve, default_convolution_config
+from syntheticstellarpopconvolve import (
+    convolve,
+    default_convolution_config,
+    default_convolution_instruction,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
@@ -70,6 +75,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
 
         #
         self.convolution_config = copy.copy(default_convolution_config)
+        self.convolution_config["logger"].setLevel(logging.CRITICAL)
 
         # Set up SFR
         self.convolution_config["SFR_info"] = {
@@ -91,6 +97,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **default_convolution_instruction,
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -116,6 +123,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **default_convolution_instruction,
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -178,6 +186,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **default_convolution_instruction,
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -219,6 +228,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **default_convolution_instruction,
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -273,6 +283,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
+                **default_convolution_instruction,
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
@@ -298,10 +309,12 @@ class test_convolve_on_the_fly(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    test_convolve_on_the_fly_obj = test_convolve_on_the_fly()
-    test_convolve_on_the_fly_obj.setUp()
-    test_convolve_on_the_fly_obj.test_convolve_on_the_fly_normal()
-    test_convolve_on_the_fly_obj.test_convolve_on_the_fly_wrong_arguments_on_the_fly_function()
-    test_convolve_on_the_fly_obj.test_convolve_on_the_fly_wrong_return_type_on_the_fly_function()
-    test_convolve_on_the_fly_obj.test_convolve_on_the_fly_metallicity_required_not_included_on_the_fly_function()
-    test_convolve_on_the_fly_obj.test_convolve_on_the_fly_convolve()
+    unittest.main()
+
+    # test_convolve_on_the_fly_obj = test_convolve_on_the_fly()
+    # test_convolve_on_the_fly_obj.setUp()
+    # test_convolve_on_the_fly_obj.test_convolve_on_the_fly_normal()
+    # test_convolve_on_the_fly_obj.test_convolve_on_the_fly_wrong_arguments_on_the_fly_function()
+    # test_convolve_on_the_fly_obj.test_convolve_on_the_fly_wrong_return_type_on_the_fly_function()
+    # test_convolve_on_the_fly_obj.test_convolve_on_the_fly_metallicity_required_not_included_on_the_fly_function()
+    # test_convolve_on_the_fly_obj.test_convolve_on_the_fly_convolve()

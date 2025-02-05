@@ -11,7 +11,10 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve import (
+    default_convolution_config,
+    default_convolution_instruction,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
     check_convolution_config,
@@ -35,6 +38,7 @@ class test_check_convolution_config(unittest.TestCase):
             "convolution_lookback_time_bin_edges": np.array([1, 2]) * u.yr,
             "convolution_instructions": [
                 {
+                    **default_convolution_instruction,
                     "input_data_name": "event_data",
                     "output_data_name": "output_event_data",
                     "convolution_type": "integrate",
@@ -134,6 +138,7 @@ class test_update_convolution_config(unittest.TestCase):
         #
         config["convolution_instructions"] = [
             {
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",

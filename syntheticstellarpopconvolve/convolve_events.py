@@ -2,6 +2,8 @@
 Functions to convolve events
 """
 
+import astropy.units as u
+import numpy as np
 import pandas as pd
 
 from syntheticstellarpopconvolve.general_functions import (
@@ -91,12 +93,12 @@ def convolve_events_by_integration_post_convolution_hook_wrapper(
     return convolution_results
 
 
+# TODO: describe properly.
+# TODO: move to general function
+# TODO: rename
 def extract_event_data(config, convolution_instruction):
     """
     Function to extract the event-type data from the correct table and store the stuff in the correct column.
-
-    # TODO: describe properly.
-    # TODO: move to general function
     """
 
     #
@@ -155,6 +157,16 @@ def extract_event_data(config, convolution_instruction):
                 data_dict[column] = data_dict[column] * unit
         else:
             raise ValueError("input type not supported.")
+
+    ##########
+    # If we have binned data we should addd the delay time bin indices to the
+    if convolution_instruction["contains_binned_data"]:
+        data_dict["data_time_bin_index"] = np.digitize(
+            data_dict["delay_time"].to(u.yr),
+            convolution_instruction["delay_time_data_bin_info"][
+                "delay_time_data_bin_edges"
+            ].to(u.yr),
+        )
 
     #
     return config, data_dict, convolution_instruction

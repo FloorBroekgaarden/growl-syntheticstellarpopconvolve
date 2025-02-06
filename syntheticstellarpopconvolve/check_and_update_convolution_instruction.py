@@ -26,16 +26,18 @@ def check_metallicity(convolution_instruction, data_key):
                 )
 
 
-def check_data_time_bin_info(data_time_bin_info):
+def check_delay_time_data_bin_info(delay_time_data_bin_info):
     """
     Function to check data time bin info dict
     """
 
-    if "data_time_bin_edges" not in data_time_bin_info:
-        raise ValueError("`data_time_bin_edges` is required in the data_time_bin_info")
+    if "delay_time_data_bin_edges" not in delay_time_data_bin_info:
+        raise ValueError(
+            "`delay_time_data_bin_edges` is required in the delay_time_data_bin_info when convolving binned data"
+        )
 
-    if not is_time_unit(data_time_bin_info["data_time_bin_edges"]):
-        raise ValueError("Please express 'data_time_bin_edges' in units of time")
+    if not is_time_unit(delay_time_data_bin_info["delay_time_data_bin_edges"]):
+        raise ValueError("Please express 'delay_time_data_bin_edges' in units of time")
 
 
 def check_convolution_instruction(convolution_instruction, config):
@@ -106,18 +108,13 @@ def check_convolution_instruction(convolution_instruction, config):
             check_required(
                 config=convolution_instruction,
                 required_list=[
-                    "data_time_bin_info",
+                    "delay_time_data_bin_info",
                 ],
             )
 
-            check_data_time_bin_info(
-                data_time_bin_info=convolution_instruction["data_time_bin_info"],
-            )
-
-            check_required(
-                config=convolution_instruction["data_column_dict"],
-                required_list=[
-                    "data_time_bin_index",
+            check_delay_time_data_bin_info(
+                delay_time_data_bin_info=convolution_instruction[
+                    "delay_time_data_bin_info"
                 ],
             )
 

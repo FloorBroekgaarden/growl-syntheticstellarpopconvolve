@@ -276,9 +276,10 @@ def handle_convolution_choice(
     ################
     # Event-convolution by integration:
     if convolution_instruction["convolution_type"] == "integrate":
+        # We don't support binned data and redshift based time-types yet
         if (
             convolution_instruction["contains_binned_data"]
-            and convolution_instruction["time_type"] == "redshift"
+            and config["time_type"] == "redshift"
         ):
             raise ValueError(
                 "Convolving binned data with redshift-based time is currently not supported"

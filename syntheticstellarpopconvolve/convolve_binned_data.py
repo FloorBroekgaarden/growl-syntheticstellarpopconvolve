@@ -18,8 +18,8 @@ import numpy as np
 
 
 def calculate_overlap_fractions(
-    shifted_left_time_bin_edge,
-    shifted_right_time_bin_edge,
+    shifted_left_delay_time_data_bin_edge,
+    shifted_right_delay_time_data_bin_edge,
     sfr_bin_sizes,
     sfr_bin_edges,
 ):
@@ -29,12 +29,18 @@ def calculate_overlap_fractions(
     TODO: consider returning only the information of the bins that overlap.
     """
 
-    assert shifted_left_time_bin_edge < shifted_right_time_bin_edge
+    assert (
+        shifted_left_delay_time_data_bin_edge < shifted_right_delay_time_data_bin_edge
+    )
+
+    delay_time_bin_size = (
+        shifted_right_delay_time_data_bin_edge - shifted_left_delay_time_data_bin_edge
+    )
 
     ##############
     # calculate distances
-    left_distances = sfr_bin_edges[1:] - shifted_left_time_bin_edge
-    right_distances = shifted_right_time_bin_edge - sfr_bin_edges[:-1]
+    left_distances = sfr_bin_edges[1:] - shifted_left_delay_time_data_bin_edge
+    right_distances = shifted_right_delay_time_data_bin_edge - sfr_bin_edges[:-1]
 
     ##############
     # mask by negatives
@@ -57,7 +63,8 @@ def calculate_overlap_fractions(
 
         # if both lie in the same bin, then its just the distance between the two data-time bin edges
         combined_overlap_array[nonzero_index] = (
-            shifted_right_time_bin_edge - shifted_left_time_bin_edge
+            shifted_right_delay_time_data_bin_edge
+            - shifted_left_delay_time_data_bin_edge
         )
     else:
         combined_overlap_array[leftmost_nonzero_index] = left_distances[
@@ -73,7 +80,7 @@ def calculate_overlap_fractions(
 
     ##############
     # get fraction of time-bin
-    time_bin_fraction = combined_overlap_array / time_bin_size_i
+    time_bin_fraction = combined_overlap_array / delay_time_bin_size
 
     ##############
     # calculate cumulative fraction to allow re-weighting with in-bin expected distribution
@@ -95,8 +102,8 @@ def calculate_overlap_fractions(
 if __name__ == "__main__":
 
     #
-    data_time_bin_info = {
-        "data_time_bin_edges": np.arange(0, 2, 1),
+    delay_time_data_bin_info = {
+        "delay_time_data_bin_edges": np.arange(0, 2, 1),
     }
 
     #
@@ -105,15 +112,15 @@ if __name__ == "__main__":
     sfr_bin_edges = np.arange(0, 20, 5)
     sfr_bin_sizes = np.diff(sfr_bin_edges)
 
-    time_bin_edges = data_time_bin_info["data_time_bin_edges"]
-    time_bin_sizes = np.diff(time_bin_edges)
+    delay_time_data_bin_edges = delay_time_data_bin_info["delay_time_data_bin_edges"]
+    delay_time_data_bin_sizes = np.diff(delay_time_data_bin_edges)
 
     #
-    left_time_bin_edges = time_bin_edges[:-1]
-    right_time_bin_edges = time_bin_edges[1:]
+    left_delay_time_data_bin_edges = delay_time_data_bin_edges[:-1]
+    right_delay_time_data_bin_edges = delay_time_data_bin_edges[1:]
 
-    shifted_left_time_bin_edges = left_time_bin_edges + shift
-    shifted_right_time_bin_edges = right_time_bin_edges + shift
+    shifted_left_delay_time_data_bin_edges = left_delay_time_data_bin_edges + shift
+    shifted_right_delay_time_data_bin_edges = right_delay_time_data_bin_edges + shift
 
     # print("sfr_bin_edges", sfr_bin_edges)
     # print("shifted_left_time_bin_edges", shifted_left_time_bin_edges)
@@ -123,14 +130,14 @@ if __name__ == "__main__":
     # Loop over the data time-bins
     for time_bin_i, (
         time_bin_size_i,
-        shifted_left_time_bin_edge,
-        shifted_right_time_bin_edge,
+        shifted_left_delay_time_data_bin_edge,
+        shifted_right_delay_time_data_bin_edge,
     ) in enumerate(
         list(
             zip(
-                time_bin_sizes,
-                shifted_left_time_bin_edges,
-                shifted_right_time_bin_edges,
+                delay_time_data_bin_sizes,
+                shifted_left_delay_time_data_bin_edges,
+                shifted_right_delay_time_data_bin_edges,
             )
         )[:1]
     ):
@@ -142,8 +149,8 @@ if __name__ == "__main__":
 
         #
         overlap_fractions = calculate_overlap_fractions(
-            shifted_left_time_bin_edge=shifted_left_time_bin_edge,
-            shifted_right_time_bin_edge=shifted_right_time_bin_edge,
+            shifted_left_delay_time_data_bin_edge=shifted_left_delay_time_data_bin_edge,
+            shifted_right_delay_time_data_bin_edge=shifted_right_delay_time_data_bin_edge,
             sfr_bin_sizes=sfr_bin_sizes,
             sfr_bin_edges=sfr_bin_edges,
         )
@@ -172,16 +179,16 @@ if __name__ == "__main__":
 
         #     # TODO: calculate sfr in those bins (incl metallicity)
 
-    plt.plot(sfr_bin_edges, np.ones(sfr_bin_edges.shape), "bo")
-    plt.plot(
-        shifted_left_time_bin_edges,
-        2 * np.ones(shifted_left_time_bin_edges.shape),
-        "ro",
-    )
-    plt.plot(
-        shifted_right_time_bin_edges,
-        2 * np.ones(shifted_right_time_bin_edges.shape),
-        "go",
-    )
-    plt.ylim(0, 5)
-    plt.show()
+    # plt.plot(sfr_bin_edges, np.ones(sfr_bin_edges.shape), "bo")
+    # plt.plot(
+    #     shifted_left_time_bin_edges,
+    #     2 * np.ones(shifted_left_time_bin_edges.shape),
+    #     "ro",
+    # )
+    # plt.plot(
+    #     shifted_right_time_bin_edges,
+    #     2 * np.ones(shifted_right_time_bin_edges.shape),
+    #     "go",
+    # )
+    # plt.ylim(0, 5)
+    # plt.show()

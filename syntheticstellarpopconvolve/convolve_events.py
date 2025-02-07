@@ -161,11 +161,14 @@ def extract_event_data(config, convolution_instruction):
     ##########
     # If we have binned data we should addd the delay time bin indices to the
     if convolution_instruction["contains_binned_data"]:
-        data_dict["delay_time_data_bin_index"] = np.digitize(
-            data_dict["delay_time"].to(u.yr),
-            convolution_instruction["delay_time_data_bin_info_dict"][
-                "delay_time_data_bin_edges"
-            ].to(u.yr),
+        data_dict["delay_time_data_bin_index"] = (
+            np.digitize(
+                data_dict["delay_time"].to(u.yr),
+                convolution_instruction["delay_time_data_bin_info_dict"][
+                    "delay_time_data_bin_edges"
+                ].to(u.yr),
+            )
+            - 1
         )
 
     #

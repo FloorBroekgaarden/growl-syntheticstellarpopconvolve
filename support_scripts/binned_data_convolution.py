@@ -1,5 +1,6 @@
 import copy
 import json
+import logging
 import os
 import time
 
@@ -15,35 +16,6 @@ from syntheticstellarpopconvolve.convolve_stochastically import (
 )
 from syntheticstellarpopconvolve.ensemble_utils import convert_ensemble_to_dataframe
 from syntheticstellarpopconvolve.general_functions import calculate_bin_edges, temp_dir
-
-# # load the data
-# example_ensemble_filename = pkg_resources.resource_filename(
-#     "syntheticstellarpopconvolve", "example_data/example_ensemble.json"
-# )
-# with open(example_ensemble_filename, "r") as f_ensemble:
-#     ensemble = json.loads(f_ensemble.read())
-
-# inflated_ensemble = convert_ensemble_to_dataframe(
-#     ensemble_data=ensemble["ensemble"]['Xyield'],
-#     verbose=False,
-#     contains_named_layers=True,
-# )
-
-# # Convert to
-# inflated_ensemble = inflated_ensemble.astype({'time': 'float', 'probability': 'float'})
-
-# # Create time bin edges
-# sorted_unique_time_centers = np.sort(inflated_ensemble['time'].unique())
-# time_bin_edges = calculate_bin_edges(sorted_unique_time_centers)
-
-# # turn the values to correct base
-# inflated_ensemble['time'] = 10**inflated_ensemble['time']
-# time_bin_edges = 10**time_bin_edges
-# # TODO: turn probability into correct base (d/dlog10 t -> d/dt)
-
-# # ensure sorting
-# inflated_ensemble = inflated_ensemble.sort_values(by=['time'])
-
 
 records = [
     {"time": 0.25, "value": 10, "probability": 1},
@@ -82,7 +54,7 @@ convolution_config["input_filename"] = input_hdf5_filename
 convolution_config["output_filename"] = output_hdf5_filename
 convolution_config["tmp_dir"] = TMP_DIR
 convolution_config["multiprocessing"] = False
-
+convolution_config["logger"].setLevel(logging.CRITICAL)
 
 ###
 # convolution instructions
@@ -98,7 +70,8 @@ convolution_config["convolution_instructions"] = [
         },
         "data_column_dict": {
             # required
-            "normalized_yield": "probability",
+            "normalized_yield": {"column_name": "probability", "unit": u.Msun / u.Msun},
+            # "normalized_yield": "probability",
             "delay_time": {"column_name": "time", "unit": u.yr},
         },
     },
@@ -107,6 +80,7 @@ convolution_config["convolution_instructions"] = [
 #
 convolution_config["time_type"] = "lookback_time"
 convolution_config["convolution_lookback_time_bin_edges"] = np.arange(8, 10, 1) * u.yr
+# print(convolution_config["normalized_yield_unit"])
 
 # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
 sfr_dict = {}
@@ -120,7 +94,72 @@ sfr_dict["starformation_rate_array"] = (
 # store
 convolution_config["SFR_info"] = sfr_dict
 
+#
+convolution_config["multiply_by_sfr_time_binsize"] = True
+convolution_config["multiply_by_convolution_time_binsize"] = True
+
 # convolve
 convolve(config=convolution_config)
 
 print("finished convolution")
+
+# read out content and integrate until today
+with h5py.File(convolution_config["output_filename"], "r") as output_hdf5_file:
+
+    print(output_hdf5_file.keys())
+    print(output_hdf5_file["output_data"].keys())
+
+    print(
+        output_hdf5_file[
+            "output_data/binned_example/binned_example/convolution_results/8.5 yr/yield"
+        ][()]
+    )
+
+    # convert units
+    unit_dict = json.loads(
+        output_hdf5_file[
+            f"output_data/binned_example/binned_example/convolution_results/8.5 yr"
+        ].attrs["units"]
+    )
+    unit_dict = {key: u.Unit(val) for key, val in unit_dict.items()}
+    print(unit_dict)
+
+    # formation_time_bin_keys = list(
+    #     output_hdf5_file[
+    #         "output_data/event/stochastic_example/stochastic_example/convolution_results"
+    #     ].keys()
+    # )
+    quit()
+    ################
+    #
+
+    # loop over the formation-time bins
+    formation_time_bin_keys = sorted(
+        formation_time_bin_keys, key=lambda x: float(x.split(" ")[0])
+    )
+    for formation_time_bin_key in formation_time_bin_keys:
+
+        # formation_time_bin_key = "3500000000.0 yr"
+        print("=================================")
+        print(f"formation_time_bin_key: {formation_time_bin_key}")
+        print("=================================")
+
+        ###########
+        # Read out data
+
+        # convert units
+        unit_dict = json.loads(
+            output_hdf5_file[
+                f"output_data/event/stochastic_example/stochastic_example/convolution_results/{formation_time_bin_key}"
+            ].attrs["units"]
+        )
+        unit_dict = {key: u.Unit(val) for key, val in unit_dict.items()}
+        print(unit_dict)
+
+
+#         indices = output_hdf5_file[
+#             f"output_data/event/stochastic_example/stochastic_example/convolution_results/{formation_time_bin_key}/indices"
+#         ][()]
+#         # print(indices)
+
+#         print(type(indices))

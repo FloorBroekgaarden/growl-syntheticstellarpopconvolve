@@ -90,6 +90,7 @@ class JsonCustomEncoder(json.JSONEncoder):
         elif isinstance(obj, (u.UnitBase, u.FunctionUnitBase)):
             if obj == u.dimensionless_unscaled:
                 obj = "dimensionless_unit"
+                return str(obj)
             else:
                 return obj.to_string()
         elif isinstance(obj, type(logger)):
@@ -513,6 +514,9 @@ def calculate_digitized_sfr_rates_binned_data(
 
         #########
         # store data in grand array
+        if not has_unit(sfr_rates):
+            sfr_rates = sfr_rates * combined_matching_delay_time_data_bin_sfr_rates.unit
+
         sfr_rates[matching_delay_time_data_bin_system_indices] = (
             combined_matching_delay_time_data_bin_sfr_rates
         )

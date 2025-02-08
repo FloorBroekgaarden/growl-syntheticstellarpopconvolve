@@ -212,11 +212,26 @@ def convolve_events_by_integration(
             sfr_dict=sfr_dict,
         )
     )
-    convolved_rate_array = (
-        digitized_sfr_rates
-        * data_dict["normalized_yield"]
-        * config["normalized_yield_unit"]
-    )
+
+    ###############
+    # Multiply results by normalized yield of the data and the normalized yield unit.
+    # TODO: allow user to just provide this themselves
+    convolved_rate_array = digitized_sfr_rates * data_dict["normalized_yield"]
+
+    ########
+    # Extract normalized yield unit
+    normalized_yield_unit = config["normalized_yield_unit"]
+    if isinstance(
+        convolution_instruction["data_column_dict"]["normalized_yield"], dict
+    ):
+        if "unit" in convolution_instruction["data_column_dict"]["normalized_yield"]:
+            normalized_yield_unit = convolution_instruction["data_column_dict"][
+                "normalized_yield"
+            ]["unit"]
+
+    #######
+    # Multiply by normalized yield unit
+    convolved_rate_array = convolved_rate_array * normalized_yield_unit
 
     #############
     # Handle multiplication by convolution time-bin size

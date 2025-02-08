@@ -202,7 +202,7 @@ def convolve_events_by_integration(
     )
 
     #############
-    # Calculate array-based convolution (i.e. yield/rate times SFR)
+    # Actual convolution (i.e. normalized yield times SFR)
     digitized_sfr_rates = (
         calculate_digitized_sfr_rates(  # TODO: consider renaming this function
             config=config,
@@ -217,6 +217,23 @@ def convolve_events_by_integration(
         * data_dict["normalized_yield"]
         * config["normalized_yield_unit"]
     )
+
+    #############
+    # Handle multiplication by convolution time-bin size
+    # TODO: consider putting this in a separate function
+    if config["multiply_by_convolution_time_binsize"]:
+        if config["time_type"] == "redshift":
+            raise ValueError(
+                "Multiplication of yield by convolution time binsizes is not supported currently"
+            )
+
+        convolved_rate_array = convolved_rate_array * time_bin_info_dict["bin_size"]
+
+        config["logger"].info(
+            "Multiplying the yield by convolution-time binsize {} to {}".format(
+                time_bin_info_dict["bin_size"], convolved_rate_array
+            )
+        )
 
     #
     convolution_results = {"yield": convolved_rate_array}

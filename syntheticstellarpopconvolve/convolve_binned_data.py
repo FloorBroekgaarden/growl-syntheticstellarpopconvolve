@@ -13,7 +13,6 @@ Routine that handles calculating the overlap of a time-bin series with the starf
 TODO: allow using CDF to re-scale. Data within the bin may not be distributed uniformly per se.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -54,8 +53,14 @@ def calculate_overlap_fractions(
     combined_overlap_array[right_distances == 0] = 0
 
     # Handle non-zero entries
-    leftmost_nonzero_index = np.nonzero(left_distances)[0][0]
-    rightmost_nonzero_index = np.nonzero(right_distances)[0][-1]
+    left_nonzero_indices = np.nonzero(left_distances)[0]
+    right_nonzero_indices = np.nonzero(right_distances)[0]
+
+    # TODO: fix situations in which there are no non-zero entries
+
+    #
+    leftmost_nonzero_index = left_nonzero_indices[0]
+    rightmost_nonzero_index = right_nonzero_indices[-1]
 
     # If they are the same, that means they both fall in the same bin
     if leftmost_nonzero_index == rightmost_nonzero_index:
@@ -85,6 +90,9 @@ def calculate_overlap_fractions(
     ##############
     # calculate cumulative fraction to allow re-weighting with in-bin expected distribution
     cumulative_time_bin_fraction = np.cumsum(time_bin_fraction)
+    change_cumulative_time_bin_fraction = np.diff(
+        cumulative_time_bin_fraction
+    )  # TODO: this input should be appended with 0 because essentially we're missing that now.
 
     ##############
     # non-zero sfr-bins. NOTE: these are the indices we should loop over
@@ -95,6 +103,7 @@ def calculate_overlap_fractions(
         "normalized_combined_overlap_array": normalized_combined_overlap_array,
         "time_bin_fraction": time_bin_fraction,
         "cumulative_time_bin_fraction": cumulative_time_bin_fraction,
+        "change_cumulative_time_bin_fraction": change_cumulative_time_bin_fraction,
         "non_zero_overlap_with_sfr_bins": non_zero_overlap_with_sfr_bins,
     }
 

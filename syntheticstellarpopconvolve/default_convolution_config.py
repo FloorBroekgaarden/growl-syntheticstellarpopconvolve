@@ -271,9 +271,9 @@ default_convolution_config_dict = {
         "description": "Default unit used for the delay-time data. NOTE: this can be overridden in data_dict column or layer entries.",
         "validation": unit_validation,
     },
-    "normalized_yield_unit": {
+    "default_normalized_yield_unit": {
         "value": 1.0 / u.Msun,
-        "description": "Unit used for the normalized-yield data. NOTE: currently it is not possible to override this through the data_dict column or layer entries.",
+        "description": "Default unit used for the normalized-yield data.",
         "validation": unit_validation,
     },
 }

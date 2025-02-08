@@ -46,18 +46,17 @@ from syntheticstellarpopconvolve.general_functions import calculate_bin_edges, t
 
 
 records = [
-    {"time": 0.5, "value": 10, "probability": 1},
-    {"time": 1.5, "probability": 2, "value": 20},
+    {"time": 0.25, "value": 10, "probability": 1},
+    {"time": 1.25, "probability": 2, "value": 20},
+    {"time": 2.25, "probability": 3, "value": 30},
+    {"time": 0.25, "value": 11, "probability": 1.1},
+    {"time": 3.25, "probability": 4, "value": 40},
 ]
 
 example_dataframe = pd.DataFrame.from_records(records)
-print(example_dataframe)
-
 
 sorted_unique_time_centers = np.sort(example_dataframe["time"].unique())
 time_bin_edges = calculate_bin_edges(sorted_unique_time_centers)
-# print(time_bin_edges)
-# quit()
 
 #
 TMP_DIR = temp_dir("code", "convolve_stochastically", clean_path=True)
@@ -82,6 +81,7 @@ convolution_config = copy.copy(default_convolution_config)
 convolution_config["input_filename"] = input_hdf5_filename
 convolution_config["output_filename"] = output_hdf5_filename
 convolution_config["tmp_dir"] = TMP_DIR
+convolution_config["multiprocessing"] = False
 
 
 ###
@@ -106,17 +106,16 @@ convolution_config["convolution_instructions"] = [
 
 #
 convolution_config["time_type"] = "lookback_time"
-convolution_config["convolution_lookback_time_bin_edges"] = np.arange(0, 2, 1) * u.yr
-
+convolution_config["convolution_lookback_time_bin_edges"] = np.arange(8, 10, 1) * u.yr
 
 # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
 sfr_dict = {}
 sfr_dict["lookback_time_bin_edges"] = np.arange(0, 10, 1) * u.yr
 
-#
 sfr_dict["starformation_rate_array"] = (
-    np.ones(sfr_dict["lookback_time_bin_edges"].shape[0] - 1) * u.Msun / u.yr
-)  # example of a constant star-formation rate. this could be anything of course.
+    np.arange(0, len(sfr_dict["lookback_time_bin_edges"]) - 1) * u.Msun / u.yr
+)
+
 
 # store
 convolution_config["SFR_info"] = sfr_dict

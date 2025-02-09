@@ -1,5 +1,4 @@
-"""Routines for stochastic convolution
-
+"""Routines for convolution-by-sampling
 
 initial idea with simple situation
 
@@ -50,7 +49,7 @@ from syntheticstellarpopconvolve.post_convolution_hook_routines import (
 )
 
 
-def convolve_events_by_sampling_post_convolution_hook_wrapper(
+def convolution_by_sampling_post_convolution_hook_wrapper(
     config,
     sfr_dict,
     data_dict,
@@ -70,7 +69,7 @@ def convolve_events_by_sampling_post_convolution_hook_wrapper(
     """
 
     #
-    name = "convolve-events by sampling"
+    name = "convolution by sampling"
 
     #
     config["logger"].warning(
@@ -355,7 +354,7 @@ def sample_systems(
     return data_dict_sampled_systems
 
 
-def convolve_events_by_sampling(
+def convolution_by_sampling(
     config,
     sfr_dict,
     data_dict,
@@ -423,7 +422,7 @@ def convolve_events_by_sampling(
 
     ######
     # Handle post-convolution function
-    convolution_results = convolve_events_by_sampling_post_convolution_hook_wrapper(
+    convolution_results = convolution_by_sampling_post_convolution_hook_wrapper(
         config=config,
         sfr_dict=sfr_dict,
         data_dict=data_dict,

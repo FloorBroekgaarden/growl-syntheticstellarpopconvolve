@@ -2,20 +2,13 @@
 Functions to convolve events
 """
 
-import astropy.units as u
-import numpy as np
-import pandas as pd
-
-from syntheticstellarpopconvolve.general_functions import (
-    calculate_digitized_sfr_rates,
-    handle_custom_scaling_or_conversion,
-)
+from syntheticstellarpopconvolve.general_functions import calculate_digitized_sfr_rates
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     handle_post_convolution_function,
 )
 
 
-def convolve_events_by_integration_post_convolution_hook_wrapper(
+def convolution_by_integration_post_convolution_hook_wrapper(
     config,
     sfr_dict,
     data_dict,
@@ -35,7 +28,7 @@ def convolve_events_by_integration_post_convolution_hook_wrapper(
     """
 
     #
-    name = "convolve-events by integration"
+    name = "convolution by integration"
 
     #
     config["logger"].warning(
@@ -93,89 +86,7 @@ def convolve_events_by_integration_post_convolution_hook_wrapper(
     return convolution_results
 
 
-# TODO: describe properly.
-# TODO: move to general function
-# TODO: rename
-def extract_event_data(config, convolution_instruction):
-    """
-    Function to extract the event-type data from the correct table and store the stuff in the correct column.
-    """
-
-    #
-    data_dict = {}
-
-    #
-    event_df = pd.read_hdf(
-        config["output_filename"],
-        "/input_data/{}".format(convolution_instruction["input_data_name"]),
-    )
-
-    data_column_dict = convolution_instruction["data_column_dict"]
-
-    # add all the columns to the data dictionary. This automatically handles the correct additional columns for the extra weights function
-    for column in data_column_dict.keys():
-        config["logger"].debug(
-            "Extracting {} as the {} data".format(data_column_dict[column], column)
-        )
-
-        # if its a string we just assume its the column name
-        if isinstance(data_column_dict[column], str):
-            data_dict[column] = event_df[data_column_dict[column]].to_numpy()
-
-            #################
-            # Handle unit for delay-time
-            if column == "delay_time":
-                data_dict[column] = (
-                    data_dict[column] * config["delay_time_default_unit"]
-                )
-
-        elif isinstance(data_column_dict[column], dict):
-            # extract data with the explicit column name entry
-            data = event_df[data_column_dict[column]["column_name"]].to_numpy()
-
-            #################
-            # Handle conversion
-            data = handle_custom_scaling_or_conversion(
-                config=config,
-                data_layer_or_column_dict_entry=data_column_dict[column],
-                value=data,
-            )
-
-            # Store
-            data_dict[column] = data
-
-            #################
-            # Handle unit for delay-time
-            # TODO: this should just take whatever unit is provided
-            if column == "delay_time":
-                if "unit" in data_column_dict[column].keys():
-                    unit = data_column_dict[column]["unit"]
-                else:
-                    unit = config["delay_time_default_unit"]
-
-                #
-                data_dict[column] = data_dict[column] * unit
-        else:
-            raise ValueError("input type not supported.")
-
-    ##########
-    # If we have binned data we should addd the delay time bin indices to the
-    if convolution_instruction["contains_binned_data"]:
-        data_dict["delay_time_data_bin_index"] = (
-            np.digitize(
-                data_dict["delay_time"].to(u.yr),
-                convolution_instruction["delay_time_data_bin_info_dict"][
-                    "delay_time_data_bin_edges"
-                ].to(u.yr),
-            )
-            - 1
-        )
-
-    #
-    return config, data_dict, convolution_instruction
-
-
-def convolve_events_by_integration(
+def convolution_by_integration(
     config,
     sfr_dict,
     data_dict,
@@ -252,7 +163,7 @@ def convolve_events_by_integration(
 
     ######
     # Handle post-convolution function
-    convolution_results = convolve_events_by_integration_post_convolution_hook_wrapper(
+    convolution_results = convolution_by_integration_post_convolution_hook_wrapper(
         config=config,
         sfr_dict=sfr_dict,
         data_dict=data_dict,

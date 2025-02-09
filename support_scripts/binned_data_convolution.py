@@ -11,10 +11,6 @@ import pandas as pd
 import pkg_resources
 
 from syntheticstellarpopconvolve import convolve, default_convolution_config
-from syntheticstellarpopconvolve.convolve_stochastically import (
-    select_dict_entries_with_new_indices,
-)
-from syntheticstellarpopconvolve.ensemble_utils import convert_ensemble_to_dataframe
 from syntheticstellarpopconvolve.general_functions import calculate_bin_edges, temp_dir
 
 records = [
@@ -85,21 +81,18 @@ convolution_config["convolution_lookback_time_bin_edges"] = np.arange(0, 3, 1) *
 
 # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
 sfr_dict = {}
-sfr_dict["lookback_time_bin_edges"] = np.arange(0, 10, 1) * u.yr
+sfr_dict["lookback_time_bin_edges"] = np.arange(8, 10, 1) * u.yr
 
 sfr_dict["starformation_rate_array"] = (
     np.arange(0, len(sfr_dict["lookback_time_bin_edges"]) - 1) ** 2 * u.Msun / u.yr
 )
 
-print(sfr_dict["starformation_rate_array"])
-
-
 # store
 convolution_config["SFR_info"] = sfr_dict
 
 #
-convolution_config["multiply_by_sfr_time_binsize"] = True
-convolution_config["multiply_by_convolution_time_binsize"] = True
+convolution_config["multiply_by_sfr_time_binsize"] = False
+convolution_config["multiply_by_convolution_time_binsize"] = False
 
 # convolve
 convolve(config=convolution_config)

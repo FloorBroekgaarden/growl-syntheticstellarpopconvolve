@@ -279,7 +279,12 @@ def calculate_digitized_sfr_rates_binned_data(
 
     ####
     # Set up empty sfr rates
-    sfr_rates = np.zeros(len(data_dict["delay_time_data_bin_index"]))
+    sfr_rates = (
+        np.zeros(len(data_dict["delay_time_data_bin_index"]))
+        * sfr_dict["starformation_rate_array"].unit
+    )
+    if config["multiply_by_sfr_time_binsize"]:
+        sfr_rates = sfr_rates * delay_time_data_bin_sizes.unit
 
     config["logger"].info("$$$$$$$$$$$$$$$$$$$$$$$$$$")
 
@@ -316,11 +321,18 @@ def calculate_digitized_sfr_rates_binned_data(
         )
 
         #########
-        # check if we extend beyond the all of the sfr bins
+        # check if we extend beyond or below all of the sfr bins
         if shifted_left_delay_time_data_bin_edge >= sfr_bin_edges[-1]:
-            config["logger"].info(
+            config["logger"].warning(
                 "left-most delay time bin edge {} extends beyond the rightmost sfr bin edge: {}. skipping current delay time bin and breaking this loop.".format(
                     shifted_left_delay_time_data_bin_edge, sfr_bin_edges[-1]
+                )
+            )
+            break
+        if shifted_right_delay_time_data_bin_edge <= sfr_bin_edges[0]:
+            config["logger"].warning(
+                "right-most delay time bin edge {} extends below the leftmost sfr bin edge: {}. skipping current delay time bin and breaking this loop.".format(
+                    shifted_right_delay_time_data_bin_edge, sfr_bin_edges[0]
                 )
             )
             break
@@ -361,8 +373,10 @@ def calculate_digitized_sfr_rates_binned_data(
         # - Using the overlap-fraction dict information we can loop over the SFR bins and fetch the rates for the relevant systems
         config["logger"].info("=========================")
 
-        combined_matching_delay_time_data_bin_sfr_rates = np.zeros(
-            matching_delay_time_data_bin_system_indices.shape
+        combined_matching_delay_time_data_bin_sfr_rates = (
+            np.zeros(matching_delay_time_data_bin_system_indices.shape)
+            * sfr_dict["starformation_rate_array"].unit
+            * sfr_bin_sizes.unit
         )
 
         #
@@ -446,15 +460,6 @@ def calculate_digitized_sfr_rates_binned_data(
 
             ########
             # Store the data in the combined array
-
-            # check if it has units
-            if not has_unit(combined_matching_delay_time_data_bin_sfr_rates):
-                combined_matching_delay_time_data_bin_sfr_rates = (
-                    combined_matching_delay_time_data_bin_sfr_rates
-                    * weighted_matching_delay_time_data_bin_sfr_rates.unit
-                )
-
-            # add to combined array for current time-bin
             combined_matching_delay_time_data_bin_sfr_rates += (
                 weighted_matching_delay_time_data_bin_sfr_rates
             )
@@ -514,9 +519,6 @@ def calculate_digitized_sfr_rates_binned_data(
 
         #########
         # store data in grand array
-        if not has_unit(sfr_rates):
-            sfr_rates = sfr_rates * combined_matching_delay_time_data_bin_sfr_rates.unit
-
         sfr_rates[matching_delay_time_data_bin_system_indices] = (
             combined_matching_delay_time_data_bin_sfr_rates
         )

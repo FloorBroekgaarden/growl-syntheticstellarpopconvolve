@@ -11,7 +11,7 @@ from syntheticstellarpopconvolve.check_and_update_sfr_dict import (
 )
 
 
-def load_mpl_rc():
+def load_mpl_rc():  # DH0001
 
     # https://matplotlib.org/users/customizing.html
     mpl.rc(

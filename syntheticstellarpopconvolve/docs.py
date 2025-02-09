@@ -5,7 +5,7 @@ import astropy.units as u
 dimensionless_unit = u.m / u.m
 
 
-def build_description_table(table_name, parameter_list, description_dict):
+def build_description_table(table_name, parameter_list, description_dict):  # DH0001
     """
     Function to create a table containing the description of the options
     """
@@ -45,7 +45,7 @@ def build_description_table(table_name, parameter_list, description_dict):
     return rst_table
 
 
-def parse_description(
+def parse_description(  # DH0001
     description_dict, add_unit=True, add_value=True, add_validation=True
 ):
     """
@@ -106,7 +106,7 @@ def parse_description(
 
 #############
 # Utilities to build the description table
-def write_convolution_config_and_instruction_documentation_to_rst_file(
+def write_convolution_config_and_instruction_documentation_to_rst_file(  # DH0001
     convolution_config_defaults_dict,
     convolution_instruction_defaults_dict,
     output_file: str,

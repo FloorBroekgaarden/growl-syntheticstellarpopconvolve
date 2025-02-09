@@ -2,7 +2,10 @@
 Functions to convolve events
 """
 
-from syntheticstellarpopconvolve.general_functions import calculate_digitized_sfr_rates
+from syntheticstellarpopconvolve.general_functions import (
+    calculate_digitized_sfr_rates,
+    get_normalized_yield_unit,
+)
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     handle_post_convolution_function,
 )
@@ -129,14 +132,7 @@ def convolution_by_integration(
     convolved_rate_array = digitized_sfr_rates * data_dict["normalized_yield"]
 
     # Extract normalized yield unit
-    normalized_yield_unit = config["default_normalized_yield_unit"]
-    if isinstance(
-        convolution_instruction["data_column_dict"]["normalized_yield"], dict
-    ):
-        if "unit" in convolution_instruction["data_column_dict"]["normalized_yield"]:
-            normalized_yield_unit = convolution_instruction["data_column_dict"][
-                "normalized_yield"
-            ]["unit"]
+    normalized_yield_unit = get_normalized_yield_unit(config, convolution_instruction)
 
     # Multiply by normalized yield unit
     convolved_rate_array = convolved_rate_array * normalized_yield_unit

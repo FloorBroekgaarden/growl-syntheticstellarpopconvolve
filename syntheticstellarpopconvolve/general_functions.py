@@ -927,3 +927,21 @@ def has_unit(parameter, fail_on_dimensionless=True):
 
 
 has_unit_dimensionless_okay = functools.partial(has_unit, fail_on_dimensionless=False)
+
+
+def get_normalized_yield_unit(config, convolution_instruction):
+    """
+    Function to get the normalized yield unit either from config or from convolution_instruction
+    """
+
+    #
+    normalized_yield_unit = config["default_normalized_yield_unit"]
+    if isinstance(
+        convolution_instruction["data_column_dict"]["normalized_yield"], dict
+    ):
+        if "unit" in convolution_instruction["data_column_dict"]["normalized_yield"]:
+            normalized_yield_unit = convolution_instruction["data_column_dict"][
+                "normalized_yield"
+            ]["unit"]
+
+    return normalized_yield_unit

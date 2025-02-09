@@ -71,6 +71,7 @@ convolution_config["convolution_instructions"] = [
         "data_column_dict": {
             # required
             "normalized_yield": {"column_name": "probability", "unit": u.Msun / u.Msun},
+            "normalized_yield": {"column_name": "probability", "unit": 1 / u.yr},
             # "normalized_yield": "probability",
             "delay_time": {"column_name": "time", "unit": u.yr},
         },
@@ -79,7 +80,7 @@ convolution_config["convolution_instructions"] = [
 
 #
 convolution_config["time_type"] = "lookback_time"
-convolution_config["convolution_lookback_time_bin_edges"] = np.arange(8, 10, 1) * u.yr
+convolution_config["convolution_lookback_time_bin_edges"] = np.arange(0, 3, 1) * u.yr
 # print(convolution_config["normalized_yield_unit"])
 
 # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
@@ -87,8 +88,10 @@ sfr_dict = {}
 sfr_dict["lookback_time_bin_edges"] = np.arange(0, 10, 1) * u.yr
 
 sfr_dict["starformation_rate_array"] = (
-    np.arange(0, len(sfr_dict["lookback_time_bin_edges"]) - 1) * u.Msun / u.yr
+    np.arange(0, len(sfr_dict["lookback_time_bin_edges"]) - 1) ** 2 * u.Msun / u.yr
 )
+
+print(sfr_dict["starformation_rate_array"])
 
 
 # store
@@ -105,41 +108,19 @@ print("finished convolution")
 
 # read out content and integrate until today
 with h5py.File(convolution_config["output_filename"], "r") as output_hdf5_file:
+    #
+    main_group = "output_data/binned_example/binned_example/convolution_results/"
 
-    print(output_hdf5_file.keys())
-    print(output_hdf5_file["output_data"].keys())
-
-    print(
-        output_hdf5_file[
-            "output_data/binned_example/binned_example/convolution_results/8.5 yr/yield"
-        ][()]
-    )
-
-    # convert units
-    unit_dict = json.loads(
-        output_hdf5_file[
-            f"output_data/binned_example/binned_example/convolution_results/8.5 yr"
-        ].attrs["units"]
-    )
-    unit_dict = {key: u.Unit(val) for key, val in unit_dict.items()}
-    print(unit_dict)
-
-    # formation_time_bin_keys = list(
-    #     output_hdf5_file[
-    #         "output_data/event/stochastic_example/stochastic_example/convolution_results"
-    #     ].keys()
-    # )
-    quit()
     ################
     #
 
     # loop over the formation-time bins
+    formation_time_bin_keys = list(output_hdf5_file[main_group].keys())
     formation_time_bin_keys = sorted(
         formation_time_bin_keys, key=lambda x: float(x.split(" ")[0])
     )
     for formation_time_bin_key in formation_time_bin_keys:
 
-        # formation_time_bin_key = "3500000000.0 yr"
         print("=================================")
         print(f"formation_time_bin_key: {formation_time_bin_key}")
         print("=================================")
@@ -149,17 +130,14 @@ with h5py.File(convolution_config["output_filename"], "r") as output_hdf5_file:
 
         # convert units
         unit_dict = json.loads(
-            output_hdf5_file[
-                f"output_data/event/stochastic_example/stochastic_example/convolution_results/{formation_time_bin_key}"
-            ].attrs["units"]
+            output_hdf5_file[f"{main_group}/{formation_time_bin_key}"].attrs["units"]
         )
         unit_dict = {key: u.Unit(val) for key, val in unit_dict.items()}
         print(unit_dict)
 
+        #
+        yield_result = output_hdf5_file[f"{main_group}/{formation_time_bin_key}/yield"][
+            ()
+        ]
 
-#         indices = output_hdf5_file[
-#             f"output_data/event/stochastic_example/stochastic_example/convolution_results/{formation_time_bin_key}/indices"
-#         ][()]
-#         # print(indices)
-
-#         print(type(indices))
+        print(yield_result)

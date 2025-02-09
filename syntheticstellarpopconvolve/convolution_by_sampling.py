@@ -43,7 +43,11 @@ lookback time to the systems (taken randomly between the bin edges)
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve.general_functions import is_mass_unit
+from syntheticstellarpopconvolve.general_functions import (
+    get_normalized_yield_unit,
+    has_unit,
+    is_mass_unit,
+)
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     handle_post_convolution_function,
 )
@@ -277,6 +281,7 @@ def sample_systems(
     lookback_time_bin_lower_edge,
     data_dict,
     config,
+    convolution_instruction,
 ):
     """
     General function to handle sampling a set of systems based on
@@ -293,12 +298,28 @@ def sample_systems(
 
     ############
     # calculate the formation yield of all the systems
-    formation_yield = (
-        total_star_formation_in_bin
-        * data_dict["normalized_yield"]
-        * config["normalized_yield_unit"]
-    )
+    formation_yield = total_star_formation_in_bin * data_dict["normalized_yield"]
 
+    # Extract normalized yield unit
+    normalized_yield_unit = get_normalized_yield_unit(config, convolution_instruction)
+
+    # Multiply by normalized yield unit
+    formation_yield = formation_yield * normalized_yield_unit
+    print(formation_yield)
+    # force into cgs
+    formation_yield = formation_yield.cgs
+    print(formation_yield)
+    # it has to be dimensionless, otherwise its not really a count.
+    if has_unit(formation_yield, fail_on_dimensionless=True):
+        raise ValueError(
+            "Combined formation yield (unit: {}) has to be dimensionless for convolution by sampling. The total star formation in bin ({}) times the normalized yield ({}) should not have a unit anymore.".format(
+                formation_yield.unit.to_string("latex_inline"),
+                total_star_formation_in_bin.unit.to_string("latex_inline"),
+                normalized_yield_unit.unit.to_string("latex_inline"),
+            )
+        )
+
+    ############
     #
     local_indices = np.arange(len(data_dict["normalized_yield"]))
 
@@ -407,6 +428,7 @@ def convolution_by_sampling(
         data_dict=data_dict,
         lookback_time_bin_size=time_bin_info_dict["bin_size"],
         lookback_time_bin_lower_edge=time_bin_info_dict["bin_edge_lower"],
+        convolution_instruction=convolution_instruction,
         config=config,
     )
 

@@ -12,7 +12,7 @@ import pandas as pd
 import pkg_resources
 
 from syntheticstellarpopconvolve import convolve, default_convolution_instruction
-from syntheticstellarpopconvolve.convolve_stochastically import (
+from syntheticstellarpopconvolve.convolution_by_sampling import (
     select_dict_entries_with_new_indices,
 )
 from syntheticstellarpopconvolve.general_functions import temp_dir

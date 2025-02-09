@@ -107,7 +107,7 @@ def load_mpl_rc():  # DH0001
     mpl.rc("mathtext", default="sf")
 
 
-def plot_sfr_dict(
+def plot_sfr_dict(  # DH0001
     sfr_dict,
     time_type,
     metallicity_string="Z",

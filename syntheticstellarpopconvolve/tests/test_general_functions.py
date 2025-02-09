@@ -33,6 +33,7 @@ from syntheticstellarpopconvolve.general_functions import (
     get_username,
     handle_custom_scaling_or_conversion,
     has_unit,
+    is_mass_unit,
     is_time_unit,
     pad_function,
     temp_dir,
@@ -45,6 +46,23 @@ from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_general_functions", clean_path=True
 )
+
+
+class test_is_mass_unit(unittest.TestCase):
+    """ """
+
+    def test_is_mass_unit(self):
+        mass_unit_value = 1 * u.g
+
+        self.assertTrue(is_mass_unit(mass_unit_value))
+
+    def test_is_not_mass_unit(self):
+        no_unit_value = 1
+        self.assertFalse(is_mass_unit(no_unit_value))
+
+    def test_is_unit_but_not_mass_unit(self):
+        wrong_unit_value = 1 * u.yr
+        self.assertFalse(is_mass_unit(wrong_unit_value))
 
 
 class test_is_time_unit(unittest.TestCase):

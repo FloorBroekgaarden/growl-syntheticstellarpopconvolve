@@ -2,8 +2,14 @@
 Testcases for ensemble_utils.py file
 """
 
-# import copy
 import unittest
+
+import pandas as pd
+
+from syntheticstellarpopconvolve.ensemble_utils import (
+    convert_ensemble_to_dataframe,
+    find_columnames_recursively,
+)
 
 # from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.general_functions import temp_dir
@@ -14,6 +20,94 @@ from syntheticstellarpopconvolve.general_functions import temp_dir
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_ensemble_utils", clean_path=True
 )
+
+
+example_ensemble_coherent = {
+    "a": {
+        "1": {
+            "b": {
+                "1": {"c": {"1": 1, "2": 2}},
+                "2": {
+                    "c": {
+                        "2": 3,
+                        "3": 4,
+                    }
+                },
+            }
+        },
+        "2": {
+            "b": {
+                "2": {
+                    "c": {
+                        "3": 5,
+                        "4": 6,
+                    }
+                },
+                "3": {"c": {"4": 7, "5": 8}},
+            }
+        },
+    }
+}
+
+
+example_ensemble_small = {
+    "a": {
+        "1": {
+            "b": {
+                "1": 1,
+                "2": 2,
+            }
+        },
+        "2": {
+            "b": {
+                "2": 3,
+                "3": 4,
+            }
+        },
+    }
+}
+
+
+class test_find_columnames_recursively(unittest.TestCase):
+    def test_find_columnames_recursively(self):
+        columnnames = find_columnames_recursively(example_ensemble_coherent)
+        expected_columnnames = ["a", "b", "c"]
+        self.assertEqual(columnnames, expected_columnnames)
+
+
+class test_convert_ensemble_to_dataframe(unittest.TestCase):
+    def test_convert_ensemble_to_dataframe(self):
+        df = convert_ensemble_to_dataframe(example_ensemble_small)
+        df["a"] = df["a"].astype(int)
+        df["b"] = df["b"].astype(int)
+        df["probability"] = df["probability"].astype(float)
+
+        records = [
+            {"a": 1, "b": 1, "probability": 1.0},
+            {"a": 1, "b": 2, "probability": 2.0},
+            {"a": 2, "b": 2, "probability": 3.0},
+            {"a": 2, "b": 3, "probability": 4.0},
+        ]
+
+        expected_df = pd.DataFrame.from_records(records)
+        self.assertTrue(df.equals(expected_df))
+
+    def test_convert_ensemble_to_dataframe_structure(self):
+        df = convert_ensemble_to_dataframe({"test": example_ensemble_small})
+
+        df["a"] = df["a"].astype(int)
+        df["b"] = df["b"].astype(int)
+        df["probability"] = df["probability"].astype(float)
+
+        records = [
+            {"ensemble": "test", "a": 1, "b": 1, "probability": 1.0},
+            {"ensemble": "test", "a": 1, "b": 2, "probability": 2.0},
+            {"ensemble": "test", "a": 2, "b": 2, "probability": 3.0},
+            {"ensemble": "test", "a": 2, "b": 3, "probability": 4.0},
+        ]
+
+        expected_df = pd.DataFrame.from_records(records)
+        self.assertTrue(df.equals(expected_df))
 
 
 # class test__get_ensemble_structure(unittest.TestCase):

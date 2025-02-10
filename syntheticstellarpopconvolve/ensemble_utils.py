@@ -984,7 +984,7 @@ from syntheticstellarpopconvolve.default_convolution_config import (
 
 def inflate_ensemble(ensemble_data):
     """
-    Function to inflate an ensmeble, taking all the values for each datalayer and making a rectangular grid for it
+    Function to inflate an ensemble, taking all the values for each datalayer and making a rectangular grid for it
 
     The first value should be a namelayer
     """
@@ -1211,12 +1211,15 @@ def convert_ensemble_to_dataframe(
     if contains_named_layers:
         try:
             columnames = find_columnames_recursively(ensemble_data)
+            data_list = inflate_ensemble_with_lists_and_named_layers(ensemble_data)
+
         except:
             columnames = find_columnames_recursively({"ensemble": ensemble_data})
-        print(columnames)
+            data_list = inflate_ensemble_with_lists_and_named_layers(
+                {"ensemble": ensemble_data}
+            )
 
         #
-        data_list = inflate_ensemble_with_lists_and_named_layers(ensemble_data)
     else:
         if columnames is None:
             raise ValueError(

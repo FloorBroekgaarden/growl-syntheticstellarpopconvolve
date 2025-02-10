@@ -938,6 +938,12 @@ def get_normalized_yield_unit(config, convolution_instruction):
 
     #
     normalized_yield_unit = config["default_normalized_yield_unit"]
+
+    if "normalized_yield" not in convolution_instruction["data_column_dict"]:
+        raise ValueError(
+            "'normalized_yield' should be provided in the 'data_column_dict'"
+        )
+
     if isinstance(
         convolution_instruction["data_column_dict"]["normalized_yield"], dict
     ):

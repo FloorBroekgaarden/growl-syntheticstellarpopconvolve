@@ -305,17 +305,17 @@ def sample_systems(
 
     # Multiply by normalized yield unit
     formation_yield = formation_yield * normalized_yield_unit
-    print(formation_yield)
+
     # force into cgs
     formation_yield = formation_yield.cgs
-    print(formation_yield)
+
     # it has to be dimensionless, otherwise its not really a count.
     if has_unit(formation_yield, fail_on_dimensionless=True):
         raise ValueError(
             "Combined formation yield (unit: {}) has to be dimensionless for convolution by sampling. The total star formation in bin ({}) times the normalized yield ({}) should not have a unit anymore.".format(
-                formation_yield.unit.to_string("latex_inline"),
-                total_star_formation_in_bin.unit.to_string("latex_inline"),
-                normalized_yield_unit.unit.to_string("latex_inline"),
+                formation_yield.unit.to_string(),
+                total_star_formation_in_bin.unit.to_string(),
+                normalized_yield_unit.unit.to_string(),
             )
         )
 

@@ -384,10 +384,10 @@ def handle_convolution_choice(
         )
 
     elif convolution_instruction["convolution_type"] == "sample":
-        if convolution_instruction["contains_binned_data"]:
-            raise ValueError(
-                "Convolving binned data with convolution by sampling is currently not supported"
-            )
+        # if convolution_instruction["contains_binned_data"]:
+        #     raise ValueError(
+        #         "Convolving binned data with convolution by sampling is currently not supported"
+        #     )
 
         ##########
         #

@@ -435,12 +435,13 @@ def convolution_by_sampling(
     ######
     # Add event lookback time. If the user provides delay-times for the systems/events,
     # we determine the event times and (by default) filter out anything that happens in the future.
-    convolution_results = add_event_lookback_time_and_filter(
-        config=config,
-        data_dict=data_dict,
-        convolution_instruction=convolution_instruction,
-        sampled_data_dict=convolution_results,
-    )
+    if convolution_instruction["add_event_lookback_time_and_filter"]:
+        convolution_results = add_event_lookback_time_and_filter(
+            config=config,
+            data_dict=data_dict,
+            convolution_instruction=convolution_instruction,
+            sampled_data_dict=convolution_results,
+        )
 
     ######
     # Handle post-convolution function

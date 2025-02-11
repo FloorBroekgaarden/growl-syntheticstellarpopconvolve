@@ -10,7 +10,11 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolve, default_convolution_config
+from syntheticstellarpopconvolve import (
+    convolve,
+    default_convolution_config,
+    default_convolution_instruction,
+)
 from syntheticstellarpopconvolve.general_functions import calculate_bin_edges, temp_dir
 
 
@@ -24,23 +28,51 @@ def post_convolution_function(
 ):
     """ """
 
-    print(data_dict)
+    # print(data_dict)
+    print(convolution_results)
 
-    return data_dict
+    #########
+    # TODO: package this in a function
+    log10Teff_bin_edges = np.array([1.5, 2.5, 3.5, 4.5])
+    log10Teff_bin_widths = np.diff(log10Teff_bin_edges)
 
+    log10Teff_indices = (
+        np.digitize(convolution_results["log10Teff"], log10Teff_bin_edges) - 1
+    )
+    print(log10Teff_indices)
+
+    # get random values
+    random_arr = np.random.random(log10Teff_indices.shape) - 0.5
+
+    # scale to size
+    random_arr = random_arr * log10Teff_bin_widths[log10Teff_indices]
+
+    sampled_log10Teff_values = convolution_results["log10Teff"] + random_arr
+
+    print(convolution_results["log10Teff"])
+    print(sampled_log10Teff_values)
+
+    return convolution_results
+
+
+# records = [
+#     {"log10Teff": 3, "time": 2 + 0.25, "value": 10, "probability": 1},
+#     {"log10Teff": 3, "time": 2 + 1.25, "probability": 2, "value": 20},
+#     {"log10Teff": 3.5, "time": 2 + 2.25, "probability": 3, "value": 30},
+#     {"log10Teff": 3, "time": 2 + 0.25, "value": 11, "probability": 1.1},
+#     {"log10Teff": 3.5, "time": 2 + 3.25, "probability": 4, "value": 40},
+#     {"log10Teff": 3, "time": 2 + 0.25, "value": 10, "probability": 1},
+#     {"log10Teff": 3.5, "time": 2 + 1.25, "probability": 2, "value": 20},
+#     {"log10Teff": 4, "time": 2 + 2.25, "probability": 3, "value": 30},
+#     {"log10Teff": 3.5, "time": 2 + 0.25, "value": 11, "probability": 1.1},
+#     {"log10Teff": 4, "time": 2 + 3.25, "probability": 4, "value": 40},
+# ]
 
 records = [
-    {"log10Teff": 3, "time": 2 + 0.25, "value": 10, "probability": 1},
-    {"log10Teff": 3, "time": 2 + 1.25, "probability": 2, "value": 20},
-    {"log10Teff": 3.5, "time": 2 + 2.25, "probability": 3, "value": 30},
-    {"log10Teff": 3, "time": 2 + 0.25, "value": 11, "probability": 1.1},
-    {"log10Teff": 3.5, "time": 2 + 3.25, "probability": 4, "value": 40},
-    {"log10Teff": 3, "time": 2 + 0.25, "value": 10, "probability": 1},
-    {"log10Teff": 3.5, "time": 2 + 1.25, "probability": 2, "value": 20},
-    {"log10Teff": 4, "time": 2 + 2.25, "probability": 3, "value": 30},
-    {"log10Teff": 3.5, "time": 2 + 0.25, "value": 11, "probability": 1.1},
-    {"log10Teff": 4, "time": 2 + 3.25, "probability": 4, "value": 40},
+    {"time": 0.25, "log10Teff": 3.0, "probability": 10},
+    {"time": 1.25, "log10Teff": 0, "probability": 0},
 ]
+
 
 example_dataframe = pd.DataFrame.from_records(records)
 
@@ -71,12 +103,13 @@ convolution_config["input_filename"] = input_hdf5_filename
 convolution_config["output_filename"] = output_hdf5_filename
 convolution_config["tmp_dir"] = TMP_DIR
 convolution_config["multiprocessing"] = False
-convolution_config["logger"].setLevel(logging.DEBUG)
+convolution_config["logger"].setLevel(logging.CRITICAL)
 
 ###
 # convolution instructions
 convolution_config["convolution_instructions"] = [
     {
+        **default_convolution_instruction,
         "convolution_type": "sample",
         "input_data_name": "binned_example",
         "output_data_name": "binned_example",
@@ -91,6 +124,7 @@ convolution_config["convolution_instructions"] = [
             "normalized_yield": {"column_name": "probability", "unit": 1 / u.Msun},
             # "normalized_yield": "probability",
             "delay_time": {"column_name": "time", "unit": u.yr},
+            "log10Teff": "log10Teff",
         },
         "post_convolution_function": post_convolution_function,
     },
@@ -98,15 +132,15 @@ convolution_config["convolution_instructions"] = [
 
 #
 convolution_config["time_type"] = "lookback_time"
-convolution_config["convolution_lookback_time_bin_edges"] = np.arange(0, 3, 1) * u.yr
+convolution_config["convolution_lookback_time_bin_edges"] = np.arange(0, 2, 1) * u.yr
 # print(convolution_config["normalized_yield_unit"])
 
 # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
 sfr_dict = {}
-sfr_dict["lookback_time_bin_edges"] = np.arange(0, 10, 1) * u.yr
+sfr_dict["lookback_time_bin_edges"] = np.arange(0, 2, 1) * u.yr
 
 sfr_dict["starformation_rate_array"] = (
-    np.arange(0, len(sfr_dict["lookback_time_bin_edges"]) - 1) ** 2 * u.Msun / u.yr
+    np.ones(len(sfr_dict["lookback_time_bin_edges"]) - 1) * u.Msun / u.yr
 )
 
 # store

@@ -18,6 +18,11 @@ dimensionless_unit = u.m / u.m
 default_convolution_instruction_dict = {
     ########################
     # Unsorted
+    "add_event_lookback_time_and_filter": {
+        "value": True,
+        "description": "Flag to indicate to add event-lookback times during convolution-by-sampling. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
+        "validation": boolean_int_validation,
+    },
     "contains_binned_data": {
         "value": False,
         "description": "Flag to indicate whether the input data is binned (in time). If so, the user should provide additional information",

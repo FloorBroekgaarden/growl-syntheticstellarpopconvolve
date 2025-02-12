@@ -28,9 +28,6 @@ def post_convolution_function(
 ):
     """ """
 
-    # print(data_dict)
-    print(convolution_results)
-
     #########
     # TODO: package this in a function
     log10Teff_bin_edges = np.array([1.5, 2.5, 3.5, 4.5])
@@ -39,14 +36,12 @@ def post_convolution_function(
     log10Teff_indices = (
         np.digitize(convolution_results["log10Teff"], log10Teff_bin_edges) - 1
     )
-    print(log10Teff_indices)
 
-    # get random values
+    # get random values and scale
     random_arr = np.random.random(log10Teff_indices.shape) - 0.5
-
-    # scale to size
     random_arr = random_arr * log10Teff_bin_widths[log10Teff_indices]
 
+    # Add to values
     sampled_log10Teff_values = convolution_results["log10Teff"] + random_arr
 
     print(convolution_results["log10Teff"])

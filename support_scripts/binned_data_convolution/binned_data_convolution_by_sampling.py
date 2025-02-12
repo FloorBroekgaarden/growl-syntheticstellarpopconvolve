@@ -18,6 +18,23 @@ from syntheticstellarpopconvolve import (
 from syntheticstellarpopconvolve.general_functions import calculate_bin_edges, temp_dir
 
 
+def sample_around_bin_center(bin_edges, values):
+    """ """
+
+    bin_widths = np.diff(bin_edges)
+
+    indices = np.digitize(values, bin_edges) - 1
+
+    # get random values and scale
+    random_arr = np.random.random(indices.shape) - 0.5
+    random_arr = random_arr * bin_widths[indices]
+
+    # Add to values
+    sampled_values = values + random_arr
+
+    return sampled_values
+
+
 def post_convolution_function(
     config,
     sfr_dict,
@@ -28,24 +45,26 @@ def post_convolution_function(
 ):
     """ """
 
-    #########
-    # TODO: package this in a function
-    log10Teff_bin_edges = np.array([1.5, 2.5, 3.5, 4.5])
-    log10Teff_bin_widths = np.diff(log10Teff_bin_edges)
+    print(convolution_results.keys())
 
-    log10Teff_indices = (
-        np.digitize(convolution_results["log10Teff"], log10Teff_bin_edges) - 1
+    delay_time_values = convolution_results["delay_time"]
+    sampled_delay_time_values = sample_around_bin_center(
+        time_bin_edges, delay_time_values
+    )
+    sampled_event_time_values = (
+        convolution_results["formation_lookback_time"] - delay_time_values
     )
 
-    # get random values and scale
-    random_arr = np.random.random(log10Teff_indices.shape) - 0.5
-    random_arr = random_arr * log10Teff_bin_widths[log10Teff_indices]
+    # check which ones are negative
 
-    # Add to values
-    sampled_log10Teff_values = convolution_results["log10Teff"] + random_arr
+    #########
 
-    print(convolution_results["log10Teff"])
-    print(sampled_log10Teff_values)
+    log10Teff_bin_edges = np.array([1.5, 2.5, 3.5])
+    sampled_log10Teff_values = sample_around_bin_center(
+        log10Teff_bin_edges, convolution_results["log10Teff"]
+    )
+
+    sampled_delaytime_values = convolution_results["log10Teff"]
 
     return convolution_results
 
@@ -122,6 +141,7 @@ convolution_config["convolution_instructions"] = [
             "log10Teff": "log10Teff",
         },
         "post_convolution_function": post_convolution_function,
+        "assign_formation_lookback_time": False,
     },
 ]
 

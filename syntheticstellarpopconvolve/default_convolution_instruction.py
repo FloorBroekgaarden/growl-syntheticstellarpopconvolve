@@ -18,9 +18,19 @@ dimensionless_unit = u.m / u.m
 default_convolution_instruction_dict = {
     ########################
     # Unsorted
-    "add_event_lookback_time_and_filter": {
+    # "assign_formation_lookback_time": {
+    #     "value": True,
+    #     "description": "Flag to indicate to assign formation-lookback times during convolution-by-sampling. If false, assigning event-lookback times and filtering future events will not be possible, and `assign_event_lookback_time` and `filter_future_events` are ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
+    #     "validation": boolean_int_validation,
+    # },
+    "assign_event_lookback_time": {
         "value": True,
-        "description": "Flag to indicate to add event-lookback times during convolution-by-sampling. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
+        "description": "Flag to indicate to assign event-lookback times during convolution-by-sampling. If false, filtering future events will not be possible, and `filter_future_events` is ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
+        "validation": boolean_int_validation,
+    },
+    "filter_future_events": {
+        "value": True,
+        "description": "Flag to control filtering out future events during convolution-by-sampling. See also `assign_event_lookback_time`. Not recommended when using binned data.",
         "validation": boolean_int_validation,
     },
     "contains_binned_data": {

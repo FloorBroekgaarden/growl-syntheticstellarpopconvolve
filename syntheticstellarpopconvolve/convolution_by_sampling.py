@@ -174,7 +174,7 @@ def add_event_lookback_time_and_filter(
     sampled_data_dict["event_lookback_times"] = event_lookback_times.to(u.yr)
 
     # filter out future events
-    if convolution_instruction.get("filter_future_events", True):
+    if convolution_instruction["filter_future_events"]:
 
         local_indices = np.arange(len(event_lookback_times))
 
@@ -435,7 +435,7 @@ def convolution_by_sampling(
     ######
     # Add event lookback time. If the user provides delay-times for the systems/events,
     # we determine the event times and (by default) filter out anything that happens in the future.
-    if convolution_instruction["add_event_lookback_time_and_filter"]:
+    if convolution_instruction["assign_event_lookback_time"]:
         convolution_results = add_event_lookback_time_and_filter(
             config=config,
             data_dict=data_dict,

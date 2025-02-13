@@ -45,16 +45,21 @@ def post_convolution_function(
 ):
     """ """
 
-    print(convolution_results.keys())
-
     delay_time_values = convolution_results["delay_time"]
     sampled_delay_time_values = sample_around_bin_center(
-        time_bin_edges, delay_time_values
+        time_bin_edges, delay_time_values.value
     )
     sampled_event_time_values = (
-        convolution_results["formation_lookback_time"] - delay_time_values
+        convolution_results["formation_lookback_times"] - delay_time_values
     )
 
+    print(
+        'convolution_results["formation_lookback_times"]',
+        convolution_results["formation_lookback_times"],
+    )
+    print('convolution_results["delay_time"]', convolution_results["delay_time"])
+    print("sampled_delay_time_values", sampled_delay_time_values)
+    print("sampled_event_time_values", sampled_event_time_values)
     # check which ones are negative
 
     #########
@@ -63,8 +68,8 @@ def post_convolution_function(
     sampled_log10Teff_values = sample_around_bin_center(
         log10Teff_bin_edges, convolution_results["log10Teff"]
     )
-
-    sampled_delaytime_values = convolution_results["log10Teff"]
+    print('convolution_results["log10Teff"]', convolution_results["log10Teff"])
+    print("sampled_log10Teff_values", sampled_log10Teff_values)
 
     return convolution_results
 

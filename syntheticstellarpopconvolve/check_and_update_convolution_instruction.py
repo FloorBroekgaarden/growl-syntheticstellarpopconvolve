@@ -7,7 +7,7 @@ import voluptuous as vol
 from syntheticstellarpopconvolve.default_convolution_instruction import (
     default_convolution_instruction_dict,
 )
-from syntheticstellarpopconvolve.general_functions import check_required
+from syntheticstellarpopconvolve.general_functions import check_required, is_time_unit
 
 
 def check_metallicity(convolution_instruction, data_key):
@@ -15,12 +15,29 @@ def check_metallicity(convolution_instruction, data_key):
     Function to check the metallicity
     """
 
-    if "ignore_metallicity" not in convolution_instruction.keys():
+    if (
+        "ignore_metallicity" not in convolution_instruction.keys()
+        or convolution_instruction["ignore_metallicity"] is False
+    ):
         if "metallicity" not in convolution_instruction.get(data_key, {}).keys():
             if "metallicity_value" not in convolution_instruction.keys():
                 raise ValueError(
                     "If no metallicity value column / layer is provided, you either need to give 'metallicity_value' or set 'ignore_metallicity' to True"
                 )
+
+
+def check_delay_time_data_bin_info_dict(delay_time_data_bin_info_dict):
+    """
+    Function to check data time bin info dict
+    """
+
+    if "delay_time_data_bin_edges" not in delay_time_data_bin_info_dict:
+        raise ValueError(
+            "`delay_time_data_bin_edges` is required in the delay_time_data_bin_info_dict when convolving binned data"
+        )
+
+    if not is_time_unit(delay_time_data_bin_info_dict["delay_time_data_bin_edges"]):
+        raise ValueError("Please express 'delay_time_data_bin_edges' in units of time")
 
 
 def check_convolution_instruction(convolution_instruction, config):
@@ -60,85 +77,56 @@ def check_convolution_instruction(convolution_instruction, config):
 
         check_required(
             config=convolution_instruction,
-            required_list=["input_data_type"],
+            required_list=[
+                "data_column_dict",
+            ],
         )
 
-        ################
-        # check event-specific instructions
-        if convolution_instruction["input_data_type"] == "event":
+        #
+        check_required(
+            config=convolution_instruction["data_column_dict"],
+            required_list=[
+                "normalized_yield",
+            ],
+        )
 
+        # check how metallicity is treated
+        check_metallicity(
+            convolution_instruction=convolution_instruction,
+            data_key="data_column_dict",
+        )
+
+        check_required(
+            config=convolution_instruction,
+            required_list=[
+                "contains_binned_data",
+            ],
+        )
+
+        #
+        if convolution_instruction["contains_binned_data"]:
             check_required(
                 config=convolution_instruction,
                 required_list=[
-                    "data_column_dict",
+                    "delay_time_data_bin_info_dict",
                 ],
             )
 
-            #
+            check_delay_time_data_bin_info_dict(
+                delay_time_data_bin_info_dict=convolution_instruction[
+                    "delay_time_data_bin_info_dict"
+                ],
+            )
+
+        else:
             check_required(
                 config=convolution_instruction["data_column_dict"],
                 required_list=[
                     "delay_time",
-                    "normalized_yield",
                 ],
             )
-
-            # check how metallicity is treated
-            check_metallicity(
-                convolution_instruction=convolution_instruction,
-                data_key="data_column_dict",
-            )
-
-            # TODO: if a second function is passed along (to calculate the
-            # detectability for example), then lets check if the user also provided
-            # a dictionary that links the function parameter name to the column name
-            # of the correct pandas table.
-
-        ################
-        # check ensemble-specific instructions
-        elif convolution_instruction["input_data_type"] == "ensemble":
-
-            # data
-            check_required(
-                config=convolution_instruction,
-                required_list=[
-                    "data_layer_dict",
-                ],
-            )
-
-            # the data layer dict requires only to have the delay time layer. the yield rate layer iks implied to be the deepest one
-            check_required(
-                config=convolution_instruction["data_layer_dict"],
-                required_list=[
-                    "delay_time",
-                ],
-            )
-
-            # check how metallicity is treated
-            check_metallicity(
-                convolution_instruction=convolution_instruction,
-                data_key="data_layer_dict",
-            )
-
-        ###########
-        # custom structure instructions
-        elif convolution_instruction["input_data_type"] == "custom":
-            # TODO:
-            raise ValueError("Custom input data type not supported yet")
 
     elif convolution_instruction["convolution_type"] == "sample":
-        check_required(
-            config=convolution_instruction,
-            required_list=["input_data_type"],
-        )
-
-        ###########
-        # custom structure instructions
-        if convolution_instruction["input_data_type"] != "event":
-            # TODO:
-            raise ValueError(
-                "input data other than event-type data currently not supported when sampling"
-            )
 
         check_required(
             config=convolution_instruction,
@@ -151,7 +139,6 @@ def check_convolution_instruction(convolution_instruction, config):
         check_required(
             config=convolution_instruction["data_column_dict"],
             required_list=[
-                # "IDs",
                 "normalized_yield",
             ],
         )

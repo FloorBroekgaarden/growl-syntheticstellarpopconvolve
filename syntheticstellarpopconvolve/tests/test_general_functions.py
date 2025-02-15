@@ -15,21 +15,28 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve import (
+    default_convolution_config,
+    default_convolution_instruction,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.general_functions import (
+    JsonCustomEncoder,
     calculate_bin_edges,
     calculate_bincenters,
     calculate_digitized_sfr_rates,
     calculate_origin_time_array,
     check_required,
+    extract_unit_dict,
     generate_group_name,
+    get_normalized_yield_unit,
     get_tmp_dir,
     get_username,
     handle_custom_scaling_or_conversion,
     has_unit,
+    is_mass_unit,
     is_time_unit,
     pad_function,
     temp_dir,
@@ -42,6 +49,101 @@ from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_general_functions", clean_path=True
 )
+
+
+class test_get_normalized_yield_unit(unittest.TestCase):
+    """ """
+
+    def test_get_normalized_yield_unit_no_normalized_yield(self):
+
+        #
+        tmp_convolution_config = copy.copy(default_convolution_config)
+        tmp_convolution_instruction = copy.copy(default_convolution_instruction)
+
+        with self.assertRaises(ValueError):
+            get_normalized_yield_unit(
+                tmp_convolution_config, tmp_convolution_instruction
+            )
+
+    def test_get_normalized_yield_unit_default(self):
+
+        #
+        tmp_convolution_config = copy.copy(default_convolution_config)
+        tmp_convolution_instruction = copy.copy(default_convolution_instruction)
+        tmp_convolution_instruction["data_column_dict"] = {
+            "normalized_yield": "normalized_yield"
+        }
+
+        #
+        unit = get_normalized_yield_unit(
+            tmp_convolution_config, tmp_convolution_instruction
+        )
+        expected_unit = 1 * 1 / u.Msun
+
+        #
+        self.assertEqual(unit, expected_unit)
+
+    def test_get_normalized_yield_unit_custom(self):
+
+        #
+        tmp_convolution_config = copy.copy(default_convolution_config)
+        tmp_convolution_instruction = copy.copy(default_convolution_instruction)
+        tmp_convolution_instruction["data_column_dict"] = {
+            "normalized_yield": {"name": "normalized_yield", "unit": u.Msun}
+        }
+
+        #
+        unit = get_normalized_yield_unit(
+            tmp_convolution_config, tmp_convolution_instruction
+        )
+        expected_unit = u.Msun
+
+        #
+        self.assertEqual(unit, expected_unit)
+
+
+class test_extract_unit_dict(unittest.TestCase):
+    """ """
+
+    def test_extract_unit_dict(self):
+
+        tmp_output_filename = os.path.join(TMP_DIR, "test_extract_unit_dict.h5py")
+        groupname = "test_extract_unit_dict"
+
+        #######
+        # Store data
+        unit_dict = {"a": u.Msun}
+
+        with h5py.File(tmp_output_filename, "a") as output_hdf5file:
+            output_hdf5file.create_group(groupname)
+
+            output_hdf5file["test_extract_unit_dict"].attrs["units"] = json.dumps(
+                unit_dict, cls=JsonCustomEncoder
+            )
+
+        #######
+        # Store data
+        with h5py.File(tmp_output_filename, "r") as output_hdf5file:
+            read_unit_dict = extract_unit_dict(output_hdf5file, groupname)
+
+            self.assertTrue(read_unit_dict == unit_dict)
+
+
+class test_is_mass_unit(unittest.TestCase):
+    """ """
+
+    def test_is_mass_unit(self):
+        mass_unit_value = 1 * u.g
+
+        self.assertTrue(is_mass_unit(mass_unit_value))
+
+    def test_is_not_mass_unit(self):
+        no_unit_value = 1
+        self.assertFalse(is_mass_unit(no_unit_value))
+
+    def test_is_unit_but_not_mass_unit(self):
+        wrong_unit_value = 1 * u.yr
+        self.assertFalse(is_mass_unit(wrong_unit_value))
 
 
 class test_is_time_unit(unittest.TestCase):
@@ -170,7 +272,6 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -193,7 +294,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
 
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         self.convolution_config = copy.copy(default_convolution_config)
@@ -226,7 +327,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         #
         self.convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -254,6 +355,9 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
             convolution_time_bin_center=0.5 * 1e9 * u.yr,
             data_dict={"delay_time": np.array([-1, 1, 2, 3, 100]) * 1e9 * u.yr},
             sfr_dict=self.convolution_config["SFR_info"],
+            convolution_instruction=self.convolution_config["convolution_instructions"][
+                0
+            ],
         )
         output_unit = u.Msun / u.yr / u.Gpc**3
 
@@ -430,7 +534,6 @@ class test_pad_function(unittest.TestCase):
 class test_generate_group_name(unittest.TestCase):
     def setUp(self):
         self.convolution_instruction = {
-            "input_data_type": "image",
             "input_data_name": "input_image",
             "output_data_name": "output_image",
         }
@@ -440,15 +543,15 @@ class test_generate_group_name(unittest.TestCase):
         groupname, elements = generate_group_name(
             self.convolution_instruction, self.sfr_dict
         )
-        expected_groupname = "test_group/image/input_image/output_image"
-        expected_elements = ["test_group", "image", "input_image", "output_image"]
+        expected_groupname = "test_group/input_image/output_image"
+        expected_elements = ["test_group", "input_image", "output_image"]
         self.assertEqual(groupname, expected_groupname)
         self.assertListEqual(elements, expected_elements)
 
     def test_generate_group_name_without_sfr(self):
         groupname, elements = generate_group_name(self.convolution_instruction, {})
-        expected_groupname = "image/input_image/output_image"
-        expected_elements = ["image", "input_image", "output_image"]
+        expected_groupname = "input_image/output_image"
+        expected_elements = ["input_image", "output_image"]
         self.assertEqual(groupname, expected_groupname)
         self.assertListEqual(elements, expected_elements)
 
@@ -456,7 +559,6 @@ class test_generate_group_name(unittest.TestCase):
 class test_get_tmp_dir(unittest.TestCase):
     def setUp(self):
         self.convolution_instruction = {
-            "input_data_type": "image",
             "input_data_name": "input_image",
             "output_data_name": "output_image",
         }
@@ -466,9 +568,7 @@ class test_get_tmp_dir(unittest.TestCase):
             config={"tmp_dir": TMP_DIR},
             convolution_instruction=self.convolution_instruction,
         )
-        self.assertEqual(
-            tmp_dir, os.path.join(TMP_DIR, "image/input_image/output_image")
-        )
+        self.assertEqual(tmp_dir, os.path.join(TMP_DIR, "input_image/output_image"))
 
 
 if __name__ == "__main__":

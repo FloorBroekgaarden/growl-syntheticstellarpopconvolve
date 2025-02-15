@@ -91,9 +91,14 @@ float_or_int = vol.Or(float, int)
 default_convolution_config_dict = {
     ###################
     # Unsorted
-    "multiply_by_time_binsize": {
+    "multiply_by_convolution_time_binsize": {
         "value": False,
-        "description": "Flag to multiply the SFR value by the time-bin size. When time-type='redshift' we use the associated lookback times and the width between those to calcualte the bi",
+        "description": "Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.",
+        "validation": boolean_int_validation,
+    },
+    "multiply_by_sfr_time_binsize": {
+        "value": False,
+        "description": "Flag to multiply the convolution results by the starformation rate time bin size. Not supported when time_type=='redshift'.",
         "validation": boolean_int_validation,
     },
     ###################
@@ -266,9 +271,9 @@ default_convolution_config_dict = {
         "description": "Default unit used for the delay-time data. NOTE: this can be overridden in data_dict column or layer entries.",
         "validation": unit_validation,
     },
-    "normalized_yield_unit": {
+    "default_normalized_yield_unit": {
         "value": 1.0 / u.Msun,
-        "description": "Unit used for the normalized-yield data. NOTE: currently it is not possible to override this through the data_dict column or layer entries.",
+        "description": "Default unit used for the normalized-yield data.",
         "validation": unit_validation,
     },
 }

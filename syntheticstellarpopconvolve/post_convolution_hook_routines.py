@@ -129,7 +129,7 @@ def handle_post_convolution_function(
         # Otherwise check if the convolution_results is a dict object
         elif not isinstance(convolution_results, dict):
             raise ValueError(
-                "The result dict object must be a dictionary type object after the post-convolution call. It's now a {}-type object".format(
+                "The result dict object must be a dictionary type object after the post-convolution call. It's now a {}-type object. Please ensure that you return a dictionary.".format(
                     type(convolution_results)
                 )
             )

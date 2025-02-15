@@ -176,7 +176,6 @@ convolution_config["filter_future_events"] = False
 # convolution instructions
 convolution_config["convolution_instructions"] = [
     {
-        "input_data_type": "event",
         "convolution_type": "sample",
         "input_data_name": "stochastic_example",
         "output_data_name": "stochastic_example",

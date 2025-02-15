@@ -1,7 +1,5 @@
 """
 Main file to handle the convolution of populations
-
-TODO: stop passing job_dict to everything. I don't entirely like passing the job dict as well as the separated dicts. I'd rather be explicit and not rely on some all-containing dict..
 """
 
 import copy
@@ -12,30 +10,108 @@ import pickle
 import traceback
 import warnings
 
+import astropy.units as u
 import h5py
+import numpy as np
+import pandas as pd
 import setproctitle
 
-from syntheticstellarpopconvolve.convolve_custom_data import (  # custom_convolution_function,
-    extract_custom_data,
+#######
+from syntheticstellarpopconvolve.convolution_by_integration import (
+    convolution_by_integration,
 )
-from syntheticstellarpopconvolve.convolve_ensembles import (
-    convolve_ensemble_by_integration,
-    extract_ensemble_data,
-)
-from syntheticstellarpopconvolve.convolve_events import (
-    convolve_events_by_integration,
-    extract_event_data,
-)
+from syntheticstellarpopconvolve.convolution_by_sampling import convolution_by_sampling
 from syntheticstellarpopconvolve.convolve_on_the_fly import convolve_on_the_fly
-from syntheticstellarpopconvolve.convolve_stochastically import (
-    convolve_events_by_sampling,
-)
+
+#######
 from syntheticstellarpopconvolve.general_functions import (
     JsonCustomEncoder,
     generate_group_name,
     get_tmp_dir,
+    handle_custom_scaling_or_conversion,
     has_unit,
 )
+
+
+def extract_data(config, convolution_instruction):
+    """
+    Function to extract the data from the correct table and store the information in the correct column.
+
+    Only extracts what is required by the data column dict
+    """
+
+    #
+    data_dict = {}
+
+    #
+    df = pd.read_hdf(
+        config["output_filename"],
+        "/input_data/{}".format(convolution_instruction["input_data_name"]),
+    )
+
+    data_column_dict = convolution_instruction["data_column_dict"]
+
+    # add all the columns to the data dictionary. This automatically handles the correct additional columns for the extra weights function
+    for column in data_column_dict.keys():
+        config["logger"].debug(
+            "Extracting {} as the {} data".format(data_column_dict[column], column)
+        )
+
+        # if its a string we just assume its the column name
+        if isinstance(data_column_dict[column], str):
+            data_dict[column] = df[data_column_dict[column]].to_numpy()
+
+            #################
+            # Handle unit for delay-time
+            if column == "delay_time":
+                data_dict[column] = (
+                    data_dict[column] * config["delay_time_default_unit"]
+                )
+
+        elif isinstance(data_column_dict[column], dict):
+            # extract data with the explicit column name entry
+            data = df[data_column_dict[column]["column_name"]].to_numpy()
+
+            #################
+            # Handle conversion
+            data = handle_custom_scaling_or_conversion(
+                config=config,
+                data_layer_or_column_dict_entry=data_column_dict[column],
+                value=data,
+            )
+
+            # Store
+            data_dict[column] = data
+
+            #################
+            # Handle unit for delay-time
+            # TODO: this should just take whatever unit is provided
+            if column == "delay_time":
+                if "unit" in data_column_dict[column].keys():
+                    unit = data_column_dict[column]["unit"]
+                else:
+                    unit = config["delay_time_default_unit"]
+
+                #
+                data_dict[column] = data_dict[column] * unit
+        else:
+            raise ValueError("input type not supported.")
+
+    ##########
+    # If we have binned data we should addd the delay time bin indices to the
+    if convolution_instruction["contains_binned_data"]:
+        data_dict["delay_time_data_bin_index"] = (
+            np.digitize(
+                data_dict["delay_time"].to(u.yr),
+                convolution_instruction["delay_time_data_bin_info_dict"][
+                    "delay_time_data_bin_edges"
+                ].to(u.yr),
+            )
+            - 1
+        )
+
+    #
+    return config, data_dict, convolution_instruction
 
 
 def handle_storing_convolution_results(config, grp, convolution_results, bin_center):
@@ -97,8 +173,6 @@ def store_convolution_result_entries(
 ):
     """
     Function to handle storing an entry of the convolution_result
-
-    TODO: handle stripped ensemble better
     """
 
     units_to_store = {}
@@ -121,8 +195,6 @@ def store_convolution_result_entries(
             units_to_store[entry] = entry_data.unit
         # handle storing data without units
         else:
-            if entry == "stripped_ensemble":  # TODO: make this more general
-                entry_data = json.dumps(entry_data)
             current_time_bin_group.create_dataset(entry, data=entry_data)
 
     ###########
@@ -283,85 +355,60 @@ def handle_convolution_choice(
     Function to handle the convolution choice
     """
 
-    # -----------------------------------------------------------------------
-    # Handle the convolution depending on which type of data exists. They
-    # all contain the same structure.
-    #
-    # The resulting dictionary contains at
-    # least the results of the convolution (i.e. an array of 'rates' or
-    # total yields), and potentially more, depending on what each function
-    # returns. ensemble convolution for example can return a stripped
-    # ensemble
-    #
-
     #
     time_bin_info_dict = job_dict["time_bin_info_dict"]
 
     ################
     # Event-convolution by integration:
-    if "input_data_type" in convolution_instruction:
+    if convolution_instruction["convolution_type"] == "integrate":
+        # We don't support binned data and redshift based time-types yet
         if (
-            convolution_instruction["input_data_type"] == "event"
-            and convolution_instruction["convolution_type"] == "integrate"
-        ):
-            ##########
-            #
-            convolution_results = convolve_events_by_integration(
-                config=config,
-                sfr_dict=sfr_dict,
-                data_dict=data_dict,
-                time_bin_info_dict=time_bin_info_dict,
-                convolution_instruction=convolution_instruction,
-                #
-                persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results,
-            )
-
-        elif (
-            convolution_instruction["input_data_type"] == "event"
-            and convolution_instruction["convolution_type"] == "sample"
-        ):
-            ##########
-            #
-            convolution_results = convolve_events_by_sampling(
-                config=config,
-                sfr_dict=sfr_dict,
-                data_dict=data_dict,
-                time_bin_info_dict=time_bin_info_dict,
-                convolution_instruction=convolution_instruction,
-                #
-                persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results,
-            )
-
-        elif (
-            convolution_instruction["input_data_type"] == "ensemble"
-            and convolution_instruction["convolution_type"] == "integrate"
-        ):
-
-            ##########
-            #
-            convolution_results = convolve_ensemble_by_integration(
-                config=config,
-                sfr_dict=sfr_dict,
-                data_dict=data_dict,
-                time_bin_info_dict=time_bin_info_dict,
-                convolution_instruction=convolution_instruction,
-                #
-                persistent_data=persistent_data,
-                previous_convolution_results=previous_convolution_results,
-            )
-
-        elif (
-            convolution_instruction["input_data_type"] == "ensemble"
-            and convolution_instruction["convolution_type"] == "sample"
+            convolution_instruction["contains_binned_data"]
+            and config["time_type"] == "redshift"
         ):
             raise ValueError(
-                "sampling convolution with ensemble-based data is currently not supported"
+                "Convolving binned data with redshift-based time is currently not supported"
             )
 
+        ##########
+        #
+        convolution_results = convolution_by_integration(
+            config=config,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            time_bin_info_dict=time_bin_info_dict,
+            convolution_instruction=convolution_instruction,
+            #
+            persistent_data=persistent_data,
+            previous_convolution_results=previous_convolution_results,
+        )
+
+    elif convolution_instruction["convolution_type"] == "sample":
+        # if convolution_instruction["contains_binned_data"]:
+        #     raise ValueError(
+        #         "Convolving binned data with convolution by sampling is currently not supported"
+        #     )
+
+        ##########
+        #
+        convolution_results = convolution_by_sampling(
+            config=config,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            time_bin_info_dict=time_bin_info_dict,
+            convolution_instruction=convolution_instruction,
+            #
+            persistent_data=persistent_data,
+            previous_convolution_results=previous_convolution_results,
+        )
+
     elif convolution_instruction["convolution_type"] == "on-the-fly":
-        warnings.warn("On-the-fly convolution is currently not supported")
+        warnings.warn("On-the-fly convolution is currently not fully tested")
+
+        if convolution_instruction["contains_binned_data"]:
+            raise ValueError(
+                "Convolving binned data with convolution by sampling is currently not supported"
+            )
 
         ##########
         #
@@ -376,8 +423,7 @@ def handle_convolution_choice(
         )
     else:
         raise ValueError(
-            "Unsupported choice of input-data type ({}) and convolution-type ({})".format(
-                convolution_instruction["input_data_type"],
+            "Unsupported choice of convolution-type ({})".format(
                 convolution_instruction["convolution_type"],
             )
         )
@@ -571,12 +617,6 @@ def generate_data_dict(config, convolution_instruction):
     Function to generate the data dict.
     """
 
-    extractor_functions = {
-        "event": extract_event_data,
-        "ensemble": extract_ensemble_data,
-        "custom": extract_custom_data,
-    }
-
     # on the fly sampling generates its own data
     if "convolution_type" in convolution_instruction:
         if convolution_instruction["convolution_type"] == "on-the-fly":
@@ -584,16 +624,15 @@ def generate_data_dict(config, convolution_instruction):
 
     #
     config["logger"].debug(
-        "Generating data_dict using the extractor function for {}: {}".format(
-            convolution_instruction["input_data_type"],
-            extractor_functions[convolution_instruction["input_data_type"]].__name__,
+        "Generating data_dict using the extractor function {}".format(
+            extract_data.__name__,
         )
     )
 
     # otherwise extract
-    config, data_dict, convolution_instruction = extractor_functions[
-        convolution_instruction["input_data_type"]
-    ](config=config, convolution_instruction=convolution_instruction)
+    config, data_dict, convolution_instruction = extract_data(
+        config=config, convolution_instruction=convolution_instruction
+    )
 
     return config, data_dict, convolution_instruction
 
@@ -727,8 +766,6 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
 
         # #############
         # run convolution
-        # TODO: add persistent data to args
-        # TODO: add previous convolution results to args
         convolution_results = handle_convolution_choice(
             config=config,
             job_dict=job_dict,

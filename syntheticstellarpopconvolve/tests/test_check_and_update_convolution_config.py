@@ -11,7 +11,10 @@ import unittest
 import astropy.units as u
 import numpy as np
 
-from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve import (
+    default_convolution_config,
+    default_convolution_instruction,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
     check_convolution_config,
@@ -35,23 +38,13 @@ class test_check_convolution_config(unittest.TestCase):
             "convolution_lookback_time_bin_edges": np.array([1, 2]) * u.yr,
             "convolution_instructions": [
                 {
-                    "input_data_type": "event",
+                    **default_convolution_instruction,
                     "input_data_name": "event_data",
                     "output_data_name": "output_event_data",
                     "convolution_type": "integrate",
                     "data_column_dict": {
                         "delay_time": "delay",
                         "normalized_yield": "rate",
-                        "metallicity": "metallicity",
-                    },
-                },
-                {
-                    "input_data_type": "ensemble",
-                    "input_data_name": "ensemble_data",
-                    "output_data_name": "output_ensemble_data",
-                    "convolution_type": "integrate",
-                    "data_layer_dict": {
-                        "delay_time": "delay",
                         "metallicity": "metallicity",
                     },
                 },
@@ -104,7 +97,6 @@ class test_check_convolution_config(unittest.TestCase):
             "time_type": "redshift",
             "convolution_instructions": [
                 {
-                    "input_data_type": "event",
                     "convolution_type": "integrate",
                     "input_data_name": "event_data",
                     "output_data_name": "output_event_data",
@@ -146,7 +138,7 @@ class test_update_convolution_config(unittest.TestCase):
         #
         config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",

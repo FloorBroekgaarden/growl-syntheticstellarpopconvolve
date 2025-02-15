@@ -19,6 +19,7 @@ from scipy import interpolate
 from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
     calculate_origin_redshift_array,
 )
+from syntheticstellarpopconvolve.convolve_binned_data import calculate_overlap_fractions
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,7 @@ class JsonCustomEncoder(json.JSONEncoder):
         elif isinstance(obj, (u.UnitBase, u.FunctionUnitBase)):
             if obj == u.dimensionless_unscaled:
                 obj = "dimensionless_unit"
+                return str(obj)
             else:
                 return obj.to_string()
         elif isinstance(obj, type(logger)):
@@ -191,15 +193,354 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
     return origin_time_array
 
 
-def calculate_digitized_sfr_rates(
-    config, convolution_time_bin_center, data_dict, sfr_dict
+def calculate_digitized_sfr_rates_binned_data(
+    config,
+    convolution_instruction,
+    convolution_time_bin_center,
+    data_dict,
+    sfr_dict,
+    delay_time_data_bin_info_dict,
 ):
     """
-    Function to calculate the digitized rates
+    Function to handle convolving binned data
 
-    TODO: update docstring
-    TODO: more elsewhere
+    This function performs the following steps:
+    - sets up the shifted data-bin edges
+    - loops over each left-right edge pair and determines which SFR bins that edge-pair spans/overlaps with, the fractional overlap etc.
+    - for each left-right edge pair, loops over the overlapping SFR bins
+
+    NOTE: does not support redshift-based convolution
     """
+
+    ############################
+    # Unpack and set up
+
+    #
+    if config["time_type"] != "lookback_time":
+        raise ValueError("Time-type must be `lookback_time`")
+
+    #
+    config["logger"].debug(
+        "Convolving the binned data for convolution_time_bin_center: {}".format(
+            convolution_time_bin_center
+        )
+    )
+
+    local_system_indices = np.arange(len(data_dict["delay_time_data_bin_index"]))
+
+    ####
+    # unpack time bin info
+    delay_time_data_bin_edges = delay_time_data_bin_info_dict[
+        "delay_time_data_bin_edges"
+    ].to(u.yr)
+    delay_time_data_bin_sizes = np.diff(delay_time_data_bin_edges)
+
+    config["logger"].info(
+        "delay_time_data_bin_edges: {}\ndelay_time_data_bin_sizes: {}".format(
+            delay_time_data_bin_edges, delay_time_data_bin_sizes
+        )
+    )
+
+    ####
+    # Get left and right edges
+    left_delay_time_data_bin_edges = delay_time_data_bin_edges[:-1]
+    right_delay_time_data_bin_edges = delay_time_data_bin_edges[1:]
+
+    config["logger"].info(
+        "left_delay_time_data_bin_edges: {}\nright_delay_time_data_bin_edges: {}".format(
+            left_delay_time_data_bin_edges, right_delay_time_data_bin_edges
+        )
+    )
+
+    ####
+    # shift time bin data
+    shifted_left_delay_time_data_bin_edges = (
+        left_delay_time_data_bin_edges + convolution_time_bin_center
+    )
+    shifted_right_delay_time_data_bin_edges = (
+        right_delay_time_data_bin_edges + convolution_time_bin_center
+    )
+
+    config["logger"].info(
+        "shifted_left_delay_time_data_bin_edges: {}\nshifted_right_delay_time_data_bin_edges: {}".format(
+            shifted_left_delay_time_data_bin_edges,
+            shifted_right_delay_time_data_bin_edges,
+        )
+    )
+
+    ####
+    # read out sfr info
+    sfr_bin_edges = sfr_dict["time_bin_edges"].to(u.yr)
+    sfr_bin_sizes = np.diff(sfr_bin_edges)
+
+    config["logger"].info(
+        "sfr_bin_edges: {}\nsfr_bin_sizes: {}".format(sfr_bin_edges, sfr_bin_sizes)
+    )
+
+    ####
+    # Set up empty sfr rates
+    sfr_rates = (
+        np.zeros(len(data_dict["delay_time_data_bin_index"]))
+        * sfr_dict["starformation_rate_array"].unit
+    )
+    if config["multiply_by_sfr_time_binsize"]:
+        sfr_rates = sfr_rates * delay_time_data_bin_sizes.unit
+
+    config["logger"].info("$$$$$$$$$$$$$$$$$$$$$$$$$$")
+
+    ##########
+    # Loop over the data time-bin edge pairs
+    #  and calculate the fraction of overlap of this edge pair with the SFR bins
+    #  and for each SFR bin that they overlap with, calculate the SFR rates
+    #  and store these and
+    for delay_time_data_bin_i, (
+        delay_time_data_bin_size_i,
+        shifted_left_delay_time_data_bin_edge,
+        shifted_right_delay_time_data_bin_edge,
+    ) in enumerate(
+        list(
+            zip(
+                delay_time_data_bin_sizes,
+                shifted_left_delay_time_data_bin_edges,
+                shifted_right_delay_time_data_bin_edges,
+            )
+        )
+    ):
+
+        #
+        config["logger"].info(
+            "delay_time_data_bin_i: {}\ndelay_time_data_bin_size_i: {}".format(
+                delay_time_data_bin_i, delay_time_data_bin_size_i
+            )
+        )
+        config["logger"].info(
+            "shifted_left_delay_time_data_bin_edge: {}\nshifted_right_delay_time_data_bin_edge: {}".format(
+                shifted_left_delay_time_data_bin_edge,
+                shifted_right_delay_time_data_bin_edge,
+            )
+        )
+
+        #########
+        # check if we extend beyond or below all of the sfr bins
+        if shifted_left_delay_time_data_bin_edge >= sfr_bin_edges[-1]:
+            config["logger"].warning(
+                "left-most delay time bin edge {} extends beyond the rightmost sfr bin edge: {}. skipping current delay time bin and breaking this loop.".format(
+                    shifted_left_delay_time_data_bin_edge, sfr_bin_edges[-1]
+                )
+            )
+            break
+        if shifted_right_delay_time_data_bin_edge <= sfr_bin_edges[0]:
+            config["logger"].warning(
+                "right-most delay time bin edge {} extends below the leftmost sfr bin edge: {}. skipping current delay time bin and breaking this loop.".format(
+                    shifted_right_delay_time_data_bin_edge, sfr_bin_edges[0]
+                )
+            )
+            break
+
+        #########
+        # Calculate/determine the indices of the systems matching the current delay-time data bin index
+        matching_delay_time_data_bin_system_indices = local_system_indices[
+            data_dict["delay_time_data_bin_index"] == delay_time_data_bin_i
+        ]
+        config["logger"].info(
+            "matching_delay_time_data_bin_system_indices: {}".format(
+                matching_delay_time_data_bin_system_indices
+            )
+        )
+
+        #########
+        # Determine bin overlap fractions
+        overlap_fractions = calculate_overlap_fractions(
+            shifted_left_delay_time_data_bin_edge=shifted_left_delay_time_data_bin_edge,
+            shifted_right_delay_time_data_bin_edge=shifted_right_delay_time_data_bin_edge,
+            sfr_bin_sizes=sfr_bin_sizes,
+            sfr_bin_edges=sfr_bin_edges,
+        )
+
+        config["logger"].info(
+            "overlap_fractions:\n{}".format(
+                "\n\t".join(
+                    [
+                        "{}: {}".format(key, value)
+                        for key, value in overlap_fractions.items()
+                    ]
+                )
+            )
+        )
+
+        ###########
+        # loop over overlapping sfr bins
+        # - Using the overlap-fraction dict information we can loop over the SFR bins and fetch the rates for the relevant systems
+        config["logger"].info("=========================")
+
+        combined_matching_delay_time_data_bin_sfr_rates = (
+            np.zeros(matching_delay_time_data_bin_system_indices.shape)
+            * sfr_dict["starformation_rate_array"].unit
+            * sfr_bin_sizes.unit
+        )
+
+        #
+        for overlap_bin_i, sfr_bin_index in enumerate(
+            overlap_fractions["non_zero_overlap_with_sfr_bins"]
+        ):
+            config["logger"].info(
+                "sfr_bin_index: {} overlap_bin_i: {}".format(
+                    sfr_bin_index, overlap_bin_i
+                )
+            )
+
+            sfr_bin_index_like_array = np.repeat(
+                sfr_bin_index, matching_delay_time_data_bin_system_indices.shape
+            )
+
+            #####################
+            # Get the SFR rates
+            # TODO: move this to a function, generalize. this functionality is shared and repeated
+            if "metallicity" in data_dict.keys():
+
+                metallicities = data_dict["metallicity"][
+                    matching_delay_time_data_bin_system_indices
+                ]
+
+                #
+                metallicity_indices = (
+                    np.digitize(
+                        metallicities,
+                        bins=sfr_dict["padded_metallicity_bin_edges"],
+                        right=False,
+                    )
+                    - 1
+                )
+
+                # Calculate rates
+                matching_delay_time_data_bin_sfr_rates = sfr_dict[
+                    "metallicity_weighted_starformation_rate_array"
+                ][sfr_bin_index_like_array, metallicity_indices]
+            else:
+                # Calculate rates
+                matching_delay_time_data_bin_sfr_rates = sfr_dict[
+                    "starformation_rate_array"
+                ][sfr_bin_index_like_array]
+
+            config["logger"].info(
+                "matching_delay_time_data_bin_sfr_rates: {}".format(
+                    matching_delay_time_data_bin_sfr_rates
+                )
+            )
+
+            #######
+            # Weight the rates properly
+
+            # Multiply by the fraction that the data time-bin overlaps
+            weighted_matching_delay_time_data_bin_sfr_rates = (
+                matching_delay_time_data_bin_sfr_rates
+                * overlap_fractions["normalized_combined_overlap_array"][sfr_bin_index]
+            )
+
+            config["logger"].info(
+                "Weighing the SFR rates with the fraction of overlap of bin: {}: {}".format(
+                    overlap_fractions["normalized_combined_overlap_array"][
+                        sfr_bin_index
+                    ],
+                    weighted_matching_delay_time_data_bin_sfr_rates,
+                )
+            )
+
+            # Multiply by the width of the sfr bin
+            weighted_matching_delay_time_data_bin_sfr_rates *= sfr_bin_sizes[
+                sfr_bin_index
+            ]
+
+            config["logger"].info(
+                "Multiplying the SFR rates matching SFR bin size: {}: {}".format(
+                    sfr_bin_sizes[sfr_bin_index],
+                    weighted_matching_delay_time_data_bin_sfr_rates,
+                )
+            )
+
+            ########
+            # Store the data in the combined array
+            combined_matching_delay_time_data_bin_sfr_rates += (
+                weighted_matching_delay_time_data_bin_sfr_rates
+            )
+
+            config["logger"].info(
+                "Added the local rates to the combined rates of this data-time bin: {}".format(
+                    combined_matching_delay_time_data_bin_sfr_rates
+                )
+            )
+
+        #################
+        #
+        config["logger"].info(
+            "Finished looping over overlapping SFR bins. Generated combined_matching_delay_time_data_bin_sfr_rates {}.\n Finalising the rate calculation".format(
+                combined_matching_delay_time_data_bin_sfr_rates
+            )
+        )
+
+        #############
+        # Calculate capped time bin size. The right edge of the time-bin can extend beyond the final SFR bin
+        capped_delay_time_data_bin_size_i = delay_time_data_bin_size_i
+        sum_overlapping_sfr_bin_size = np.sum(
+            overlap_fractions["normalized_combined_overlap_array"] * sfr_bin_sizes
+        )
+        if sum_overlapping_sfr_bin_size < capped_delay_time_data_bin_size_i:
+            capped_delay_time_data_bin_size_i = sum_overlapping_sfr_bin_size
+            config["logger"].info(
+                "Capped delay-time data bin normalisition width to {}.".format(
+                    capped_delay_time_data_bin_size_i
+                )
+            )
+
+        #############
+        # re-weight them to make average starformation rate
+        combined_matching_delay_time_data_bin_sfr_rates /= (
+            capped_delay_time_data_bin_size_i
+        )
+        config["logger"].info(
+            "Divided sfr rates with {} to {}".format(
+                capped_delay_time_data_bin_size_i,
+                combined_matching_delay_time_data_bin_sfr_rates,
+            )
+        )
+
+        #########
+        # multiply by data time-bin if we to multiply by bin size
+        if config["multiply_by_sfr_time_binsize"]:
+            combined_matching_delay_time_data_bin_sfr_rates *= (
+                capped_delay_time_data_bin_size_i
+            )
+            config["logger"].info(
+                "Multiplying the rates by capped data-time binsize {} to {}".format(
+                    capped_delay_time_data_bin_size_i,
+                    combined_matching_delay_time_data_bin_sfr_rates,
+                )
+            )
+
+        #########
+        # store data in grand array
+        sfr_rates[matching_delay_time_data_bin_system_indices] = (
+            combined_matching_delay_time_data_bin_sfr_rates
+        )
+
+    config["logger"].debug(
+        "Handled convolution of binned data at convolution bin-center {}".format(
+            convolution_time_bin_center
+        )
+    )
+    config["logger"].info(
+        "Final sfr_rates for convolution bin-center {}: {}".format(
+            convolution_time_bin_center, sfr_rates
+        )
+    )
+
+    return sfr_rates
+
+
+def calculate_digitized_sfr_rates_non_binned_data(
+    config, convolution_instruction, convolution_time_bin_center, data_dict, sfr_dict
+):
+    """ """
 
     ###########
     # calculate origin time
@@ -260,12 +601,12 @@ def calculate_digitized_sfr_rates(
         ]
         config["logger"].debug("Found sfr rates {}".format(digitised_sfr_rates))
 
-    #
-
-    # handle multiplication by bin-size
+    ###################
+    # Handle multiplication by sfr bin-size
     # TODO: clean and handle implementation
-    # TODO: make sure that padded_time_binsizes exists.
-    if config["multiply_by_time_binsize"]:
+
+    if config["multiply_by_sfr_time_binsize"]:
+
         # get indices
         time_binsize_indices = (
             np.digitize(
@@ -279,6 +620,39 @@ def calculate_digitized_sfr_rates(
 
         # update sfr_rates
         digitised_sfr_rates = digitised_sfr_rates * time_binsizes[time_binsize_indices]
+
+    return digitised_sfr_rates
+
+
+def calculate_digitized_sfr_rates(
+    config, convolution_instruction, convolution_time_bin_center, data_dict, sfr_dict
+):
+    """
+    Function to handle calculation of the digitized rates
+
+    TODO: update docstring
+    TODO: more elsewhere
+    """
+
+    if convolution_instruction["contains_binned_data"]:
+        digitised_sfr_rates = calculate_digitized_sfr_rates_binned_data(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            convolution_time_bin_center=convolution_time_bin_center,
+            data_dict=data_dict,
+            sfr_dict=sfr_dict,
+            delay_time_data_bin_info_dict=convolution_instruction[
+                "delay_time_data_bin_info_dict"
+            ],
+        )
+    else:
+        digitised_sfr_rates = calculate_digitized_sfr_rates_non_binned_data(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            convolution_time_bin_center=convolution_time_bin_center,
+            data_dict=data_dict,
+            sfr_dict=sfr_dict,
+        )
 
     return digitised_sfr_rates
 
@@ -397,7 +771,6 @@ def generate_group_name(convolution_instruction, sfr_dict):
         elements.append(sfr_dict["name"])
 
     #
-    elements.append(convolution_instruction.get("input_data_type", "none"))
     elements.append(convolution_instruction["input_data_name"])
     elements.append(convolution_instruction["output_data_name"])
 
@@ -556,3 +929,27 @@ def has_unit(parameter, fail_on_dimensionless=True):
 
 
 has_unit_dimensionless_okay = functools.partial(has_unit, fail_on_dimensionless=False)
+
+
+def get_normalized_yield_unit(config, convolution_instruction):
+    """
+    Function to get the normalized yield unit either from config or from convolution_instruction
+    """
+
+    #
+    normalized_yield_unit = config["default_normalized_yield_unit"]
+
+    if "normalized_yield" not in convolution_instruction["data_column_dict"]:
+        raise ValueError(
+            "'normalized_yield' should be provided in the 'data_column_dict'"
+        )
+
+    if isinstance(
+        convolution_instruction["data_column_dict"]["normalized_yield"], dict
+    ):
+        if "unit" in convolution_instruction["data_column_dict"]["normalized_yield"]:
+            normalized_yield_unit = convolution_instruction["data_column_dict"][
+                "normalized_yield"
+            ]["unit"]
+
+    return normalized_yield_unit

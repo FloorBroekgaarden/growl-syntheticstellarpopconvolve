@@ -11,7 +11,7 @@ from syntheticstellarpopconvolve.check_and_update_sfr_dict import (
 )
 
 
-def load_mpl_rc():
+def load_mpl_rc():  # DH0001
 
     # https://matplotlib.org/users/customizing.html
     mpl.rc(
@@ -107,7 +107,7 @@ def load_mpl_rc():
     mpl.rc("mathtext", default="sf")
 
 
-def plot_sfr_dict(
+def plot_sfr_dict(  # DH0001
     sfr_dict,
     time_type,
     metallicity_string="Z",

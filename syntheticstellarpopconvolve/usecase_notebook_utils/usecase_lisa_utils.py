@@ -26,14 +26,14 @@ import astropy.units as u
 # Units are kpc, Gyr
 
 
-def zCDFInv(Xiz, Hz):
+def zCDFInv(Xiz, Hz):  # DH0001
     zCoord = -Hz * np.log(1 - Xiz)
     return zCoord
 
 
-def RCDFInv(Xir, Hr):
+def RCDFInv(Xir, Hr):  # DH0001
     # Get the parameters for the inverse CDF
-    def RCD(R):
+    def RCD(R):  # DH0001
         Res = (1 - np.exp(-R / Hr)) - (R / Hr) * np.exp(-R / Hr) - Xir
         return Res
 
@@ -46,7 +46,7 @@ def RCDFInv(Xir, Hr):
     return R
 
 
-def Sample1D(Hr, Hz):
+def Sample1D(Hr, Hz):  # DH0001
     RRand = np.random.uniform()
     ZRand = np.random.uniform()
     ZSign = np.sign(np.random.uniform() - 0.5)
@@ -79,7 +79,7 @@ def Sample1D(Hr, Hz):
     return ResDict
 
 
-def Sample1DPop(NBin, Hr, Hz):
+def Sample1DPop(NBin, Hr, Hz):  # DH0001
     RRandSet = np.random.uniform(0, 1, NBin)
     ZRandSet = np.random.uniform(0, 1, NBin)
     ZSignSet = np.sign(np.random.uniform(0, 2, NBin) - 1)
@@ -119,7 +119,7 @@ if ExportTable:
     Res.to_csv("./GalTest.csv", index=False)
 
 
-def sample_distances_simple(NBin):
+def sample_distances_simple(NBin):  # DH0001
     """
     Simple distance sampler using the
     """
@@ -152,7 +152,7 @@ def sample_distances_simple(NBin):
 ###########################
 
 
-def get_bin_frac_ratio(IC_model, binary_fraction=0.5):
+def get_bin_frac_ratio(IC_model, binary_fraction=0.5):  # DH0001
 
     # these are the hard coded ratios based on initial conditions sampling
     # tests done by K. Breivik using binary fractions from 0.1-1.0
@@ -361,7 +361,7 @@ def get_bin_frac_ratio(IC_model, binary_fraction=0.5):
     return r_spline(binary_fraction)
 
 
-def get_mass_norm(IC_model, binary_fraction=0.5):
+def get_mass_norm(IC_model, binary_fraction=0.5):  # DH0001
     """selects the mass normalization for the
     initial conditions sample set based on
     the IC_model name and a binary fraction
@@ -400,7 +400,7 @@ def get_mass_norm(IC_model, binary_fraction=0.5):
 ######################
 
 
-def get_period(semimajor_axis, m1, m2):
+def get_period(semimajor_axis, m1, m2):  # DH0001
     """
     function to get the periods of the systems
     """
@@ -419,7 +419,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
-def precompute_radial_cdf(Hr, num_points=1000, R_max=20):
+def precompute_radial_cdf(Hr, num_points=1000, R_max=20):  # DH0001
     """
     Precompute the radial CDF and its inverse for efficient sampling.
     """
@@ -438,21 +438,21 @@ def precompute_radial_cdf(Hr, num_points=1000, R_max=20):
     return inverse_cdf
 
 
-def RCDFInv_interpolated(Xir, inverse_cdf):
+def RCDFInv_interpolated(Xir, inverse_cdf):  # DH0001
     """
     Use the precomputed inverse CDF to sample R values.
     """
     return inverse_cdf(Xir)
 
 
-def zCDFInv(Xiz, Hz):
+def zCDFInv(Xiz, Hz):  # DH0001
     """
     Vectorized implementation of the inverse CDF for Z.
     """
     return -Hz * np.log(1 - Xiz)
 
 
-def Sample1DPop_interpolated(NBin, Hr, Hz, inverse_cdf):
+def Sample1DPop_interpolated(NBin, Hr, Hz, inverse_cdf):  # DH0001
     """
     Sample 1D population using precomputed inverse CDF.
     """
@@ -472,7 +472,7 @@ def Sample1DPop_interpolated(NBin, Hr, Hz, inverse_cdf):
     return np.stack((XSet, YSet, ZSet), axis=1)
 
 
-def sample_distances_interpolated(NBin, Hr, inverse_cdf):
+def sample_distances_interpolated(NBin, Hr, inverse_cdf):  # DH0001
     """
     Main function to sample distances using interpolation for the radial CDF.
     """

@@ -7,6 +7,7 @@ TODO: test things with multiply SFR histories
 
 import copy
 import json
+import logging
 import os
 import unittest
 
@@ -16,7 +17,11 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 
-from syntheticstellarpopconvolve import convolve, default_convolution_config
+from syntheticstellarpopconvolve import (
+    convolve,
+    default_convolution_config,
+    default_convolution_instruction,
+)
 from syntheticstellarpopconvolve.general_functions import temp_dir
 
 TMP_DIR = temp_dir(
@@ -49,7 +54,6 @@ class test_convolution_with_events(unittest.TestCase):
             ######################
             # Create groups
             input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
             input_hdf5_file.create_group("config")
 
             ###############
@@ -72,10 +76,11 @@ class test_convolution_with_events(unittest.TestCase):
 
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         convolution_config = copy.copy(default_convolution_config)
+        convolution_config["logger"].setLevel(logging.CRITICAL)
 
         # Set up SFR
         convolution_config["SFR_info"] = {
@@ -105,7 +110,7 @@ class test_convolution_with_events(unittest.TestCase):
         #
         convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
                 "convolution_type": "integrate",
@@ -129,25 +134,25 @@ class test_convolution_with_events(unittest.TestCase):
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolution_results/0.5 yr/yield"
+                "output_data/dummy/dummy/convolution_results/0.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolution_results/1.5 yr/yield"
+                "output_data/dummy/dummy/convolution_results/1.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolution_results/2.5 yr/yield"
+                "output_data/dummy/dummy/convolution_results/2.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 0])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolution_results/3.5 yr/yield"
+                "output_data/dummy/dummy/convolution_results/3.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 0, 0])))
 

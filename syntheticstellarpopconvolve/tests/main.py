@@ -32,28 +32,29 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
 from syntheticstellarpopconvolve.tests.test_check_input_file import (
     test_check_input_file,
 )
-from syntheticstellarpopconvolve.tests.test_convolution_with_ensemble import (
-    test_convolution_with_ensemble,
+
+# from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
+#     test_convolve_ensemble_by_integration,
+#     test_ensemble_handle_marginalisation,
+#     test_ensemble_handle_SFR_multiplication,
+#     test_extract_ensemble_data,
+#     test_handle_binsize_multiplication_factor,
+# )
+from syntheticstellarpopconvolve.tests.test_convolution_by_integration import (
+    test_convolution_by_integration,
 )
+
+# from syntheticstellarpopconvolve.tests.test_convolution_with_ensemble import (
+#     test_convolution_with_ensemble,
+# )
 from syntheticstellarpopconvolve.tests.test_convolution_with_events import (
     test_convolution_with_events,
 )
-from syntheticstellarpopconvolve.tests.test_convolve_custom_data import (
-    test_custom_convolution_function,
-    test_extract_custom_data,
-)
-from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
-    test_convolve_ensemble_by_integration,
-    test_ensemble_handle_marginalisation,
-    test_ensemble_handle_SFR_multiplication,
-    test_extract_ensemble_data,
-    test_handle_binsize_multiplication_factor,
-)
-from syntheticstellarpopconvolve.tests.test_convolve_events import (
-    test_convolve_events_by_integration,
-    test_extract_event_data,
+from syntheticstellarpopconvolve.tests.test_convolve_on_the_fly import (
+    test_convolve_on_the_fly,
 )
 from syntheticstellarpopconvolve.tests.test_convolve_populations import (
+    test_extract_data,
     test_generate_data_dict,
 )
 from syntheticstellarpopconvolve.tests.test_cosmology_utils import (
@@ -70,7 +71,8 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
     test_logger_validation,
     test_unit_validation,
 )
-from syntheticstellarpopconvolve.tests.test_ensemble_utils import *
+
+# from syntheticstellarpopconvolve.tests.test_ensemble_utils import *
 from syntheticstellarpopconvolve.tests.test_extract_population_settings import (
     test_extract_population_settings,
 )

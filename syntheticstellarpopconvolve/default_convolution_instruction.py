@@ -23,6 +23,11 @@ default_convolution_instruction_dict = {
     #     "description": "Flag to indicate to assign formation-lookback times during convolution-by-sampling. If false, assigning event-lookback times and filtering future events will not be possible, and `assign_event_lookback_time` and `filter_future_events` are ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
     #     "validation": boolean_int_validation,
     # },
+    "reverse_convolution": {
+        "value": False,
+        "description": "Flag to reverse the convolution direction. If True, we start with the bin furthest back in time and work to. Useful in combination with `convolution_config['multiprocessing']=False`, and the `previous_convolution_results` and `persistant_data` objects.",
+        "validation": boolean_int_validation,
+    },
     "assign_event_lookback_time": {
         "value": True,
         "description": "Flag to indicate to assign event-lookback times during convolution-by-sampling. If false, filtering future events will not be possible, and `filter_future_events` is ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",

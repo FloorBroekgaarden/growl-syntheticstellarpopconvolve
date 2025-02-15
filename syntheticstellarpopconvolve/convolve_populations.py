@@ -540,6 +540,10 @@ def create_bin_iterator(config, convolution_instruction, sfr_dict):
     else:
         raise ValueError("convolution type not supported")
 
+    # flip if we want to reverse convolution direction. Related to persistant data and previous results
+    if convolution_instruction["reverse_convolution"]:
+        zipped_bin_data = zipped_bin_data[::-1]
+
     return zipped_bin_data, bin_type
 
 

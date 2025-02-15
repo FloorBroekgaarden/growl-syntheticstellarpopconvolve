@@ -31,14 +31,15 @@ https://keepachangelog.com/en/0.3.0/
         - provided support for a sequential convolution, as opposed to multiprocessed
         - provided support for to pass results of previous convolution in sequential convolution. This is accessible in the post-convolution hook.
         - provided support for a persistent data storage dictionary where the user can store things in. This is accessible in the post-convolution hook.
+        - added option to reverse the convolution direction through convolution_instructions['reverse_convolution'] to allow accessing chronologically previous timestep data.
     - [feature/inflate_ensemble]:
         - moved all the ensemble-operation related functionality to `ensemble_utils.py`
         - provided functionality to inflate ensemble which allows the user to use initially ensemble-based data like event-based data
-		- [feature/binned_data_convolution]:
+	- [feature/binned_data_convolution]:
         - removed support for ensemble convolution through the recursive approach, and rather convolve the data through the event-based version but with configuration
         - removed input data-type configuration and effects.
         - implemented methods to convolve binned data
         - added functionality to multiply the convolution results by the starformation time-bin size through `multiply_by_sfr_time_binsize` in the convolution config.
         - added functionality to multiply the convolution results by the convolution time-bin size through `multiply_by_convolution_time_binsize` in the convolution config.
         - added functionality for user to provide a unit for the 'normalized_yield' data, which overrides config['default_normalized_yield_unit'].
-				- cleaned structure and added notebooks
+		- cleaned structure and added notebooks

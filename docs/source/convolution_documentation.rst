@@ -221,6 +221,12 @@ Convolution-instruction options
 
    * - Option
      - Description
+   * - assign_event_lookback_time
+     - Description:
+          Flag to indicate to assign event-lookback times during convolution-by-sampling. If false, filtering future events will not be possible, and `filter_future_events` is ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.
+
+       Default value:
+          True
    * - contains_binned_data
      - Description:
           Flag to indicate whether the input data is binned (in time). If so, the user should provide additional information.
@@ -245,6 +251,12 @@ Convolution-instruction options
 
        Default value:
           {}
+   * - filter_future_events
+     - Description:
+          Flag to control filtering out future events during convolution-by-sampling. See also `assign_event_lookback_time`. Not recommended when using binned data.
+
+       Default value:
+          True
    * - ignore_metallicity
      - Description:
           Flag to ignore any metallicity dependence in the input data and the starformation rate.

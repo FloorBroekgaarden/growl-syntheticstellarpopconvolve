@@ -43,6 +43,10 @@ list of some current features:
 -   post-convolution processing of data, for example to filter out things based on an additional calculation (like whether a system is within the LISA frequency range at current day)
 -   etc.
 
+
+
+
+
 In the coming period I will:
 
 -   Continue to clean the code, update the docstrings of the functions, and
@@ -55,6 +59,9 @@ In the coming period I will:
 -   make the advanced functionality more clear and provide a notebook on this.
 
 Future features I aim to add in the foreseeable future:
+
+    - chunked convolution to support larger datasets that do not fit entirely into memory (will require sequential processing)
+
 
 -   better functionality for other data-sources/types: Currently event-based data
     requires it being stored in a dataframe but one should be able to provide

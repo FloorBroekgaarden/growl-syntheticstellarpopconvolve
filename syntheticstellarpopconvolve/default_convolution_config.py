@@ -104,7 +104,7 @@ default_convolution_config_dict = {
     ###################
     # Convolution configuration
     "time_type": {
-        "value": "redshift",
+        "value": "lookback_time",
         "description": "Time-type used in convolution. Can be either 'redshift' or 'lookback_time'",
         "validation": vol.All(
             str,

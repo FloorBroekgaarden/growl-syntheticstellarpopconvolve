@@ -43,3 +43,5 @@ https://keepachangelog.com/en/0.3.0/
         - added functionality to multiply the convolution results by the convolution time-bin size through `multiply_by_convolution_time_binsize` in the convolution config.
         - added functionality for user to provide a unit for the 'normalized_yield' data, which overrides config['default_normalized_yield_unit'].
 		- cleaned structure and added notebooks
+	- [feature/backward_convolution_by_sampling_with_binned_data]:
+	    - added support for backward convolution by sampling of binned data

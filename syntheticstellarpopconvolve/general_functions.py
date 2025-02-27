@@ -193,7 +193,7 @@ def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
     return origin_time_array
 
 
-def calculate_digitized_sfr_rates_binned_data(
+def calculate_digitized_sfr_rates_binned_data_for_backward_convolution(
     config,
     convolution_instruction,
     convolution_time_bin_center,
@@ -537,7 +537,7 @@ def calculate_digitized_sfr_rates_binned_data(
     return sfr_rates
 
 
-def calculate_digitized_sfr_rates_non_binned_data(
+def calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution(
     config, convolution_instruction, convolution_time_bin_center, data_dict, sfr_dict
 ):
     """ """
@@ -624,37 +624,37 @@ def calculate_digitized_sfr_rates_non_binned_data(
     return digitised_sfr_rates
 
 
-def calculate_digitized_sfr_rates(
-    config, convolution_instruction, convolution_time_bin_center, data_dict, sfr_dict
-):
-    """
-    Function to handle calculation of the digitized rates
+# def calculate_digitized_sfr_rates(
+#     config, convolution_instruction, convolution_time_bin_center, data_dict, sfr_dict
+# ):
+#     """
+#     Function to handle calculation of the digitized rates
 
-    TODO: update docstring
-    TODO: more elsewhere
-    """
+#     TODO: update docstring
+#     TODO: more elsewhere
+#     """
 
-    if convolution_instruction["contains_binned_data"]:
-        digitised_sfr_rates = calculate_digitized_sfr_rates_binned_data(
-            config=config,
-            convolution_instruction=convolution_instruction,
-            convolution_time_bin_center=convolution_time_bin_center,
-            data_dict=data_dict,
-            sfr_dict=sfr_dict,
-            delay_time_data_bin_info_dict=convolution_instruction[
-                "delay_time_data_bin_info_dict"
-            ],
-        )
-    else:
-        digitised_sfr_rates = calculate_digitized_sfr_rates_non_binned_data(
-            config=config,
-            convolution_instruction=convolution_instruction,
-            convolution_time_bin_center=convolution_time_bin_center,
-            data_dict=data_dict,
-            sfr_dict=sfr_dict,
-        )
+#     if convolution_instruction["contains_binned_data"]:
+#         digitised_sfr_rates = calculate_digitized_sfr_rates_binned_data(
+#             config=config,
+#             convolution_instruction=convolution_instruction,
+#             convolution_time_bin_center=convolution_time_bin_center,
+#             data_dict=data_dict,
+#             sfr_dict=sfr_dict,
+#             delay_time_data_bin_info_dict=convolution_instruction[
+#                 "delay_time_data_bin_info_dict"
+#             ],
+#         )
+#     else:
+#         digitised_sfr_rates = calculate_digitized_sfr_rates_non_binned_data(
+#             config=config,
+#             convolution_instruction=convolution_instruction,
+#             convolution_time_bin_center=convolution_time_bin_center,
+#             data_dict=data_dict,
+#             sfr_dict=sfr_dict,
+#         )
 
-    return digitised_sfr_rates
+#     return digitised_sfr_rates
 
 
 def calculate_bincenters(array, convert="linear"):

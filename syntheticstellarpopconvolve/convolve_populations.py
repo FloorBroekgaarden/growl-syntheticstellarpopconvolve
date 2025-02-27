@@ -17,11 +17,14 @@ import pandas as pd
 import setproctitle
 
 #######
-from syntheticstellarpopconvolve.convolution_by_integration import (
-    convolution_by_integration,
-)
-from syntheticstellarpopconvolve.convolution_by_sampling import convolution_by_sampling
+# from syntheticstellarpopconvolve.convolution_by_integration import (
+#     convolution_by_integration,
+# )
+# from syntheticstellarpopconvolve.convolution_by_sampling import convolution_by_sampling
 from syntheticstellarpopconvolve.convolve_on_the_fly import convolve_on_the_fly
+from syntheticstellarpopconvolve.convolve_pre_calculated_data import (
+    convolve_pre_calculated_data,
+)
 
 #######
 from syntheticstellarpopconvolve.general_functions import (
@@ -33,6 +36,7 @@ from syntheticstellarpopconvolve.general_functions import (
 )
 
 
+## TODO: move to general_functions.py
 def extract_data(config, convolution_instruction):
     """
     Function to extract the data from the correct table and store the information in the correct column.
@@ -358,56 +362,16 @@ def handle_convolution_choice(
     #
     time_bin_info_dict = job_dict["time_bin_info_dict"]
 
-    ################
-    # Event-convolution by integration:
-    if convolution_instruction["convolution_type"] == "integrate":
-        # We don't support binned data and redshift based time-types yet
-        if (
-            convolution_instruction["contains_binned_data"]
-            and config["time_type"] == "redshift"
-        ):
-            raise ValueError(
-                "Convolving binned data with redshift-based time is currently not supported"
-            )
-
-        ##########
-        #
-        convolution_results = convolution_by_integration(
-            config=config,
-            sfr_dict=sfr_dict,
-            data_dict=data_dict,
-            time_bin_info_dict=time_bin_info_dict,
-            convolution_instruction=convolution_instruction,
-            #
-            persistent_data=persistent_data,
-            previous_convolution_results=previous_convolution_results,
-        )
-
-    elif convolution_instruction["convolution_type"] == "sample":
-        # if convolution_instruction["contains_binned_data"]:
-        #     raise ValueError(
-        #         "Convolving binned data with convolution by sampling is currently not supported"
-        #     )
-
-        ##########
-        #
-        convolution_results = convolution_by_sampling(
-            config=config,
-            sfr_dict=sfr_dict,
-            data_dict=data_dict,
-            time_bin_info_dict=time_bin_info_dict,
-            convolution_instruction=convolution_instruction,
-            #
-            persistent_data=persistent_data,
-            previous_convolution_results=previous_convolution_results,
-        )
-
-    elif convolution_instruction["convolution_type"] == "on-the-fly":
+    ##################
+    # Handle choice of convolution type.
+    #   here we just handle whether the convolution uses pre-calculated data or not.
+    #
+    if convolution_instruction["convolution_type"] == "on-the-fly":
         warnings.warn("On-the-fly convolution is currently not fully tested")
 
         if convolution_instruction["contains_binned_data"]:
             raise ValueError(
-                "Convolving binned data with convolution by sampling is currently not supported"
+                "Convolving binned data with on-the-fly convolution is currently not supported."
             )
 
         ##########
@@ -422,12 +386,56 @@ def handle_convolution_choice(
             previous_convolution_results=previous_convolution_results,
         )
     else:
-        raise ValueError(
-            "Unsupported choice of convolution-type ({})".format(
-                convolution_instruction["convolution_type"],
-            )
+        convolution_results = convolve_pre_calculated_data(
+            config=config,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            time_bin_info_dict=time_bin_info_dict,
+            convolution_instruction=convolution_instruction,
+            #
+            persistent_data=persistent_data,
+            previous_convolution_results=previous_convolution_results,
         )
-    # TODO: add custom type convolution
+
+    # ################
+    # # Event-convolution by integration:
+    # if convolution_instruction["convolution_type"] == "integrate":
+    #     # We don't support binned data and redshift based time-types yet
+    #     if (
+    #         convolution_instruction["contains_binned_data"]
+    #         and config["time_type"] == "redshift"
+    #     ):
+    #         raise ValueError(
+    #             "Convolving binned data with redshift-based time is currently not supported"
+    #         )
+
+    #     ##########
+    #     #
+    #     convolution_results = convolution_by_integration(
+    #         config=config,
+    #         sfr_dict=sfr_dict,
+    #         data_dict=data_dict,
+    #         time_bin_info_dict=time_bin_info_dict,
+    #         convolution_instruction=convolution_instruction,
+    #         #
+    #         persistent_data=persistent_data,
+    #         previous_convolution_results=previous_convolution_results,
+    #     )
+
+    # elif convolution_instruction["convolution_type"] == "sample":
+
+    #     ##########
+    #     #
+    #     convolution_results = convolution_by_sampling(
+    #         config=config,
+    #         sfr_dict=sfr_dict,
+    #         data_dict=data_dict,
+    #         time_bin_info_dict=time_bin_info_dict,
+    #         convolution_instruction=convolution_instruction,
+    #         #
+    #         persistent_data=persistent_data,
+    #         previous_convolution_results=previous_convolution_results,
+    #     )
 
     return convolution_results
 
@@ -513,24 +521,42 @@ def create_bin_iterator(config, convolution_instruction, sfr_dict):
     """
 
     ######
-    # Determine bins to loop over (integrate = backward conv, sampling = forward conv, on-the-fly forward conv)
-    # backward conv loops over convolution bins
-    # forward conv loops over sfr bins
-    if convolution_instruction["convolution_type"] == "integrate":
+    # Determine bins to loop over
+    # - backward conv loops over convolution bins
+    # - forward conv loops over sfr bins
+
+    ###
+    # Support checks
+
+    # integrate convolution does not support forward convolution (yet) TODO: not too difficult to support.
+    if (convolution_instruction["convolution_type"] == "integrate") and (
+        convolution_instruction["convolution_direction"] != "backward"
+    ):
+        raise ValueError(
+            "Choice of convolution-method {} for convolution_type=`convolution_by_integration` is not supported. Only convolution_direction=`backward` is supported.".format(
+                convolution_instruction["convolution_direction"]
+            )
+        )
+
+    # on-the-fly convolution does not support backward convolution
+    if (convolution_instruction["convolution_type"] == "on-the-fly") and (
+        convolution_instruction["convolution_direction"] != "forward"
+    ):
+        raise ValueError(
+            "Choice of convolution-method {} for convolution_type=`on-the-fly` is not supported. Only convolution_direction=`forward` is supported.".format(
+                convolution_instruction["convolution_direction"]
+            )
+        )
+
+    #
+    if convolution_instruction["convolution_direction"] == "backward":
         bin_type = "convolution time"
         zipped_bin_data = zip(
             config["convolution_time_bin_centers"],
             config["convolution_time_bin_sizes"],
             config["convolution_time_bin_edges"][:-1],
         )
-    elif convolution_instruction["convolution_type"] == "sample":
-        bin_type = "star formation time"
-        zipped_bin_data = zip(
-            sfr_dict["time_bin_centers"],
-            sfr_dict["time_bin_sizes"],
-            sfr_dict["time_bin_edges"][:-1],
-        )
-    elif convolution_instruction["convolution_type"] == "on-the-fly":
+    elif convolution_instruction["convolution_direction"] == "forward":
         bin_type = "star formation time"
         zipped_bin_data = zip(
             sfr_dict["time_bin_centers"],
@@ -538,7 +564,11 @@ def create_bin_iterator(config, convolution_instruction, sfr_dict):
             sfr_dict["time_bin_edges"][:-1],
         )
     else:
-        raise ValueError("convolution type not supported")
+        raise ValueError(
+            "`convolution_direction` {} not supported".format(
+                convolution_instruction["convolution_direction"]
+            )
+        )
 
     # flip if we want to reverse convolution direction. Related to persistant data and previous results
     if convolution_instruction["reverse_convolution"]:

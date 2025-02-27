@@ -1,52 +1,51 @@
-"""Routines for convolution-by-sampling
+# """Routines for convolution-by-sampling
 
-initial idea with simple situation
+# initial idea with simple situation
 
-sfr [Msun /yr], global
-fixed Z
+# sfr [Msun /yr], global
+# fixed Z
 
-partially grid-like
+# partially grid-like
 
-with a SFR evaluated in lookback time in bins, with t_l,i lookback times and dt_l,i binsize and edges t_l,i-0.5, t_l,i+0.5
+# with a SFR evaluated in lookback time in bins, with t_l,i lookback times and dt_l,i binsize and edges t_l,i-0.5, t_l,i+0.5
 
-in a given bin we have the total mass formed in stars sfr(t_l=t_l,i) * dt_l,i = m_tot,i
+# in a given bin we have the total mass formed in stars sfr(t_l=t_l,i) * dt_l,i = m_tot,i
 
-now, we have some systems of interest (e.g. dwd), gained through pop-synth simulations. these have a.o. the property normalized yield, i..e number per formed solar mass
+# now, we have some systems of interest (e.g. dwd), gained through pop-synth simulations. these have a.o. the property normalized yield, i..e number per formed solar mass
 
-Y_j [Msun]
+# Y_j [Msun]
 
-total number of system j sampled;
-Y_j * M_tot,i = N_j
+# total number of system j sampled;
+# Y_j * M_tot,i = N_j
 
-if N_j > 1:
-- take X systems where X = floor(N_j)
-- N_j-x is then < 1
-- take random number from uniform dist, P. if P < N_j-x: accept, else not
+# if N_j > 1:
+# - take X systems where X = floor(N_j)
+# - N_j-x is then < 1
+# - take random number from uniform dist, P. if P < N_j-x: accept, else not
 
-then we have a bunch of systems (which can include the same system)
-but in that array, assign random lookback time between the bin edges
+# then we have a bunch of systems (which can include the same system)
+# but in that array, assign random lookback time between the bin edges
 
-assign radnom position
+# assign radnom position
 
-- this sampling stategy can be multiprocssed easily (lookback time bins)
-- can also easily be extended to include metallicity
-- naturally handles unequal yield per systems
+# - this sampling stategy can be multiprocssed easily (lookback time bins)
+# - can also easily be extended to include metallicity
+# - naturally handles unequal yield per systems
 
-Notes:
-- this method does not turn things around like the others do. We start
-at a given lookback time bin for all systems. We sample a set of
-systems based on the total starformation within that lookback time
-bin, and the normalized yields of the systems. We then assign a birth
-lookback time to the systems (taken randomly between the bin edges)
-"""
+# Notes:
+# - this method does not turn things around like the others do. We start
+# at a given lookback time bin for all systems. We sample a set of
+# systems based on the total starformation within that lookback time
+# bin, and the normalized yields of the systems. We then assign a birth
+# lookback time to the systems (taken randomly between the bin edges)
+# """
 
-import astropy.units as u
+# import astropy.units as u
 import numpy as np
 
 from syntheticstellarpopconvolve.general_functions import (
     get_normalized_yield_unit,
     has_unit,
-    is_mass_unit,
 )
 from syntheticstellarpopconvolve.post_convolution_hook_routines import (
     handle_post_convolution_function,
@@ -112,94 +111,94 @@ def select_dict_entries_with_new_indices(sampled_data_dict, new_indices):
     return sampled_data_dict
 
 
-def handle_sorting(convolution_results):
-    """
-    Function to handle sorting
-    """
+# def handle_sorting(convolution_results):
+#     """
+#     Function to handle sorting
+#     """
 
-    if isinstance(convolution_results, dict):
+#     if isinstance(convolution_results, dict):
 
-        # Sort on indices
-        sorted_indices = convolution_results["indices"].argsort()
+#         # Sort on indices
+#         sorted_indices = convolution_results["indices"].argsort()
 
-        # re-select
-        convolution_results = select_dict_entries_with_new_indices(
-            sampled_data_dict=convolution_results, new_indices=sorted_indices
-        )
-    else:
-        for convolution_result in convolution_results:
-            # Sort on indices
-            sorted_indices = convolution_result["indices"].argsort()
+#         # re-select
+#         convolution_results = select_dict_entries_with_new_indices(
+#             sampled_data_dict=convolution_results, new_indices=sorted_indices
+#         )
+#     else:
+#         for convolution_result in convolution_results:
+#             # Sort on indices
+#             sorted_indices = convolution_result["indices"].argsort()
 
-            # re-select
-            select_dict_entries_with_new_indices(
-                sampled_data_dict=convolution_result, new_indices=sorted_indices
-            )
+#             # re-select
+#             select_dict_entries_with_new_indices(
+#                 sampled_data_dict=convolution_result, new_indices=sorted_indices
+#             )
 
-    return convolution_results
+#     return convolution_results
 
 
-def add_event_lookback_time_and_filter(
-    config, data_dict, convolution_instruction, sampled_data_dict
-):
-    """
-    Function to add the event lookback time to the data
+# def add_event_lookback_time_and_filter(
+#     config, data_dict, convolution_instruction, sampled_data_dict
+# ):
+#     """
+#     Function to add the event lookback time to the data
 
-    TODO: ensure same units
-    """
+#     TODO: ensure same units
+#     """
 
-    if "delay_time" not in data_dict.keys():
-        return sampled_data_dict
+#     if "delay_time" not in data_dict.keys():
+#         return sampled_data_dict
 
-    #
-    config["logger"].warning("Adding event lookback time.")
+#     #
+#     config["logger"].warning("Adding event lookback time.")
 
-    # extract data
-    event_delay_times = data_dict["delay_time"].to(u.yr)
+#     # extract data
+#     event_delay_times = data_dict["delay_time"].to(u.yr)
 
-    # select the event delay-times of the actual sampled systems
-    event_delay_times_of_sampled_systems = event_delay_times[
-        sampled_data_dict["indices"]
-    ]
+#     # select the event delay-times of the actual sampled systems
+#     event_delay_times_of_sampled_systems = event_delay_times[
+#         sampled_data_dict["indices"]
+#     ]
 
-    #
-    formation_lookback_times = sampled_data_dict["formation_lookback_times"].to(u.yr)
+#     #
+#     formation_lookback_times = sampled_data_dict["formation_lookback_times"].to(u.yr)
 
-    # calculate event lookback times
-    event_lookback_times = (
-        formation_lookback_times - event_delay_times_of_sampled_systems
-    )
+#     # calculate event lookback times
+#     event_lookback_times = (
+#         formation_lookback_times - event_delay_times_of_sampled_systems
+#     )
 
-    # store in dict
-    sampled_data_dict["event_lookback_times"] = event_lookback_times.to(u.yr)
+#     # store in dict
+#     sampled_data_dict["event_lookback_times"] = event_lookback_times.to(u.yr)
 
-    # filter out future events
-    if convolution_instruction["filter_future_events"]:
+#     # filter out future events
+#     if convolution_instruction["filter_future_events"]:
 
-        local_indices = np.arange(len(event_lookback_times))
+#         local_indices = np.arange(len(event_lookback_times))
 
-        # calculate local indices that include only the events occuring in the past
-        past_event_local_indices = local_indices[event_lookback_times > 0]
-        future_event_local_indices = local_indices[event_lookback_times < 0]
+#         # calculate local indices that include only the events occuring in the past
+#         past_event_local_indices = local_indices[event_lookback_times > 0]
+#         future_event_local_indices = local_indices[event_lookback_times < 0]
 
-        #
-        config["logger"].warning(
-            "Filtering out {} systems that would occur in the future. {} systems are left, and happen in the past".format(
-                len(future_event_local_indices), len(past_event_local_indices)
-            )
-        )
+#         #
+#         config["logger"].warning(
+#             "Filtering out {} systems that would occur in the future. {} systems are left, and happen in the past".format(
+#                 len(future_event_local_indices), len(past_event_local_indices)
+#             )
+#         )
 
-        # updated sampled data dict to include only past-events
-        sampled_data_dict = select_dict_entries_with_new_indices(
-            sampled_data_dict=sampled_data_dict,
-            new_indices=past_event_local_indices,
-        )
+#         # updated sampled data dict to include only past-events
+#         sampled_data_dict = select_dict_entries_with_new_indices(
+#             sampled_data_dict=sampled_data_dict,
+#             new_indices=past_event_local_indices,
+#         )
 
-    return sampled_data_dict
+#     return sampled_data_dict
 
 
 def calculate_total_star_formation_in_bin(
-    config, sfr_dict, data_dict, time_bin_info_dict
+    config, convolution_instruction, sfr_dict, data_dict, time_bin_info_dict
 ):
     """
     Function to calculate the total starformation occuring in a particular time
@@ -210,30 +209,69 @@ def calculate_total_star_formation_in_bin(
     if it is required, this yields a vector with values matching
     `total_star_formation_mass * (dP/dZ_{j})*dZ_{j}` where Z_{j} is the
     metallicity-bin in which the system falls
+
+    TODO: abstract the actual SFR rate sampling
     """
 
-    # Unpack
-    lookback_time_bin_size = time_bin_info_dict["bin_size"]
-    lookback_time_bin_lower_edge = time_bin_info_dict["bin_edge_lower"]
-    star_formation_rate_in_lookback_time_bin = sfr_dict["starformation_rate_array"][
-        time_bin_info_dict["bin_number"]
-    ]
-
-    #
-    total_star_formation_in_lookback_time_bin = (
-        star_formation_rate_in_lookback_time_bin * lookback_time_bin_size
-    )
-
-    # Check if the total star formation is a mass-type value
-    if not is_mass_unit(total_star_formation_in_lookback_time_bin):
+    #########
+    # backward convolution
+    if convolution_instruction["convolution_direction"] == "backward":
         raise ValueError(
-            "The total star formation in current bin ({}) is not of a mass-type unit. Something wrong with either the sfr ({}) or the time-bin size ({})".format(
-                total_star_formation_in_lookback_time_bin,
-                star_formation_rate_in_lookback_time_bin,
-                lookback_time_bin_size,
-            )
+            "Currently backward convolution by sampling with unbinned data is not supported"
         )
 
+    #########
+    # Forward convolution
+    else:
+        # Unpack
+        star_formation_rate_in_lookback_time_bin = sfr_dict["starformation_rate_array"][
+            time_bin_info_dict["bin_number"]
+        ]
+
+        ############
+        # if we want to include metallicity then for each system we weigh
+        # the total starformation rate by a fraction determined by the
+        # metallicity bin they fall in
+
+        # TODO: move all these to a central file and combine them
+
+        # make sure that this is all checked better at the start
+        if "metallicity_weighted_starformation_rate_array" in sfr_dict:
+            config["logger"].warning(
+                "Convolution sampling using metallicity-weighted SFR rate array {}".format(
+                    sfr_dict["metallicity_weighted_starformation_rate_array"][
+                        time_bin_info_dict["bin_number"], :
+                    ]
+                )
+            )
+
+            # get the indices in the metallicity bins that the system fall into
+            metallicity_indices = (
+                np.digitize(
+                    data_dict["metallicity"],
+                    bins=config["padded_metallicity_bin_edges"],
+                    right=False,
+                )
+                - 1
+            )
+
+            # Using the metallicity-indices and the time-bin index, select the sfr for each bin (system)
+            total_star_formation_in_lookback_time_bin = sfr_dict[
+                "padded_metallicity_weighted_starformation_rate_array"
+            ][metallicity_indices, time_bin_info_dict["bin_number"] + 1]
+
+    #
+    lookback_time_bin_size = time_bin_info_dict["bin_size"]
+    lookback_time_bin_lower_edge = time_bin_info_dict["bin_edge_lower"]
+
+    # multiply by binsize
+    if config["multiply_by_sfr_time_binsize"]:
+        #
+        total_star_formation_in_lookback_time_bin = (
+            star_formation_rate_in_lookback_time_bin * lookback_time_bin_size
+        )
+
+    #
     config["logger"].warning(
         "Lower time bin {} upper time bin {} total mass formed {}".format(
             lookback_time_bin_lower_edge,
@@ -241,36 +279,6 @@ def calculate_total_star_formation_in_bin(
             total_star_formation_in_lookback_time_bin,
         )
     )
-
-    ############
-    # if we want to include metallicity then for each system we weigh
-    # the total starformation rate by a fraction determined by the
-    # metallicity bin they fall in
-
-    # make sure that this is all checked better at the start
-    if "metallicity_weighted_starformation_rate_array" in sfr_dict:
-        config["logger"].warning(
-            "Convolution sampling using metallicity-weighted SFR rate array {}".format(
-                sfr_dict["metallicity_weighted_starformation_rate_array"][
-                    time_bin_info_dict["bin_number"], :
-                ]
-            )
-        )
-
-        # get the indices in the metallicity bins that the system fall into
-        metallicity_indices = (
-            np.digitize(
-                data_dict["metallicity"],
-                bins=config["padded_metallicity_bin_edges"],
-                right=False,
-            )
-            - 1
-        )
-
-        # Using the metallicity-indices and the time-bin index, select the sfr for each bin (system)
-        total_star_formation_in_lookback_time_bin = sfr_dict[
-            "padded_metallicity_weighted_starformation_rate_array"
-        ][metallicity_indices, time_bin_info_dict["bin_number"] + 1]
 
     return total_star_formation_in_lookback_time_bin
 
@@ -356,17 +364,6 @@ def sample_systems(
     )
 
     ############
-    # Assign random formation times (of system)
-    sampled_formation_lookback_times = (
-        np.random.random(size=len(combined_sampled_indices)) * lookback_time_bin_size
-    ) + lookback_time_bin_lower_edge
-
-    # add to data_dict
-    data_dict_sampled_systems["formation_lookback_times"] = (
-        sampled_formation_lookback_times
-    )
-
-    ############
     #
     config["logger"].warning(
         "Sampled {} systems.".format(len(combined_sampled_indices))
@@ -375,100 +372,104 @@ def sample_systems(
     return data_dict_sampled_systems
 
 
-def convolution_by_sampling(
-    config,
-    sfr_dict,
-    data_dict,
-    time_bin_info_dict,
-    convolution_instruction,
-    #
-    persistent_data=None,
-    previous_convolution_results=None,
-):
-    """
-    Function to handle convolution of events by sampling
+# def convolution_by_sampling(
+#     config,
+#     sfr_dict,
+#     data_dict,
+#     time_bin_info_dict,
+#     convolution_instruction,
+#     #
+#     persistent_data=None,
+#     previous_convolution_results=None,
+# ):
+#     """
+#     Function to handle convolution of events by sampling
 
-    This function uses forward convolution, and 'star-formation-time' as the time-bin.
+#     This function uses forward convolution, and 'star-formation-time' as the time-bin.
 
-    NOTE: currently only works for lookback-time based sfr
-    NOTE: This function does not really do anything useful atm
-    """
+#     NOTE: currently only works for lookback-time based sfr
+#     """
 
-    if time_bin_info_dict["time_type"] == "redshift":
-        raise ValueError(
-            "Convolution by sampling for redshift time-types is not supported currently"
-        )
+#     if time_bin_info_dict["time_type"] == "redshift":
+#         raise ValueError(
+#             "Convolution by sampling for redshift time-types is not supported currently"
+#         )
 
-    #
-    config["logger"].debug(
-        "Convolving event-based data {}->{} for {} bin_center {} using sampling-based convolution".format(
-            convolution_instruction["input_data_name"],
-            convolution_instruction["output_data_name"],
-            time_bin_info_dict["bin_type"],
-            time_bin_info_dict["bin_center"],
-        )
-    )
+#     #
+#     config["logger"].debug(
+#         "Convolving event-based data {}->{} for {} bin_center {} using sampling-based convolution".format(
+#             convolution_instruction["input_data_name"],
+#             convolution_instruction["output_data_name"],
+#             time_bin_info_dict["bin_type"],
+#             time_bin_info_dict["bin_center"],
+#         )
+#     )
 
-    ##############
-    #
-    total_star_formation_in_lookback_time_bin = calculate_total_star_formation_in_bin(
-        config=config,
-        sfr_dict=sfr_dict,
-        data_dict=data_dict,
-        time_bin_info_dict=time_bin_info_dict,
-    )
 
-    # add indices to dict
-    data_dict["indices"] = np.arange(len(data_dict["normalized_yield"]))
+#     ##############
+#     #
+#     total_star_formation_in_lookback_time_bin = calculate_total_star_formation_in_bin(
+#         config=config,
+#         sfr_dict=sfr_dict,
+#         data_dict=data_dict,
+#         time_bin_info_dict=time_bin_info_dict,
+#     )
 
-    #######
-    # Generate the samples
-    convolution_results = sample_systems(
-        total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
-        data_dict=data_dict,
-        lookback_time_bin_size=time_bin_info_dict["bin_size"],
-        lookback_time_bin_lower_edge=time_bin_info_dict["bin_edge_lower"],
-        convolution_instruction=convolution_instruction,
-        config=config,
-    )
+#     # add indices to dict
+#     data_dict["indices"] = np.arange(len(data_dict["normalized_yield"]))
 
-    ######
-    # Add event lookback time. If the user provides delay-times for the systems/events,
-    # we determine the event times and (by default) filter out anything that happens in the future.
-    if convolution_instruction["assign_event_lookback_time"]:
-        convolution_results = add_event_lookback_time_and_filter(
-            config=config,
-            data_dict=data_dict,
-            convolution_instruction=convolution_instruction,
-            sampled_data_dict=convolution_results,
-        )
+#     #######
+#     # Generate the samples
+#     # TODO: handle support for backward sampling here too.
+#     convolution_results = sample_systems(
+#         total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
+#         data_dict=data_dict,
+#         lookback_time_bin_size=time_bin_info_dict["bin_size"],
+#         lookback_time_bin_lower_edge=time_bin_info_dict["bin_edge_lower"],
+#         convolution_instruction=convolution_instruction,
+#         config=config,
+#     )
 
-    ######
-    # Handle post-convolution function
-    convolution_results = convolution_by_sampling_post_convolution_hook_wrapper(
-        config=config,
-        sfr_dict=sfr_dict,
-        data_dict=data_dict,
-        time_bin_info_dict=time_bin_info_dict,
-        convolution_instruction=convolution_instruction,
-        convolution_results=convolution_results,
-        #
-        persistent_data=persistent_data,
-        previous_convolution_results=previous_convolution_results,
-    )
 
-    ######
-    # Handle sorting on indices
-    convolution_results = handle_sorting(convolution_results=convolution_results)
+#     # TODO: handle support for backward sampling. in that case the event lookback time is not relevant and we only should add the birth lookback time
 
-    ###########
-    # wrap up
+#     ######
+#     # Add event lookback time. If the user provides delay-times for the systems/events,
+#     # we determine the event times and (by default) filter out anything that happens in the future.
+#     if convolution_instruction["assign_event_lookback_time"]:
+#         convolution_results = add_event_lookback_time_and_filter(
+#             config=config,
+#             data_dict=data_dict,
+#             convolution_instruction=convolution_instruction,
+#             sampled_data_dict=convolution_results,
+#         )
 
-    # delete the normalized yield
-    if isinstance(convolution_results, dict):
-        del convolution_results["normalized_yield"]
-    else:
-        for convolution_result in convolution_results:
-            del convolution_result["normalized_yield"]
+#     ######
+#     # Handle post-convolution function
+#     convolution_results = convolution_by_sampling_post_convolution_hook_wrapper(
+#         config=config,
+#         sfr_dict=sfr_dict,
+#         data_dict=data_dict,
+#         time_bin_info_dict=time_bin_info_dict,
+#         convolution_instruction=convolution_instruction,
+#         convolution_results=convolution_results,
+#         #
+#         persistent_data=persistent_data,
+#         previous_convolution_results=previous_convolution_results,
+#     )
 
-    return {"convolution_results": convolution_results}
+#     ######
+#     # Handle sorting on indices
+#     convolution_results = handle_sorting(convolution_results=convolution_results)
+
+#     ###########
+#     # wrap up
+
+#     # delete the normalized yield
+#     if isinstance(convolution_results, dict):
+#         del convolution_results["normalized_yield"]
+#     else:
+#         for convolution_result in convolution_results:
+#             del convolution_result["normalized_yield"]
+
+#     return {"convolution_results": convolution_results}

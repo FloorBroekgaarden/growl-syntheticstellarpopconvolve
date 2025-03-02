@@ -5,12 +5,13 @@ TODO: make wrappers to handle timing logging to debug.
 TODO: allow usage of astropy units
 """
 
+from syntheticstellarpopconvolve.check_and_prepare_output_file import (
+    check_and_prepare_output_file,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
-from syntheticstellarpopconvolve.check_input_file import check_input_file
 from syntheticstellarpopconvolve.convolve_populations import convolve_populations
-from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     prepare_redshift_interpolator,
 )
@@ -34,12 +35,8 @@ def convolve(config):  # DH0001
     check_and_update_convolution_config(config=config)
 
     ###########
-    # Check the input file
-    check_input_file(config=config)
-
-    ###########
     # Copy the input file and
-    prepare_output_file(config=config)
+    check_and_prepare_output_file(config=config)
 
     ###########
     # Calculate SFR information and add to hdf5 file

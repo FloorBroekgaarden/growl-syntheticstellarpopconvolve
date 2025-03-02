@@ -21,18 +21,6 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
     test_pad_sfr_dict,
 )
 
-# from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
-#     test_check_convolution_config,
-#     test_check_convolution_instruction,
-#     test_check_metallicity,
-#     test_check_required,
-#     test_check_sfr_dict,
-#     test_pad_sfr_dict,
-# )
-from syntheticstellarpopconvolve.tests.test_check_input_file import (
-    test_check_input_file,
-)
-
 # from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
 #     test_convolve_ensemble_by_integration,
 #     test_ensemble_handle_marginalisation,
@@ -104,6 +92,16 @@ from syntheticstellarpopconvolve.tests.test_store_redshift_shell_info import (
     test_create_shell_volume_dict,
     test_store_redshift_shell_info,
 )
+
+# from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
+#     test_check_convolution_config,
+#     test_check_convolution_instruction,
+#     test_check_metallicity,
+#     test_check_required,
+#     test_check_sfr_dict,
+#     test_pad_sfr_dict,
+# )
+
 
 if __name__ == "__main__":
     unittest.main()

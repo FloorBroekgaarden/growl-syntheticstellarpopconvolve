@@ -3,8 +3,6 @@ Function to copy the input file and
 """
 
 import json
-import os
-import shutil
 
 import h5py
 
@@ -17,13 +15,22 @@ def prepare_output_file(config):
     """
 
     #
-    config["logger"].debug("Preparing output file")
+    config["logger"].debug("Checking and preparing convolution output file")
 
-    # Copy input file to output file
-    if os.path.isfile(config["output_filename"]):
-        os.remove(config["output_filename"])
-    shutil.copy(config["input_filename"], config["output_filename"])
+    #
+    output_file = h5py.File(config["output_filename"], "r")
 
+    # check if there is data in the file
+    if "input_data" not in output_file.keys():
+        raise ValueError("Please provide a 'input_data' group in the output hdf5file.")
+
+    # check if there is a config group and
+    if "config" not in output_file.keys():
+        raise ValueError("Please provide a 'config' group in the output hdf5file.")
+
+    output_file.close()
+
+    # Store config
     with h5py.File(config["output_filename"], "a") as output_hdf5file:
         # Store convolution configuration in
         output_hdf5file["config"].create_dataset(

@@ -61,7 +61,7 @@ def convolve_pre_calculated_data(
     # - (opt) multiply by convolution time-bin width
     normalized_yield = data_dict["normalized_yield"]
     normalized_yield_unit = get_normalized_yield_unit(config, convolution_instruction)
-    yield_value = starformation * normalized_yield * normalized_yield_unit
+    yield_array = starformation * normalized_yield * normalized_yield_unit
 
     # Handle multiplication by convolution time-bin size
     # TODO: consider putting this in a separate function
@@ -72,11 +72,11 @@ def convolve_pre_calculated_data(
             )
 
         # TODO: if convolution direction is forward then convolution bin is SFR bin. double check if the user doesnt do this twice.
-        yield_value = yield_value * time_bin_info_dict["bin_size"]
+        yield_array = yield_array * time_bin_info_dict["bin_size"]
 
         config["logger"].info(
             "Multiplying the yield by convolution-time binsize {} to {}".format(
-                time_bin_info_dict["bin_size"], yield_value
+                time_bin_info_dict["bin_size"], yield_array
             )
         )
 
@@ -88,13 +88,13 @@ def convolve_pre_calculated_data(
         # check whether the yield is dimensionless
 
         # force into cgs (basically to ensure that Gyr/yr is seen as dimensionless with a scale)
-        yield_value = yield_value.cgs
+        yield_array = yield_array.cgs
 
         # it has to be dimensionless, otherwise its not really a count.
-        if has_unit(yield_value, fail_on_dimensionless=True):
+        if has_unit(yield_array, fail_on_dimensionless=True):
             raise ValueError(
                 "Combined formation yield (unit: {}) has to be dimensionless for convolution by sampling. The total star formation in bin ({}) times the normalized yield ({}) should not have a unit anymore.".format(
-                    yield_value.unit.to_string(),
+                    yield_array.unit.to_string(),
                     starformation.unit.to_string(),
                     normalized_yield_unit.unit.to_string(),
                 )
@@ -103,7 +103,7 @@ def convolve_pre_calculated_data(
         # handle sampling
         # TODO: add persistent data and previous conv results?
         convolution_results = sample_systems(
-            total_star_formation_in_bin=total_star_formation_in_lookback_time_bin,
+            yield_array=yield_array,
             data_dict=data_dict,
             lookback_time_bin_size=time_bin_info_dict["bin_size"],
             lookback_time_bin_lower_edge=time_bin_info_dict["bin_edge_lower"],

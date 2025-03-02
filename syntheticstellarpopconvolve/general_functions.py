@@ -1,5 +1,7 @@
 """
-Some general functions related to the convolution
+Some general functions related to the convolution codebase.
+
+Mostly unsorted, likely better placed in together with related functionality.
 """
 
 import functools
@@ -11,6 +13,7 @@ import tempfile
 from inspect import isfunction
 
 import astropy.units as u
+import h5py
 import numpy as np
 import psutil
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
@@ -24,6 +27,22 @@ from syntheticstellarpopconvolve.convolve_binned_data import calculate_overlap_f
 logger = logging.getLogger(__name__)
 
 dimensionless_unit = u.m / u.m
+
+
+def generate_boilerplate_outputfile(outputfile_name):
+    """
+    Function to generate a boilerplate output file structure so the user does not have to worry about including the correct groups.
+    """
+
+    # create file
+    output_hdf5_file = h5py.File(outputfile_name, "w")
+
+    # Create groups main
+    output_hdf5_file.create_group("input_data")
+    output_hdf5_file.create_group("config")
+
+    # close
+    output_hdf5_file.close()
 
 
 def extract_unit_dict(output_hdf5_file, key):

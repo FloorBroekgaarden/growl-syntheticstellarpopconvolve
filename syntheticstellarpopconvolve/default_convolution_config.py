@@ -251,14 +251,9 @@ default_convolution_config_dict = {
         "validation": list_of_dicts_validation,  # TODO: lets also allow just 1 convolution instruction as a dictionary
         # "validation": # NOTE: validation handled with custom function
     },
-    "input_filename": {
-        "value": "",
-        "description": "Full path to input hdf5 filename",
-        "validation": existing_path_validation,
-    },
     "output_filename": {
         "value": "",
-        "description": "Full path to output hdf5 filename",
+        "description": "Full path to output hdf5 filename. This should point to a file that already contains the input data that will be used to do the convolution with.",
         "validation": str,
     },
     "check_convolution_config": {

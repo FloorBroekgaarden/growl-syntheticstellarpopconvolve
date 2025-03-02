@@ -73,9 +73,6 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
 )
 
 # from syntheticstellarpopconvolve.tests.test_ensemble_utils import *
-from syntheticstellarpopconvolve.tests.test_extract_population_settings import (
-    test_extract_population_settings,
-)
 from syntheticstellarpopconvolve.tests.test_general_functions import (
     test_calculate_bin_edges,
     test_calculate_bincenters,

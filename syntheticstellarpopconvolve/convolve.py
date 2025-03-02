@@ -10,9 +10,6 @@ from syntheticstellarpopconvolve.check_and_update_convolution_config import (
 )
 from syntheticstellarpopconvolve.check_input_file import check_input_file
 from syntheticstellarpopconvolve.convolve_populations import convolve_populations
-from syntheticstellarpopconvolve.extract_population_settings import (
-    extract_population_settings,
-)
 from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     prepare_redshift_interpolator,
@@ -43,10 +40,6 @@ def convolve(config):  # DH0001
     ###########
     # Copy the input file and
     prepare_output_file(config=config)
-
-    ###########
-    # Extract some information to store in the config
-    config = extract_population_settings(config=config)
 
     ###########
     # Calculate SFR information and add to hdf5 file

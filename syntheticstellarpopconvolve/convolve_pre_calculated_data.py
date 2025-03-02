@@ -2,68 +2,20 @@
 File that contains main functions related to convolution of pre-calculated data.
 """
 
+from syntheticstellarpopconvolve.calculate_starformation_rate import (
+    calculate_starformation,
+)
 from syntheticstellarpopconvolve.convolution_by_integration import (
     convolution_by_integration_post_convolution_hook_wrapper,
 )
 from syntheticstellarpopconvolve.convolution_by_sampling import (
-    calculate_total_star_formation_in_bin,
     convolution_by_sampling_post_convolution_hook_wrapper,
     sample_systems,
 )
 from syntheticstellarpopconvolve.general_functions import (
-    calculate_digitized_sfr_rates_binned_data_for_backward_convolution,
-    calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution,
     get_normalized_yield_unit,
     has_unit,
 )
-
-
-def get_starformation(
-    config, convolution_instruction, data_dict, sfr_dict, time_bin_info_dict
-):
-    """
-    Main function that handles choices for starformation calculation
-    """
-
-    if convolution_instruction["convolution_direction"] == "backward":
-        # with backward sampling the star formation for binned data needs to perform a weighted averaging over the SFR bins
-        if convolution_instruction["contains_binned_data"]:
-            starformation = (
-                calculate_digitized_sfr_rates_binned_data_for_backward_convolution(
-                    config=config,
-                    convolution_instruction=convolution_instruction,
-                    convolution_time_bin_center=time_bin_info_dict["bin_center"],
-                    data_dict=data_dict,
-                    sfr_dict=sfr_dict,
-                    delay_time_data_bin_info_dict=convolution_instruction[
-                        "delay_time_data_bin_info_dict"
-                    ],
-                )
-            )
-        # otherwise we just find out the starformation at the exact birth time of the system given the convolution time and the delay time.
-        else:
-            starformation = (
-                calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution(
-                    config=config,
-                    convolution_instruction=convolution_instruction,
-                    convolution_time_bin_center=time_bin_info_dict["bin_center"],
-                    data_dict=data_dict,
-                    sfr_dict=sfr_dict,
-                )
-            )
-    elif convolution_instruction["convolution_direction"] == "forward":
-        # forward sampling just takes the value in the current bin
-        starformation = calculate_total_star_formation_in_bin(
-            config=config,
-            convolution_instruction=convolution_instruction,
-            sfr_dict=sfr_dict,
-            data_dict=data_dict,
-            time_bin_info_dict=time_bin_info_dict,
-        )
-    else:
-        raise ValueError("convolution direction not supported")
-
-    return starformation
 
 
 def convolve_pre_calculated_data(
@@ -94,7 +46,7 @@ def convolve_pre_calculated_data(
 
     #########
     # get SFR
-    starformation = get_starformation(
+    starformation = calculate_starformation(
         config=config,
         convolution_instruction=convolution_instruction,
         data_dict=data_dict,

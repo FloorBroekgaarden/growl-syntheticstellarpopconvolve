@@ -27,6 +27,23 @@ from syntheticstellarpopconvolve.general_functions import (
 TMP_DIR = temp_dir("code", "convolve_stochastically", clean_path=True)
 
 
+def post_convolution_function(
+    config, sfr_dict, data_dict, convolution_results, convolution_instruction
+):
+    """
+    Post-convolution function to handle integrating the systems forward in time and finding those that end up in the LISA waveband.
+
+    using local_indices to select everything and using Alexey's distance sampler to handle sampling the distances
+    """
+
+    # unpack data
+    system_indices = convolution_results["indices"]
+
+    print(system_indices)
+
+    return convolution_results
+
+
 ##############
 # create file
 output_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5.h5")
@@ -34,13 +51,20 @@ generate_boilerplate_outputfile(output_hdf5_filename)
 
 ##############
 # Create input data
+# records = [
+#     {"time": 0.25, "value": 10, "probability": 1},
+#     {"time": 1.25, "probability": 2, "value": 20},
+#     {"time": 2.25, "probability": 3, "value": 30},
+#     # {"time": 0.25, "value": 11, "probability": 1.1},
+#     # {"time": 3.25, "probability": 4, "value": 40},
+# ]
+
 records = [
-    {"time": 0.25, "value": 10, "probability": 1},
-    {"time": 1.25, "probability": 2, "value": 20},
-    {"time": 2.25, "probability": 3, "value": 30},
-    {"time": 0.25, "value": 11, "probability": 1.1},
-    {"time": 3.25, "probability": 4, "value": 40},
+    {"time": 0.5, "value": 10, "probability": 1},
+    {"time": 1.5, "probability": 2, "value": 20},
+    {"time": 2.5, "probability": 3, "value": 30},
 ]
+
 
 example_dataframe = pd.DataFrame.from_records(records)
 
@@ -56,7 +80,7 @@ convolution_config = copy.copy(default_convolution_config)
 convolution_config["output_filename"] = output_hdf5_filename
 convolution_config["tmp_dir"] = TMP_DIR
 convolution_config["multiprocessing"] = False
-convolution_config["logger"].setLevel(logging.DEBUG)
+convolution_config["logger"].setLevel(logging.CRITICAL)
 convolution_config["multiply_by_sfr_time_binsize"] = False
 convolution_config["multiply_by_convolution_time_binsize"] = False
 convolution_config["time_type"] = "lookback_time"
@@ -67,7 +91,7 @@ convolution_config["convolution_lookback_time_bin_edges"] = np.arange(0, 3, 1) *
 convolution_config["convolution_instructions"] = [
     {
         **default_convolution_instruction,
-        "convolution_type": "integrate",
+        "convolution_type": "sample",
         "input_data_name": "binned_example",
         "output_data_name": "binned_example",
         "contains_binned_data": True,
@@ -76,16 +100,15 @@ convolution_config["convolution_instructions"] = [
             "delay_time_data_bin_edges": time_bin_edges * u.yr
         },
         "data_column_dict": {
-            # required
-            # "normalized_yield": {"column_name": "probability", "unit": u.Msun / u.Msun},
-            "normalized_yield": {"column_name": "probability", "unit": 1 / u.yr},
-            # "normalized_yield": "probability",
+            "normalized_yield": {"column_name": "probability", "unit": 1 / u.Msun},
             "delay_time": {"column_name": "time", "unit": u.yr},
+            "value": "value",
         },
+        "post_convolution_function": post_convolution_function,
     },
 ]
 
-
+############
 # construct the sfr-dict (NOTE: this uses absolute SFR, not metallicity dependent)
 sfr_dict = {}
 sfr_dict["lookback_time_bin_edges"] = np.arange(0, 10, 1) * u.yr

@@ -24,6 +24,38 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
+def get_physical_dimensions(unit):
+    """Return the physical dimensions of a unit in sorted [M][L][T] notation using SI base units."""
+    # Decompose into SI base units
+    decomposed = unit.decompose(bases=u.si.bases)
+
+    # Extract base units and their powers
+    si_dimensions = {
+        str(base.physical_type): power
+        for base, power in zip(decomposed.bases, decomposed.powers)
+    }
+
+    # Define standard SI dimension notation
+    notation_map = {
+        "mass": "M",
+        "length": "L",
+        "time": "T",
+        "current": "I",
+        "temperature": "Θ",
+        "amount of substance": "N",
+        "luminous intensity": "J",
+    }
+
+    # Convert to notation, ensuring unknown types don't appear
+    sorted_notation = [
+        f"[{notation_map[ptype]}^{power}]" if power != 1 else f"[{notation_map[ptype]}]"
+        for ptype, power in sorted(si_dimensions.items())  # Sorting works correctly now
+        if ptype in notation_map  # Ignore unknown types
+    ]
+
+    return "".join(sorted_notation) or "[dimensionless]"
+
+
 def generate_boilerplate_outputfile(outputfile_name):
     """
     Function to generate a boilerplate output file structure so the user does not have to worry about including the correct groups.

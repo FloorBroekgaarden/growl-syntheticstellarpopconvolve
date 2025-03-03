@@ -14,6 +14,7 @@ from syntheticstellarpopconvolve.convolution_by_sampling import (
 )
 from syntheticstellarpopconvolve.general_functions import (
     get_normalized_yield_unit,
+    get_physical_dimensions,
     has_unit,
 )
 
@@ -91,16 +92,17 @@ def convolve_pre_calculated_data(
         ##################
         # check whether the yield is dimensionless
 
-        # force into cgs (basically to ensure that Gyr/yr is seen as dimensionless with a scale)
-        yield_array = yield_array.cgs
-
         # it has to be dimensionless, otherwise its not really a count.
-        if has_unit(yield_array, fail_on_dimensionless=True):
+        # force into cgs (basically to ensure that Gyr/yr is seen as dimensionless with a scale)
+        if has_unit(yield_array.cgs, fail_on_dimensionless=True):
             raise ValueError(
-                "Combined formation yield (unit: {}) has to be dimensionless for convolution by sampling. The total star formation in bin ({}) times the normalized yield ({}) should not have a unit anymore.".format(
+                "Combined formation yield (unit: {}. dimension: {}) has to be dimensionless for convolution by sampling. The total star formation in bin (unit: {}. dimension: {}) times the normalized yield (unit: {}. dimension: {}) should not have a unit anymore.".format(
                     yield_array.unit.to_string(),
+                    get_physical_dimensions(yield_array.unit),
                     starformation.unit.to_string(),
+                    get_physical_dimensions(starformation.unit),
                     normalized_yield_unit.unit.to_string(),
+                    get_physical_dimensions(normalized_yield_unit.unit),
                 )
             )
 

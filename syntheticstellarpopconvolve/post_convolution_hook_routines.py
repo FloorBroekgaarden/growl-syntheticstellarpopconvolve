@@ -20,6 +20,14 @@ def extract_arguments(func, arg_dict):
     ]
     args_without_defaults = [arg for arg in all_args if arg not in args_with_defaults]
 
+    for arg in args_without_defaults:
+        if arg not in arg_dict.keys():
+            raise ValueError(
+                "Argument '{}' of postconvolution function is not part of the available information. Please only choose arguments from the following list: '{}'".format(
+                    arg, list(arg_dict.keys())
+                )
+            )
+
     # construct args
     args = {arg: arg_dict[arg] for arg in args_without_defaults}
 

@@ -213,7 +213,7 @@ def sample_systems(
 
     ############
     #
-    local_indices = np.arange(yield_array.shape)
+    local_indices = np.arange(yield_array.shape[0])
 
     ############
     # first sample systems that have a should form at least one time, but only the down-rounded number of times
@@ -240,12 +240,16 @@ def sample_systems(
         [integer_sampled_formation_indices, fractional_sampled_formation_indices]
     )
 
+    print(combined_sampled_indices)
+
     ############
     # Make a copy of the data dict and select everything using the combined indices
     data_dict_sampled_systems = select_dict_entries_with_new_indices(
         sampled_data_dict=data_dict,
         new_indices=combined_sampled_indices,
     )
+
+    print(data_dict_sampled_systems)
 
     ############
     #

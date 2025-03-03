@@ -81,6 +81,10 @@ def convolve_pre_calculated_data(
         )
 
     #########
+    # Wrap as convolution results
+    convolution_results = {"yield": yield_array}
+
+    #########
     # handle choice for sampling actual systems or just use i
     if convolution_instruction["convolution_type"] == "sample":
 
@@ -164,9 +168,11 @@ def convolve_pre_calculated_data(
     #############
     # delete the normalized yield
     if isinstance(convolution_results, dict):
-        del convolution_results["normalized_yield"]
+        if "normalized_yield" in convolution_results:
+            del convolution_results["normalized_yield"]
     else:
         for convolution_result in convolution_results:
-            del convolution_result["normalized_yield"]
+            if "normalized_yield" in convolution_results:
+                del convolution_result["normalized_yield"]
 
-    return convolution_results
+    return {"convolution_results": convolution_results}

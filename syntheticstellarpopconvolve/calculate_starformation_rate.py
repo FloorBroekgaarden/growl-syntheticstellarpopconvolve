@@ -19,7 +19,9 @@ def general_sfr_digitise_function(sfr_dict, time_values, metallicity_values=None
     ################
     # Calculate time indices and determine the SFR values
     time_indices = (
-        np.digitize(time_values, bins=sfr_dict["padded_time_bin_edges"], right=False)
+        np.digitize(
+            time_values.value, bins=sfr_dict["padded_time_bin_edges"].value, right=False
+        )
         - 1
     )
 

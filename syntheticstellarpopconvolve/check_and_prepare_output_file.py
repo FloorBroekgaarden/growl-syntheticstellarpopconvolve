@@ -9,7 +9,7 @@ import h5py
 from syntheticstellarpopconvolve.general_functions import JsonCustomEncoder
 
 
-def prepare_output_file(config):
+def check_and_prepare_output_file(config):
     """
     Function to prepare the output file, create some initial groups and store the configuration
     """

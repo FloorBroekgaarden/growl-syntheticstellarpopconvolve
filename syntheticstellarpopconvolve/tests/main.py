@@ -9,6 +9,9 @@ import unittest
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
 )
+from syntheticstellarpopconvolve.tests.test_check_and_prepare_output_file import (
+    test_check_and_prepare_output_file,
+)
 from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
     test_check_convolution_config,
 )
@@ -19,17 +22,6 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_instruc
 from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
     test_check_sfr_dict,
     test_pad_sfr_dict,
-)
-
-# from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
-#     test_convolve_ensemble_by_integration,
-#     test_ensemble_handle_marginalisation,
-#     test_ensemble_handle_SFR_multiplication,
-#     test_extract_ensemble_data,
-#     test_handle_binsize_multiplication_factor,
-# )
-from syntheticstellarpopconvolve.tests.test_convolution_by_integration import (
-    test_convolution_by_integration,
 )
 
 # from syntheticstellarpopconvolve.tests.test_convolution_with_ensemble import (
@@ -80,9 +72,6 @@ from syntheticstellarpopconvolve.tests.test_post_convolution_hook_routines impor
     test_extract_arguments,
     test_postprocessing,
 )
-from syntheticstellarpopconvolve.tests.test_prepare_output_file import (
-    test_prepare_output_file,
-)
 from syntheticstellarpopconvolve.tests.test_prepare_redshift_interpolator import (
     test_create_interpolation_datasets,
     test_load_interpolation_data,
@@ -92,6 +81,18 @@ from syntheticstellarpopconvolve.tests.test_store_redshift_shell_info import (
     test_create_shell_volume_dict,
     test_store_redshift_shell_info,
 )
+
+# from syntheticstellarpopconvolve.tests.test_convolve_ensembles import (
+#     test_convolve_ensemble_by_integration,
+#     test_ensemble_handle_marginalisation,
+#     test_ensemble_handle_SFR_multiplication,
+#     test_extract_ensemble_data,
+#     test_handle_binsize_multiplication_factor,
+# )
+# from syntheticstellarpopconvolve.tests.test_convolution_by_integration import (
+#     test_convolution_by_integration,
+# )
+
 
 # from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
 #     test_check_convolution_config,

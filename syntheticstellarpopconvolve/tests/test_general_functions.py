@@ -19,6 +19,9 @@ from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
 )
+from syntheticstellarpopconvolve.check_and_prepare_output_file import (
+    check_and_prepare_output_file,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
@@ -41,7 +44,6 @@ from syntheticstellarpopconvolve.general_functions import (
     pad_function,
     temp_dir,
 )
-from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
     prepare_redshift_interpolator,
 )
@@ -346,7 +348,7 @@ class test_calculate_digitized_sfr_rates(unittest.TestCase):
         check_and_update_convolution_config(self.convolution_config)
 
         #
-        prepare_output_file(config=self.convolution_config)
+        check_and_prepare_output_file(config=self.convolution_config)
 
     def test_calculate_digitized_sfr_rates_sfr_only(self):
 

@@ -16,12 +16,14 @@ from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
 )
+from syntheticstellarpopconvolve.check_and_prepare_output_file import (
+    check_and_prepare_output_file,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.convolve_on_the_fly import convolve_on_the_fly
 from syntheticstellarpopconvolve.general_functions import temp_dir
-from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_convolution_on_the_fly", clean_path=True
@@ -117,7 +119,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
         check_and_update_convolution_config(self.convolution_config)
 
         #
-        prepare_output_file(config=self.convolution_config)
+        check_and_prepare_output_file(config=self.convolution_config)
 
     def test_convolve_on_the_fly_wrong_arguments_on_the_fly_function(self):
         #

@@ -155,8 +155,9 @@ def calculate_digitized_sfr_rates_binned_data_for_backward_convolution(
 
     This function performs the following steps:
     - sets up the shifted data-bin edges
-    - loops over each left-right edge pair and determines which SFR bins that edge-pair spans/overlaps with, the fractional overlap etc.
-    - for each left-right edge pair, loops over the overlapping SFR bins
+    - loops over each left-right edge pair and determines which SFR bins that
+      edge-pair spans/overlaps with, the fractional overlap etc. for each
+    - left-right edge pair, loops over the overlapping SFR bins
 
     NOTE: does not support redshift-based convolution
     """

@@ -22,8 +22,6 @@ def pad_sfr_dict(config, sfr_dict):
     Function to pad the entries in the sfr dictionary with empty bins.
 
     These functions update all the sfr properties and adds new entries that are prepended with 'padded_'
-
-    TODO: add time binsizes
     """
 
     #

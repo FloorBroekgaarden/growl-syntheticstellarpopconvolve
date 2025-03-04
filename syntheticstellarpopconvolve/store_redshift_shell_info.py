@@ -74,13 +74,3 @@ def store_redshift_shell_info(config, sfr_dict):
         sfr_dict["redshift_shell_volume_dict"] = redshift_shell_volume_dict
 
     return sfr_dict
-
-    # #############
-    # # Store the information
-    # with h5py.File(config["output_filename"], "a") as output_hdf5file:
-    #     output_hdf5file.create_group("cosmology")
-    #     cosmology = output_hdf5file["cosmology"]
-    #     cosmology.create_dataset(
-    #         "redshift_shell_volume_dict",
-    #         data=json.dumps(redshift_shell_volume_dict, cls=JsonCustomEncoder),
-    #     )

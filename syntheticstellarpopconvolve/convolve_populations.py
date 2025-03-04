@@ -16,19 +16,14 @@ import numpy as np
 import pandas as pd
 import setproctitle
 
-#######
-# from syntheticstellarpopconvolve.convolution_by_integration import (
-#     convolution_by_integration,
-# )
-# from syntheticstellarpopconvolve.convolution_by_sampling import convolution_by_sampling
 from syntheticstellarpopconvolve.convolve_on_the_fly import convolve_on_the_fly
 from syntheticstellarpopconvolve.convolve_pre_calculated_data import (
     convolve_pre_calculated_data,
 )
-
-#######
 from syntheticstellarpopconvolve.general_functions import (
     JsonCustomEncoder,
+    create_job_dict,
+    create_time_bin_info_dict,
     generate_group_name,
     get_tmp_dir,
     handle_custom_scaling_or_conversion,
@@ -265,19 +260,9 @@ def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
 
 def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
-        Function to handle post-convolution.
+    Function to handle post-convolution.
 
-        Mostly stores tmp pickle files that contain the data
-
-        TODO: stuff below is not relevant really anymre.
-    data types:
-    - yield (integration, events and ensemble): SFR weighted probabilities of each system
-    - stripped_ensemble (integration, ensembe): Ensemble with its endpoints stripped off. Will only be stored in the first one and should be used to re-construct the other results
-    - sampled_IDs: (sampling, events): IDs of sampled systems
-    - sampled_birth_times: (sampling, events): Assigned birth-times of sampled systems.
-    - sampled_positions: (sampling, events): sampled positions. Can be multi-d.
-
-    We can automatically store these and update some of the meta-data.
+    Mostly stores tmp pickle files that contain the data
     """
 
     #################
@@ -397,46 +382,6 @@ def handle_convolution_choice(
             previous_convolution_results=previous_convolution_results,
         )
 
-    # ################
-    # # Event-convolution by integration:
-    # if convolution_instruction["convolution_type"] == "integrate":
-    #     # We don't support binned data and redshift based time-types yet
-    #     if (
-    #         convolution_instruction["contains_binned_data"]
-    #         and config["time_type"] == "redshift"
-    #     ):
-    #         raise ValueError(
-    #             "Convolving binned data with redshift-based time is currently not supported"
-    #         )
-
-    #     ##########
-    #     #
-    #     convolution_results = convolution_by_integration(
-    #         config=config,
-    #         sfr_dict=sfr_dict,
-    #         data_dict=data_dict,
-    #         time_bin_info_dict=time_bin_info_dict,
-    #         convolution_instruction=convolution_instruction,
-    #         #
-    #         persistent_data=persistent_data,
-    #         previous_convolution_results=previous_convolution_results,
-    #     )
-
-    # elif convolution_instruction["convolution_type"] == "sample":
-
-    #     ##########
-    #     #
-    #     convolution_results = convolution_by_sampling(
-    #         config=config,
-    #         sfr_dict=sfr_dict,
-    #         data_dict=data_dict,
-    #         time_bin_info_dict=time_bin_info_dict,
-    #         convolution_instruction=convolution_instruction,
-    #         #
-    #         persistent_data=persistent_data,
-    #         previous_convolution_results=previous_convolution_results,
-    #     )
-
     return convolution_results
 
 
@@ -470,11 +415,9 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
         # Set up output dict
         payload = {}
 
+        ##############
+        # run convolution
         try:
-            # TODO: add log that contains info about the worker id etc
-
-            ##############
-            # run convolution
             convolution_results = handle_convolution_choice(
                 config=config,
                 job_dict=job_dict,
@@ -603,7 +546,6 @@ def convolution_queue_filler(  # DH0001
 
     ######
     # Fill the queue with centres
-    # TODO: this loop itself is used in the sequential method as well. Abstract and call either job.put or other
     for bin_number, (
         bin_center,
         bin_size,
@@ -611,28 +553,25 @@ def convolution_queue_filler(  # DH0001
     ) in enumerate(zipped_bin_data):
 
         # store current bin info, which is different in different cases.
-        time_bin_info_dict = {
-            "bin_number": bin_number,
-            "bin_center": bin_center,
-            "bin_edge_lower": bin_edge_lower,
-            "bin_size": bin_size,
-            "bin_type": bin_type,
-            "time_type": config["time_type"],
-        }
+        time_bin_info_dict = create_time_bin_info_dict(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            bin_number=bin_number,
+            bin_center=bin_center,
+            bin_edge_lower=bin_edge_lower,
+            bin_size=bin_size,
+            bin_type=bin_type,
+        )
 
         # Set up job dict
-        job_dict = {
-            "job_number": bin_number,
-            "time_bin_info_dict": time_bin_info_dict,
-            "sfr_dict": sfr_dict,
-            "convolution_instruction": convolution_instruction,
-            "data_dict": data_dict,
-            "output_dir": get_tmp_dir(
-                config=config,
-                convolution_instruction=convolution_instruction,
-                sfr_dict=sfr_dict,
-            ),
-        }
+        job_dict = create_job_dict(
+            config=config,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            convolution_instruction=convolution_instruction,
+            time_bin_info_dict=time_bin_info_dict,
+            bin_number=bin_number,
+        )
 
         #
         config["logger"].debug("job {} in the queue".format(job_dict["job_number"]))
@@ -744,11 +683,14 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
     """
     Main function to handle sequential convolution.
 
-    This handles the convolution steps in sequence, but also allows the user to provide persistent information and use results of the previous convolution step
+    This handles the convolution steps in sequence, but also allows the user
+    to provide persistent information and use results of the previous
+    convolution step
     """
 
     ###################
-    # Set up data_dict: dictionary that contains the arrays or ensembles that are required for the convolution.
+    # Set up data_dict: dictionary that contains the arrays or ensembles that
+    # are required for the convolution.
     config, data_dict, convolution_instruction = generate_data_dict(
         config=config, convolution_instruction=convolution_instruction
     )
@@ -775,28 +717,25 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
     ) in enumerate(zipped_bin_data):
 
         # store current bin info, which is different in different cases.
-        time_bin_info_dict = {
-            "bin_number": bin_number,
-            "bin_center": bin_center,
-            "bin_edge_lower": bin_edge_lower,
-            "bin_size": bin_size,
-            "bin_type": bin_type,
-            "time_type": config["time_type"],
-        }
+        time_bin_info_dict = create_time_bin_info_dict(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            bin_number=bin_number,
+            bin_center=bin_center,
+            bin_edge_lower=bin_edge_lower,
+            bin_size=bin_size,
+            bin_type=bin_type,
+        )
 
         # Set up job dict
-        job_dict = {
-            "job_number": bin_number,
-            "time_bin_info_dict": time_bin_info_dict,
-            "sfr_dict": sfr_dict,
-            "convolution_instruction": convolution_instruction,
-            "data_dict": data_dict,
-            "output_dir": get_tmp_dir(
-                config=config,
-                convolution_instruction=convolution_instruction,
-                sfr_dict=sfr_dict,
-            ),
-        }
+        job_dict = create_job_dict(
+            config=config,
+            sfr_dict=sfr_dict,
+            data_dict=data_dict,
+            convolution_instruction=convolution_instruction,
+            time_bin_info_dict=time_bin_info_dict,
+            bin_number=bin_number,
+        )
 
         # #############
         # run convolution

@@ -117,29 +117,6 @@ def convolve_pre_calculated_data(
             config=config,
         )
 
-        # ############
-        # # Assign random formation times (of system)
-        # TODO: activate again
-        # sampled_formation_lookback_times = (
-        #     np.random.random(size=len(combined_sampled_indices)) * lookback_time_bin_size
-        # ) + lookback_time_bin_lower_edge
-
-        # # add to data_dict
-        # data_dict_sampled_systems["formation_lookback_times"] = (
-        #     sampled_formation_lookback_times
-        # )
-
-        # ######
-        # # Add event lookback time. If the user provides delay-times for the systems/events,
-        # # we determine the event times and (by default) filter out anything that happens in the future.
-        # if convolution_instruction["assign_event_lookback_time"]:
-        #     convolution_results = add_event_lookback_time_and_filter(
-        #         config=config,
-        #         data_dict=data_dict,
-        #         convolution_instruction=convolution_instruction,
-        #         sampled_data_dict=convolution_results,
-        #     )
-
         # handle postconvolution
         convolution_results = convolution_by_sampling_post_convolution_hook_wrapper(
             config=config,

@@ -28,18 +28,25 @@ TMP_DIR = temp_dir("code", "convolve_stochastically", clean_path=True)
 
 
 def post_convolution_function(
-    config, sfr_dict, data_dict, convolution_results, convolution_instruction
+    config, sfr_dict, time_bin_info_dict, data_dict, convolution_results, convolution_instruction
 ):
     """
-    Post-convolution function to handle integrating the systems forward in time and finding those that end up in the LISA waveband.
+    Post-convolution function to handle integrating the systems forward in
+    time and finding those that end up in the LISA waveband.
 
-    using local_indices to select everything and using Alexey's distance sampler to handle sampling the distances
+    using local_indices to select everything and using Alexey's distance
+    sampler to handle sampling the distances
     """
 
-    # unpack data
-    system_indices = convolution_results["indices"]
+    print("=========")
+    print(time_bin_info_dict)
+    print(data_dict)
+    print(convolution_results)
 
-    print(system_indices)
+    # # unpack data
+    # system_indices = convolution_results["indices"]
+
+    # print(system_indices)
 
     return convolution_results
 
@@ -100,7 +107,7 @@ convolution_config["convolution_instructions"] = [
             "delay_time_data_bin_edges": time_bin_edges * u.yr
         },
         "data_column_dict": {
-            "normalized_yield": {"column_name": "probability", "unit": 1 / u.Msun},
+            "normalized_yield": {"column_name": "probability", "unit": u.yr / u.Msun},
             "delay_time": {"column_name": "time", "unit": u.yr},
             "value": "value",
         },

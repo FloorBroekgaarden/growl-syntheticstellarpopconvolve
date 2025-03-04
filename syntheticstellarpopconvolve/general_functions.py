@@ -24,6 +24,57 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
+def create_job_dict(
+    config, sfr_dict, data_dict, convolution_instruction, time_bin_info_dict, bin_number
+):
+    """
+    Function to create the job dict
+    """
+
+    # Set up job dict
+    job_dict = {
+        "job_number": bin_number,
+        "time_bin_info_dict": time_bin_info_dict,
+        "sfr_dict": sfr_dict,
+        "convolution_instruction": convolution_instruction,
+        "data_dict": data_dict,
+        "output_dir": get_tmp_dir(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            sfr_dict=sfr_dict,
+        ),
+    }
+
+    return job_dict
+
+
+def create_time_bin_info_dict(
+    config,
+    convolution_instruction,
+    bin_number,
+    bin_center,
+    bin_edge_lower,
+    bin_size,
+    bin_type,
+):
+    """
+    Function to set up the time bin info dict
+    """
+
+    time_bin_info_dict = {
+        "bin_number": bin_number,
+        "bin_center": bin_center,
+        "bin_edge_lower": bin_edge_lower,
+        "bin_size": bin_size,
+        "bin_type": bin_type,
+        "time_type": config["time_type"],
+        "reverse_bin_order": convolution_instruction["reverse_convolution"],
+        "convolution_direction": convolution_instruction["convolution_direction"],
+    }
+
+    return time_bin_info_dict
+
+
 def get_physical_dimensions(unit):
     """Return the physical dimensions of a unit in sorted [M][L][T] notation using SI base units."""
     # Decompose into SI base units

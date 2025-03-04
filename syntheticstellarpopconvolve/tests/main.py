@@ -53,11 +53,9 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
 )
 
 # from syntheticstellarpopconvolve.tests.test_ensemble_utils import *
-from syntheticstellarpopconvolve.tests.test_general_functions import (
+from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_calculate_digitized_sfr_rates,; test_calculate_origin_time_array,
     test_calculate_bin_edges,
     test_calculate_bincenters,
-    test_calculate_digitized_sfr_rates,
-    test_calculate_origin_time_array,
     test_check_required,
     test_generate_group_name,
     test_get_tmp_dir,

@@ -22,7 +22,10 @@ from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
 )
-from syntheticstellarpopconvolve.general_functions import temp_dir
+from syntheticstellarpopconvolve.general_functions import (
+    generate_boilerplate_outputfile,
+    temp_dir,
+)
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_convolution_with_events", clean_path=True
@@ -36,8 +39,8 @@ class test_convolution_with_events(unittest.TestCase):
         """ """
 
         #
-        input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
         output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
+        generate_boilerplate_outputfile(output_hdf5_filename)
 
         ##############
         # SET UP DATA
@@ -47,36 +50,9 @@ class test_convolution_with_events(unittest.TestCase):
         }
         dummy_df = pd.DataFrame.from_records(dummy_data)
 
-        #############
-        # create input HDF5 file
-        with h5py.File(input_hdf5_filename, "w") as input_hdf5_file:
-
-            ######################
-            # Create groups
-            input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("config")
-
-            ###############
-            # Readout population settings
-            population_settings_filename = pkg_resources.resource_filename(
-                "syntheticstellarpopconvolve",
-                "example_data/example_population_settings.json",
-            )
-
-            with open(population_settings_filename, "r") as f:
-                population_settings = json.loads(f.read())
-
-            # Delete some stuff from the settings
-            del population_settings["population_settings"]["bse_options"]["metallicity"]
-
-            # Write population config to file
-            input_hdf5_file.create_dataset(
-                "config/population", data=json.dumps(population_settings)
-            )
-
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
+        dummy_df.to_hdf(output_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         convolution_config = copy.copy(default_convolution_config)
@@ -100,7 +76,6 @@ class test_convolution_with_events(unittest.TestCase):
         convolution_config["time_type"] = "lookback_time"
 
         #
-        convolution_config["input_filename"] = input_hdf5_filename
         convolution_config["output_filename"] = output_hdf5_filename
 
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(

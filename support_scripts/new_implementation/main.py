@@ -28,7 +28,12 @@ TMP_DIR = temp_dir("code", "convolve_stochastically", clean_path=True)
 
 
 def post_convolution_function(
-    config, sfr_dict, time_bin_info_dict, data_dict, convolution_results, convolution_instruction
+    config,
+    sfr_dict,
+    time_bin_info_dict,
+    data_dict,
+    convolution_results,
+    convolution_instruction,
 ):
     """
     Post-convolution function to handle integrating the systems forward in
@@ -87,7 +92,7 @@ convolution_config = copy.copy(default_convolution_config)
 convolution_config["output_filename"] = output_hdf5_filename
 convolution_config["tmp_dir"] = TMP_DIR
 convolution_config["multiprocessing"] = False
-convolution_config["logger"].setLevel(logging.CRITICAL)
+convolution_config["logger"].setLevel(logging.INFO)
 convolution_config["multiply_by_sfr_time_binsize"] = False
 convolution_config["multiply_by_convolution_time_binsize"] = False
 convolution_config["time_type"] = "lookback_time"

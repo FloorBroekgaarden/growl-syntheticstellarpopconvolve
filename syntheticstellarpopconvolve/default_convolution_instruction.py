@@ -18,6 +18,16 @@ dimensionless_unit = u.m / u.m
 default_convolution_instruction_dict = {
     ########################
     # Unsorted
+    "multiply_by_convolution_time_binsize": {
+        "value": False,
+        "description": "Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.",
+        "validation": boolean_int_validation,
+    },
+    "multiply_by_sfr_time_binsize": {
+        "value": False,
+        "description": "Flag to multiply the convolution results by the starformation rate time bin size. Not supported when time_type=='redshift'.",
+        "validation": boolean_int_validation,
+    },
     "convolution_direction": {
         "value": "backward",
         "description": "Choice of convolution direction. 'backward' convolves the data such that every event occurs at the current time by looking what the starformation rate is for each given delay time. 'forward' convolution generates each system at the same time and looks at when events happen afterwards based on their delay times. Note: neither option is supported in all choices of `convolution_type` and `contains_binned_data`.",

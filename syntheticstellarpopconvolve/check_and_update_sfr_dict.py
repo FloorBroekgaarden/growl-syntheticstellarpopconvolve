@@ -63,6 +63,7 @@ def pad_sfr_dict(config, sfr_dict):
             right_val=0,
             relative_to_edge_val=False,
         )
+        sfr_dict["padded_time_bin_sizes"] = sfr_dict["padded_lookback_time_bin_sizes"]
 
         # log the binsizes
         config["logger"].debug(

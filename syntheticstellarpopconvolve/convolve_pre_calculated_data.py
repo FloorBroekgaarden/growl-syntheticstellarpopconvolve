@@ -66,7 +66,7 @@ def convolve_pre_calculated_data(
 
     # Handle multiplication by convolution time-bin size
     # TODO: consider putting this in a separate function
-    if config["multiply_by_convolution_time_binsize"]:
+    if convolution_instruction["multiply_by_convolution_time_binsize"]:
         if config["time_type"] == "redshift":
             raise ValueError(
                 "Multiplication of yield by convolution time binsizes is not supported currently"

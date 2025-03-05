@@ -124,7 +124,7 @@ def calculate_digitized_sfr_rates_for_forward_convolution(
     lookback_time_bin_lower_edge = time_bin_info_dict["bin_edge_lower"]
 
     # multiply by binsize
-    if config["multiply_by_sfr_time_binsize"]:
+    if convolution_instruction["multiply_by_sfr_time_binsize"]:
         #
         total_star_formation_in_lookback_time_bin = (
             total_star_formation_in_lookback_time_bin * lookback_time_bin_size
@@ -233,7 +233,7 @@ def calculate_digitized_sfr_rates_binned_data_for_backward_convolution(
         np.zeros(len(data_dict["delay_time_data_bin_index"]))
         * sfr_dict["starformation_rate_array"].unit
     )
-    if config["multiply_by_sfr_time_binsize"]:
+    if convolution_instruction["multiply_by_sfr_time_binsize"]:
         sfr_rates = sfr_rates * delay_time_data_bin_sizes.unit
 
     config["logger"].info("$$$$$$$$$$$$$$$$$$$$$$$$$$")
@@ -441,7 +441,7 @@ def calculate_digitized_sfr_rates_binned_data_for_backward_convolution(
 
         #########
         # multiply by data time-bin if we to multiply by bin size
-        if config["multiply_by_sfr_time_binsize"]:
+        if convolution_instruction["multiply_by_sfr_time_binsize"]:
             combined_matching_delay_time_data_bin_sfr_rates *= (
                 capped_delay_time_data_bin_size_i
             )
@@ -499,7 +499,7 @@ def calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution(
     # Handle multiplication by sfr bin-size
     # TODO: clean and handle implementation
     # TODO: perhaps this can also be put into the sfr calculation function
-    if config["multiply_by_sfr_time_binsize"]:
+    if convolution_instruction["multiply_by_sfr_time_binsize"]:
 
         # get indices
         time_binsize_indices = (
@@ -510,7 +510,7 @@ def calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution(
         )
 
         # get time-binsizes
-        time_binsizes = sfr_dict["padded_time_binsizes"]
+        time_binsizes = sfr_dict["padded_time_bin_sizes"]
 
         # update sfr_rates
         digitised_sfr_rates = digitised_sfr_rates * time_binsizes[time_binsize_indices]

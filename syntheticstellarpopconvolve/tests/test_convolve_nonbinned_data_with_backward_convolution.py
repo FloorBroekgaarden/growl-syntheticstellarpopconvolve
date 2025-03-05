@@ -1,9 +1,5 @@
 """
 Tests for backward convolution of binned data.
-
-TODO:
-- test integrate
-- test sample
 """
 
 import copy
@@ -30,12 +26,41 @@ from syntheticstellarpopconvolve.general_functions import (
     temp_dir,
 )
 
+np.random.seed(0)
+
 TMP_DIR = temp_dir(
     "tests",
     "tests_convolution",
     "tests_convolve_nonbinned_data_with_backward_convolution",
     clean_path=True,
 )
+
+
+def integrate_post_convolution_function(
+    config,
+    sfr_dict,
+    data_dict,
+    convolution_results,
+    convolution_instruction,
+):
+    convolution_results["yield"] = convolution_results["yield"] * 0
+
+    return convolution_results
+
+
+def sample_post_convolution_function(
+    config,
+    sfr_dict,
+    data_dict,
+    convolution_results,
+    convolution_instruction,
+):
+
+    convolution_results["sampled_value"] = data_dict["value"][
+        convolution_results["sampled_indices"]
+    ]
+
+    return convolution_results
 
 
 class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
@@ -52,6 +77,7 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
         # SET UP DATA
         self.dummy_data = {
             "delay_time": np.array([0, 1, 2, 3]),
+            "value": np.array([3, 2, 1, 0]),
             "probability": np.array([1, 2, 3, 4]),
         }
         dummy_df = pd.DataFrame.from_records(self.dummy_data)
@@ -81,7 +107,7 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
 
         # set up convolution bins
         self.convolution_config["convolution_lookback_time_bin_edges"] = (
-            np.array([0, 1, 2, 3, 4]) * u.yr
+            np.array([0, 1]) * u.yr
         )
 
     def test_convolve_nonbinned_data_with_backward_convolution_integrate(self):
@@ -108,90 +134,178 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
         with h5py.File(
             self.convolution_config["output_filename"], "r"
         ) as output_hdf5file:
-            print(
-                output_hdf5file[
-                    "output_data/dummy/dummy/convolution_results/0.5 yr"
-                ].keys()
-            )
-            print(
-                output_hdf5file[
-                    "output_data/dummy/dummy/convolution_results/0.5 yr/yield"
-                ][()]
-            )
-
             groupname = "output_data/dummy/dummy/convolution_results/0.5 yr/"
+
             data = output_hdf5file[groupname + "/yield"][()]
             unit_dict = extract_unit_dict(output_hdf5file, groupname)
 
-            #
             np.testing.assert_array_equal(
                 data * unit_dict["yield"],
                 np.array([1, 2, 3, 4.0]) * (1.0 / u.yr / u.Gpc**3),
             )
 
-    # def test_convolve_nonbinned_data_with_backward_convolution_integrate_post_convolution_simple(self):
-    #     def simple_post_convolution_function(
-    #         config,
-    #         sfr_dict,
-    #         data_dict,
-    #         convolution_results,
-    #         convolution_instruction,
-    #     ):
-    #         convolution_results["yield"] = convolution_results["yield"] * 0
+    def test_convolve_nonbinned_data_with_backward_convolution_integrate_post_convolution_simple(
+        self,
+    ):
 
-    #         return convolution_results
+        #
+        convolution_instructions = {
+            **default_convolution_instruction,
+            "input_data_name": "dummy",
+            "output_data_name": "dummy",
+            "convolution_type": "integrate",
+            "data_column_dict": {
+                "delay_time": "delay_time",
+                "normalized_yield": "probability",
+            },
+            "ignore_metallicity": True,
+            "post_convolution_function": integrate_post_convolution_function,
+        }
 
-    #     #
-    #     normal_convolution_instructions = {
-    #         **default_convolution_instruction,
-    #         "input_data_name": "dummy",
-    #         "output_data_name": "dummy",
-    #         "convolution_type": "integrate",
-    #         "data_column_dict": {
-    #             "delay_time": "delay_time",
-    #             "normalized_yield": "probability",
-    #         },
-    #         "ignore_metallicity": True,
-    #         "post_convolution_function": simple_post_convolution_function,
-    #     }
+        #
+        self.convolution_config["convolution_instructions"] = [convolution_instructions]
 
-    #     #
-    #     self.convolution_config, data_dict, _ = extract_data(
-    #         config=self.convolution_config,
-    #         convolution_instruction=normal_convolution_instructions,
-    #     )
+        #
+        convolve(self.convolution_config)
 
-    #     sfr_dict = self.convolution_config["SFR_info"]
+        with h5py.File(
+            self.convolution_config["output_filename"], "r"
+        ) as output_hdf5file:
+            groupname = "output_data/dummy/dummy/convolution_results/0.5 yr/"
 
-    #     time_bin_info_dict = {
-    #         "bin_number": 0,
-    #         "bin_center": 0.5 * u.yr,
-    #         "bin_edge_lower": 0,
-    #         "bin_size": 1 * u.yr,
-    #         "bin_type": "convolution time",
-    #         "time_type": self.convolution_config["time_type"],
-    #     }
+            data = output_hdf5file[groupname + "/yield"][()]
+            unit_dict = extract_unit_dict(output_hdf5file, groupname)
 
-    #     #
-    #     convolution_result = convolution_by_integration(
-    #         time_bin_info_dict=time_bin_info_dict,
-    #         sfr_dict=sfr_dict,
-    #         config=self.convolution_config,
-    #         convolution_instruction=normal_convolution_instructions,
-    #         data_dict=data_dict,
-    #     )
+            np.testing.assert_array_equal(
+                data * unit_dict["yield"],
+                np.zeros(self.dummy_data["probability"].shape)
+                * (1.0 / u.yr / u.Gpc**3),
+            )
 
-    #     yield_result = convolution_result["convolution_results"]["yield"]
+    def test_convolve_nonbinned_data_with_backward_convolution_sample_fractional(self):
 
-    #     #
-    #     np.testing.assert_array_equal(
-    #         yield_result,
-    #         np.zeros(self.dummy_data["probability"].shape) * (1.0 / u.yr / u.Gpc**3),
-    #     )
+        #
+        convolution_instructions = {
+            **default_convolution_instruction,
+            "input_data_name": "dummy",
+            "output_data_name": "dummy",
+            "convolution_type": "sample",
+            "data_column_dict": {
+                "delay_time": "delay_time",
+                "normalized_yield": "probability",
+            },
+            "ignore_metallicity": True,
+            "multiply_by_sfr_time_binsize": True,
+        }
 
-    # def test_convolve_nonbinned_data_with_backward_convolution_sample(self):
+        # Set up SFR
+        self.convolution_config["SFR_info"] = {
+            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
+            "starformation_rate_array": np.array([1.1, 2.2, 3.3, 4.4, 5.5])
+            * u.Msun
+            / u.yr,
+        }
 
-    # def test_convolve_nonbinned_data_with_backward_convolution_sample_post_convolution_simple(self):
+        self.convolution_config["convolution_instructions"] = [convolution_instructions]
+
+        #
+        convolve(self.convolution_config)
+
+        with h5py.File(
+            self.convolution_config["output_filename"], "r"
+        ) as output_hdf5file:
+            groupname = "output_data/dummy/dummy/convolution_results/0.5 yr/"
+
+            data = output_hdf5file[groupname + "/sampled_indices"][()]
+            unit_dict = extract_unit_dict(output_hdf5file, groupname)
+
+            unique, counts = np.unique(data, return_counts=True)
+
+            np.testing.assert_array_equal(unique, np.array([0, 1, 2, 3]))
+            np.testing.assert_array_equal(counts, np.array([1, 4, 10, 18]))
+
+    def test_convolve_nonbinned_data_with_backward_convolution_sample_integer(self):
+
+        #
+        convolution_instructions = {
+            **default_convolution_instruction,
+            "input_data_name": "dummy",
+            "output_data_name": "dummy",
+            "convolution_type": "sample",
+            "data_column_dict": {
+                "delay_time": "delay_time",
+                "normalized_yield": "probability",
+            },
+            "ignore_metallicity": True,
+            "multiply_by_sfr_time_binsize": True,
+        }
+
+        # Set up SFR
+        self.convolution_config["SFR_info"] = {
+            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
+            "starformation_rate_array": np.array([1, 2, 3, 4, 5]) * u.Msun / u.yr,
+        }
+
+        self.convolution_config["convolution_instructions"] = [convolution_instructions]
+
+        #
+        convolve(self.convolution_config)
+
+        with h5py.File(
+            self.convolution_config["output_filename"], "r"
+        ) as output_hdf5file:
+            groupname = "output_data/dummy/dummy/convolution_results/0.5 yr/"
+
+            data = output_hdf5file[groupname + "/sampled_indices"][()]
+            unit_dict = extract_unit_dict(output_hdf5file, groupname)
+            unique, counts = np.unique(data, return_counts=True)
+
+            np.testing.assert_array_equal(unique, np.array([0, 1, 2, 3]))
+            np.testing.assert_array_equal(counts, np.array([1, 4, 9, 16]))
+
+    def test_convolve_nonbinned_data_with_backward_convolution_sample_integer_post_convolution_simple(
+        self,
+    ):
+
+        #
+        convolution_instructions = {
+            **default_convolution_instruction,
+            "input_data_name": "dummy",
+            "output_data_name": "dummy",
+            "convolution_type": "sample",
+            "data_column_dict": {
+                "delay_time": "delay_time",
+                "normalized_yield": "probability",
+                "value": "value",
+            },
+            "ignore_metallicity": True,
+            "multiply_by_sfr_time_binsize": True,
+            "post_convolution_function": sample_post_convolution_function,
+        }
+
+        # Set up SFR
+        self.convolution_config["SFR_info"] = {
+            "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
+            "starformation_rate_array": np.array([1, 2, 3, 4, 5]) * u.Msun / u.yr,
+        }
+
+        self.convolution_config["convolution_instructions"] = [convolution_instructions]
+
+        #
+        convolve(self.convolution_config)
+
+        with h5py.File(
+            self.convolution_config["output_filename"], "r"
+        ) as output_hdf5file:
+            groupname = "output_data/dummy/dummy/convolution_results/0.5 yr/"
+
+            data = output_hdf5file[groupname + "/sampled_value"][()]
+
+            unit_dict = extract_unit_dict(output_hdf5file, groupname)
+            unique, counts = np.unique(data, return_counts=True)
+
+            np.testing.assert_array_equal(unique, np.array([0, 1, 2, 3]))
+            np.testing.assert_array_equal(counts, np.array([16, 9, 4, 1]))
 
 
 if __name__ == "__main__":

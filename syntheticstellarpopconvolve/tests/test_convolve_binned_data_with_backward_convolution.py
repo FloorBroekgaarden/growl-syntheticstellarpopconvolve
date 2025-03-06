@@ -126,7 +126,7 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
 
             np.testing.assert_array_equal(
                 data * unit_dict["yield"],
-                np.array([1, 2, 3, 4.0]) * (1.0 / u.yr / u.Gpc**3),
+                np.array([1, 2, 3, 4.0]) * (1.0 / u.yr),
             )
 
     # def test_convolve_nonbinned_data_with_backward_convolution_integrate_post_convolution_simple(

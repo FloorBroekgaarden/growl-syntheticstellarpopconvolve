@@ -22,6 +22,7 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_instruc
 from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
     test_check_sfr_dict,
     test_pad_sfr_dict,
+    test_update_sfr_dict,
 )
 from syntheticstellarpopconvolve.tests.test_convolution_with_events import (
     test_convolution_with_events,

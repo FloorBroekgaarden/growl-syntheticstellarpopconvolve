@@ -343,8 +343,15 @@ def calculate_digitized_sfr_rates_binned_data_for_backward_convolution(
             sfr_bin_center_value_like_array = np.repeat(
                 sfr_bin_center_value, matching_delay_time_data_bin_system_indices.shape
             )
+            print("sfr_bin_center_value", sfr_bin_center_value)
+            print(
+                "matching_delay_time_data_bin_system_indices",
+                matching_delay_time_data_bin_system_indices,
+            )
+            print("sfr_bin_center_value_like_array", sfr_bin_center_value_like_array)
 
-            #
+            raise ValueError("SOLVE THIS FIRST")
+            # NOTE: this is not really necessary!
             matching_delay_time_data_bin_sfr_rates = general_sfr_digitise_function(
                 sfr_dict=sfr_dict,
                 time_values=sfr_bin_center_value_like_array,

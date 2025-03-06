@@ -1,10 +1,5 @@
 """
 File containing the default values and the validations for the configuration of the convolution
-
-TODO: always require the starformation array function to accept config and time_centers
-TODO: always require the metallicity array function to accept config, time_centers, metallicity centers
-TODO: allow a better configuration for the starformation rate, instead of having the time-bins decide how that starformation rate array is resolved
-TODO: allow passing a unit for the starformation rate
 """
 
 import logging

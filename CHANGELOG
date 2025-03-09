@@ -45,4 +45,4 @@ https://keepachangelog.com/en/0.3.0/
 		- cleaned structure and added notebooks
 	- [feature/backward_convolution_by_sampling_with_binned_data]:
 		- added support for backward convolution by sampling of binned data
-		- Made a large restructuring of the code
+	- Made a large restructuring of the code that allows convolution in both directions with sampling and integration.

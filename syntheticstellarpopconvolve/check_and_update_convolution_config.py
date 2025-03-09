@@ -33,7 +33,8 @@ def update_convolution_config(config):
     # Calculate some extra convolution-bin info if needed (the other two dont need any convolution-bin info)
     requires_convolution_bin_info = any(
         [
-            convolution_instruction["convolution_type"] == "integrate"
+            # convolution_instruction["convolution_type"] == "integrate" # NOTE: before, 'integrate' implied 'backward' convolution but was the only one
+            convolution_instruction["convolution_direction"] == "backward"
             for convolution_instruction in config["convolution_instructions"]
         ]
     )

@@ -8,7 +8,6 @@ import os
 import unittest
 
 import astropy.units as u
-import h5py
 import numpy as np
 
 from syntheticstellarpopconvolve import (
@@ -16,12 +15,17 @@ from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
 )
+from syntheticstellarpopconvolve.check_and_prepare_output_file import (
+    check_and_prepare_output_file,
+)
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.convolve_on_the_fly import convolve_on_the_fly
-from syntheticstellarpopconvolve.general_functions import temp_dir
-from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
+from syntheticstellarpopconvolve.general_functions import (
+    generate_boilerplate_outputfile,
+    temp_dir,
+)
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_convolution_on_the_fly", clean_path=True
@@ -60,18 +64,9 @@ class test_convolve_on_the_fly(unittest.TestCase):
     """ """
 
     def setUp(self):
-        #
-        input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
-        output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
-
-        #############
-        # create input HDF5 file
-        with h5py.File(input_hdf5_filename, "w") as input_hdf5_file:
-
-            ######################
-            # Create groups
-            input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("config")
+        # setup output file
+        output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5.h5")
+        generate_boilerplate_outputfile(output_hdf5_filename)
 
         #
         self.convolution_config = copy.copy(default_convolution_config)
@@ -83,11 +78,15 @@ class test_convolve_on_the_fly(unittest.TestCase):
             "starformation_rate_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr,
         }
 
+        # set up convolution bins
+        self.convolution_config["convolution_lookback_time_bin_edges"] = (
+            np.array([0, 1, 2, 3, 4]) * u.yr
+        )
+
         # lookback time convolution only
         self.convolution_config["time_type"] = "lookback_time"
 
         #
-        self.convolution_config["input_filename"] = input_hdf5_filename
         self.convolution_config["output_filename"] = output_hdf5_filename
 
         self.convolution_config["redshift_interpolator_data_output_filename"] = (
@@ -117,7 +116,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
         check_and_update_convolution_config(self.convolution_config)
 
         #
-        prepare_output_file(config=self.convolution_config)
+        check_and_prepare_output_file(config=self.convolution_config)
 
     def test_convolve_on_the_fly_wrong_arguments_on_the_fly_function(self):
         #

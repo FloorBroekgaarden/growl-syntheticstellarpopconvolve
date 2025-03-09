@@ -5,94 +5,15 @@ TODO: Force these functions to return a certain astropy unit
 TODO: go through all papers and find what unit they use
 TODO: add https://arxiv.org/abs/2111.13704 (MW models)
 TODO: add https://ui.adsabs.harvard.edu/abs/2020ApJ...898...71B/abstract (MW models)
+TODO: https://arxiv.org/abs/2208.05938
+TODO: https://ui.adsabs.harvard.edu/abs/2012ARA%26A..50..531K/abstract
+TODO: https://arxiv.org/abs/1208.4256
+TODO: https://arxiv.org/abs/1901.11321
+TODO:  https://www.aanda.org/articles/aa/full_html/2014/11/aa24441-14/aa24441-14.html
 """
 
 import astropy.units as u
 import numpy as np
-
-# def generate_metallicity_sfr_array(
-#     config, star_formation_rate_time_distribution_bin_centers, metallicity_centers
-# ):
-#     """
-#     Function that generates the 2d array containing
-
-#     - Time array
-#     - available metallicity array
-
-#     First it sets up the empty array
-
-#     Then we loop over all the values of time, generate the metallicity weighting and sfr values and put them into the array
-
-#     TODO: extract arguments to functions to pass things better
-#     TODO: clean this function and make the components
-#     """
-
-#     ##############
-#     # Get the star formation rate: this is an array containing
-#     SFR_args = {"config": config, **config["star_formation_rate_distribution_args"]}
-#     if config["time_type"] == "lookback_time":
-#         SFR_args["lookback_times"] = star_formation_rate_time_distribution_bin_centers
-#     elif config["time_type"] == "redshift":
-#         SFR_args["redshifts"] = star_formation_rate_time_distribution_bin_centers
-
-#     #
-#     starformation_array = config["star_formation_rate_distribution_function"](
-#         **SFR_args
-#     )
-
-#     ##############
-#     # Get the metallicity distribution
-#     # TODO: make optional that this is not done at all (if Z_function is None)
-#     Z_args = {
-#         "config": config,
-#         "metallicity_centers": metallicity_centers,
-#         **config["metallicity_distribution_args"],
-#     }
-#     if config["time_type"] == "lookback_time":
-#         Z_args["lookback_times"] = star_formation_rate_time_distribution_bin_centers
-#     elif config["time_type"] == "redshift":
-#         Z_args["redshifts"] = star_formation_rate_time_distribution_bin_centers
-
-#     #
-#     metallicity_distribution_array = config["metallicity_distribution_function"](
-#         **Z_args
-#     )
-
-#     #############
-#     # Construct the combined array.
-
-#     # Multiply by sfr:
-#     metallicity_weighted_starformation_array = (
-#         starformation_array * metallicity_distribution_array.T
-#     ).T
-
-#     # TODO: remove this at this location. Modify it at the convolution step
-#     # We need to add two empty columns here to make sure the digitise does not multiply the wrong one
-#     metallicity_weighted_starformation_array = np.insert(
-#         metallicity_weighted_starformation_array, 0, 0, axis=0
-#     )
-#     metallicity_weighted_starformation_array = np.insert(
-#         metallicity_weighted_starformation_array,
-#         metallicity_weighted_starformation_array.shape[0],
-#         0,
-#         axis=0,
-#     )
-
-#     #
-#     starformation_array = np.insert(starformation_array, 0, 0, axis=0)
-#     starformation_array = np.insert(
-#         starformation_array,
-#         starformation_array.shape[0],
-#         0,
-#         axis=0,
-#     )
-
-#     #
-#     return (
-#         metallicity_weighted_starformation_array,
-#         metallicity_distribution_array,
-#         starformation_array,
-#     )
 
 
 def madau_dickinson_sfr(redshifts, a, b, c, d):

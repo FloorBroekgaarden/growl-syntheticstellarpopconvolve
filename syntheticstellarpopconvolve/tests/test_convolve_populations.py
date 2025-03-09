@@ -3,19 +3,19 @@ Testcases for convolve_populations file
 """
 
 import copy
-import json
 import os
 import unittest
 
 import astropy.units as u
-import h5py
 import numpy as np
 import pandas as pd
-import pkg_resources
 
 from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
+)
+from syntheticstellarpopconvolve.check_and_prepare_output_file import (
+    check_and_prepare_output_file,
 )
 from syntheticstellarpopconvolve.check_and_update_convolution_config import (
     check_and_update_convolution_config,
@@ -24,8 +24,10 @@ from syntheticstellarpopconvolve.convolve_populations import (
     extract_data,
     generate_data_dict,
 )
-from syntheticstellarpopconvolve.general_functions import temp_dir
-from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
+from syntheticstellarpopconvolve.general_functions import (
+    generate_boilerplate_outputfile,
+    temp_dir,
+)
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_convolve_populations", clean_path=True
@@ -37,8 +39,8 @@ class test_extract_data(unittest.TestCase):
 
     def setUp(self):
         #
-        input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
         output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
+        generate_boilerplate_outputfile(output_hdf5_filename)
 
         ##############
         # SET UP DATA
@@ -48,36 +50,9 @@ class test_extract_data(unittest.TestCase):
         }
         dummy_df = pd.DataFrame.from_records(self.dummy_data)
 
-        #############
-        # create input HDF5 file
-        with h5py.File(input_hdf5_filename, "w") as input_hdf5_file:
-
-            ######################
-            # Create groups
-            input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("config")
-
-            ###############
-            # Readout population settings
-            population_settings_filename = pkg_resources.resource_filename(
-                "syntheticstellarpopconvolve",
-                "example_data/example_population_settings.json",
-            )
-
-            with open(population_settings_filename, "r") as f:
-                population_settings = json.loads(f.read())
-
-            # Delete some stuff from the settings
-            del population_settings["population_settings"]["bse_options"]["metallicity"]
-
-            # Write population config to file
-            input_hdf5_file.create_dataset(
-                "config/population", data=json.dumps(population_settings)
-            )
-
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
+        dummy_df.to_hdf(output_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         self.convolution_config = copy.copy(default_convolution_config)
@@ -100,7 +75,6 @@ class test_extract_data(unittest.TestCase):
         self.convolution_config["time_type"] = "lookback_time"
 
         #
-        self.convolution_config["input_filename"] = input_hdf5_filename
         self.convolution_config["output_filename"] = output_hdf5_filename
 
         self.convolution_config["redshift_interpolator_data_output_filename"] = (
@@ -125,7 +99,7 @@ class test_extract_data(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
-        prepare_output_file(config=self.convolution_config)
+        check_and_prepare_output_file(config=self.convolution_config)
 
     def test_extract_data_normal(self):
         #
@@ -232,8 +206,8 @@ class test_generate_data_dict(unittest.TestCase):
     def test_generate_data_dict_events(self):
 
         #
-        input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
         output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
+        generate_boilerplate_outputfile(output_hdf5_filename)
 
         ##############
         # SET UP DATA
@@ -243,36 +217,9 @@ class test_generate_data_dict(unittest.TestCase):
         }
         dummy_df = pd.DataFrame.from_records(self.dummy_data)
 
-        #############
-        # create input HDF5 file
-        with h5py.File(input_hdf5_filename, "w") as input_hdf5_file:
-
-            ######################
-            # Create groups
-            input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("config")
-
-            ###############
-            # Readout population settings
-            population_settings_filename = pkg_resources.resource_filename(
-                "syntheticstellarpopconvolve",
-                "example_data/example_population_settings.json",
-            )
-
-            with open(population_settings_filename, "r") as f:
-                population_settings = json.loads(f.read())
-
-            # Delete some stuff from the settings
-            del population_settings["population_settings"]["bse_options"]["metallicity"]
-
-            # Write population config to file
-            input_hdf5_file.create_dataset(
-                "config/population", data=json.dumps(population_settings)
-            )
-
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/{}".format("dummy"))
+        dummy_df.to_hdf(output_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         self.convolution_config = copy.copy(default_convolution_config)
@@ -295,7 +242,6 @@ class test_generate_data_dict(unittest.TestCase):
         self.convolution_config["time_type"] = "lookback_time"
 
         #
-        self.convolution_config["input_filename"] = input_hdf5_filename
         self.convolution_config["output_filename"] = output_hdf5_filename
 
         self.convolution_config["redshift_interpolator_data_output_filename"] = (
@@ -321,7 +267,7 @@ class test_generate_data_dict(unittest.TestCase):
         self.convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
 
         #
-        prepare_output_file(config=self.convolution_config)
+        check_and_prepare_output_file(config=self.convolution_config)
 
         #
         check_and_update_convolution_config(self.convolution_config)

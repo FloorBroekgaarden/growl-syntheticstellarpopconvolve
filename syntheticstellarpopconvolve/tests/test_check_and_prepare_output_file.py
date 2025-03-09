@@ -1,5 +1,5 @@
 """
-Testcases for prepare_output_file file
+Testcases for check_and_prepare_output_file file
 """
 
 import copy
@@ -9,15 +9,17 @@ import unittest
 import h5py
 
 from syntheticstellarpopconvolve import default_convolution_config
+from syntheticstellarpopconvolve.check_and_prepare_output_file import (
+    check_and_prepare_output_file,
+)
 from syntheticstellarpopconvolve.general_functions import temp_dir
-from syntheticstellarpopconvolve.prepare_output_file import prepare_output_file
 
 TMP_DIR = temp_dir(
-    "tests", "tests_convolution", "test_prepare_output_file", clean_path=True
+    "tests", "tests_convolution", "test_check_and_prepare_output_file", clean_path=True
 )
 
 
-class test_prepare_output_file(unittest.TestCase):
+class test_check_and_prepare_output_file(unittest.TestCase):
     """ """
 
     def setUp(self):
@@ -40,10 +42,10 @@ class test_prepare_output_file(unittest.TestCase):
         self.working_hdf5_file.create_group("config/population")
         self.working_hdf5_file.close()
 
-    def test_prepare_output_file(self):
+    def test_check_and_prepare_output_file(self):
 
         # run preparing of output file
-        prepare_output_file(self.config_working)
+        check_and_prepare_output_file(self.config_working)
 
         #
         self.assertTrue(os.path.isfile(self.config_working["output_filename"]))

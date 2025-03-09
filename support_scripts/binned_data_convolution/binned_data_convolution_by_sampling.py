@@ -2,13 +2,11 @@ import copy
 import json
 import logging
 import os
-import time
 
 import astropy.units as u
 import h5py
 import numpy as np
 import pandas as pd
-import pkg_resources
 
 from syntheticstellarpopconvolve import (
     convolve,
@@ -113,6 +111,7 @@ input_hdf5_file.create_group("config")
 # close
 input_hdf5_file.close()
 
+
 # store the data frame in the hdf5file
 example_dataframe.to_hdf(input_hdf5_filename, key="input_data/binned_example")
 
@@ -139,7 +138,7 @@ convolution_config["convolution_instructions"] = [
         },
         "data_column_dict": {
             # required
-            "normalized_yield": {"column_name": "probability", "unit": u.Msun / u.Msun},
+            # "normalized_yield": {"column_name": "probability", "unit": u.Msun / u.Msun},
             "normalized_yield": {"column_name": "probability", "unit": 1 / u.Msun},
             # "normalized_yield": "probability",
             "delay_time": {"column_name": "time", "unit": u.yr},

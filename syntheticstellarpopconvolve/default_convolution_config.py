@@ -1,10 +1,5 @@
 """
 File containing the default values and the validations for the configuration of the convolution
-
-TODO: always require the starformation array function to accept config and time_centers
-TODO: always require the metallicity array function to accept config, time_centers, metallicity centers
-TODO: allow a better configuration for the starformation rate, instead of having the time-bins decide how that starformation rate array is resolved
-TODO: allow passing a unit for the starformation rate
 """
 
 import logging
@@ -90,21 +85,9 @@ float_or_int = vol.Or(float, int)
 #
 default_convolution_config_dict = {
     ###################
-    # Unsorted
-    "multiply_by_convolution_time_binsize": {
-        "value": False,
-        "description": "Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.",
-        "validation": boolean_int_validation,
-    },
-    "multiply_by_sfr_time_binsize": {
-        "value": False,
-        "description": "Flag to multiply the convolution results by the starformation rate time bin size. Not supported when time_type=='redshift'.",
-        "validation": boolean_int_validation,
-    },
-    ###################
     # Convolution configuration
     "time_type": {
-        "value": "redshift",
+        "value": "lookback_time",
         "description": "Time-type used in convolution. Can be either 'redshift' or 'lookback_time'",
         "validation": vol.All(
             str,

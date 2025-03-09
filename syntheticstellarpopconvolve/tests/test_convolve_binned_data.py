@@ -104,8 +104,6 @@ class test_calculate_overlap_fractions(unittest.TestCase):
             sfr_bin_edges=sfr_bin_edges,
         )
 
-        print(overlap_fractions)
-
         expected_overlap_fractions = {
             "combined_overlap_array": np.array([0.75, 1.0, 1.0, 1.0, 0.25]),
             "normalized_combined_overlap_array": np.array([0.75, 1.0, 1.0, 1.0, 0.25]),

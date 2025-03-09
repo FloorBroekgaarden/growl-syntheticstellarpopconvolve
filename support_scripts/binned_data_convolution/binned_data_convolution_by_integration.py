@@ -2,13 +2,11 @@ import copy
 import json
 import logging
 import os
-import time
 
 import astropy.units as u
 import h5py
 import numpy as np
 import pandas as pd
-import pkg_resources
 
 from syntheticstellarpopconvolve import convolve, default_convolution_config
 from syntheticstellarpopconvolve.general_functions import calculate_bin_edges, temp_dir
@@ -66,7 +64,6 @@ convolution_config["convolution_instructions"] = [
         },
         "data_column_dict": {
             # required
-            "normalized_yield": {"column_name": "probability", "unit": u.Msun / u.Msun},
             "normalized_yield": {"column_name": "probability", "unit": 1 / u.yr},
             # "normalized_yield": "probability",
             "delay_time": {"column_name": "time", "unit": u.yr},

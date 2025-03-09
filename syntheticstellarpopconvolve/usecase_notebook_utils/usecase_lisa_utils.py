@@ -1,27 +1,20 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-
 """
+Copy of galactic stellar density distribution files written by Alexey for the LISA UCB project
+
 Created on Wed Jun  5 18:05:24 2024
 
 @author: alexey
 """
 
-
 import sys
+import time
 
+import astropy.constants as const
+import astropy.units as u
 import numpy as np
 import pandas as pd
 import scipy as sp
-from scipy.interpolate import CubicSpline
-from scipy.optimize import root
-
-sys.path.insert(1, "./PyModules/")
-
-import astropy.constants as const
-import astropy.coordinates as coord
-import astropy.units as u
+from scipy.interpolate import CubicSpline, interp1d
 
 # Units are kpc, Gyr
 
@@ -412,13 +405,6 @@ def get_period(semimajor_axis, m1, m2):  # DH0001
     return p.to(u.yr)
 
 
-############
-#
-
-import numpy as np
-from scipy.interpolate import interp1d
-
-
 def precompute_radial_cdf(Hr, num_points=1000, R_max=20):  # DH0001
     """
     Precompute the radial CDF and its inverse for efficient sampling.
@@ -443,13 +429,6 @@ def RCDFInv_interpolated(Xir, inverse_cdf):  # DH0001
     Use the precomputed inverse CDF to sample R values.
     """
     return inverse_cdf(Xir)
-
-
-def zCDFInv(Xiz, Hz):  # DH0001
-    """
-    Vectorized implementation of the inverse CDF for Z.
-    """
-    return -Hz * np.log(1 - Xiz)
 
 
 def Sample1DPop_interpolated(NBin, Hr, Hz, inverse_cdf):  # DH0001
@@ -495,12 +474,6 @@ def sample_distances_interpolated(NBin, Hr, inverse_cdf):  # DH0001
 if __name__ == "__main__":
     import functools
 
-    import astropy.units as u
-
-    # get_period(1 * u.au, 1 * u.Msun, 2 * u.Msun)
-    ####################
-    #
-
     Hr = 4  # Radial scale length
 
     # Precompute the inverse CDF for radial distribution
@@ -509,8 +482,6 @@ if __name__ == "__main__":
     bound_sample_distances_interpolated = functools.partial(
         sample_distances_interpolated, inverse_cdf=inverse_cdf
     )
-
-    import time
 
     num_system_indices = 100
     convolution_results = {}

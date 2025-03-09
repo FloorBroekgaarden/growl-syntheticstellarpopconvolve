@@ -1,8 +1,6 @@
 """
-Main entry point to the convolution code. This code handles passing choosing the correct code to do the convolution with.
-
-TODO: make wrappers to handle timing logging to debug.
-TODO: allow usage of astropy units
+Main entry point to the convolution code. This code handles passing choosing
+the correct code to do the convolution with.
 """
 
 from syntheticstellarpopconvolve.check_and_prepare_output_file import (

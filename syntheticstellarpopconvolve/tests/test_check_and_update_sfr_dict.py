@@ -157,10 +157,7 @@ class test_check_sfr_dict(unittest.TestCase):
             "lookback_time_bin_edges": np.array([1, 2, 3]) * 1e9 * u.yr,
             "starformation_rate_array": np.array([10, 20]) * u.Msun / u.yr,
             "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
-            "metallicity_distribution_array": np.array(
-                [[1, 2, 3], [4, 5, 6]]
-                # [[1, 2], [3, 4], [5, 6]]
-            ),
+            "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]),
         }
 
         self.config = default_convolution_config
@@ -277,10 +274,139 @@ class test_check_sfr_dict(unittest.TestCase):
         )
 
 
+class test_update_sfr_dict(unittest.TestCase):
+    def test_update_sfr_dict_lookback_time(self):
+        config = {"logger": logging.getLogger(__name__), "time_type": "lookback_time"}
+
+        sfr_dict = {
+            "lookback_time_bin_edges": np.array([1, 2, 3, 4]),
+        }
+
+        sfr_dict = update_sfr_dict(sfr_dict, config)
+
+        # Expected output
+        expected_bin_centers = np.array([1.5, 2.5, 3.5])
+
+        # Assertions
+        assert (
+            "lookback_time_bin_centers" in sfr_dict
+        ), "Key 'lookback_time_bin_centers' is missing in the updated dictionary"
+        assert (
+            "time_bin_centers" in sfr_dict
+        ), "Key 'time_bin_centers' is missing in the updated dictionary"
+
+        np.testing.assert_array_almost_equal(
+            sfr_dict["lookback_time_bin_centers"], expected_bin_centers, decimal=10
+        )
+        np.testing.assert_array_almost_equal(
+            sfr_dict["time_bin_centers"], expected_bin_centers, decimal=10
+        )
+
+    def test_update_sfr_dict_redshift(self):
+        config = {
+            "logger": logging.getLogger(__name__),
+            "time_type": "redshift",
+            "cosmology": cosmo,
+        }
+
+        sfr_dict = {
+            "redshift_bin_edges": np.array([0.1, 0.2, 0.3, 0.4]),
+        }
+
+        sfr_dict = update_sfr_dict(sfr_dict, config)
+
+        # Expected output
+        expected_bin_centers = np.array([0.15, 0.25, 0.35])
+
+        # Assertions
+        assert (
+            "redshift_bin_centers" in sfr_dict
+        ), "Key 'redshift_bin_centers' is missing in the updated dictionary"
+        assert (
+            "time_bin_centers" in sfr_dict
+        ), "Key 'time_bin_centers' is missing in the updated dictionary"
+
+        np.testing.assert_array_almost_equal(
+            sfr_dict["redshift_bin_centers"], expected_bin_centers, decimal=10
+        )
+        np.testing.assert_array_almost_equal(
+            sfr_dict["time_bin_centers"], expected_bin_centers, decimal=10
+        )
+
+    def test_update_sfr_dict_metallicity_info(self):
+        config = {"logger": logging.getLogger(__name__), "time_type": "lookback_time"}
+
+        sfr_dict = {
+            "lookback_time_bin_edges": np.array([1, 2, 3, 4]),
+            "starformation_rate_array": np.array([10, 20, 30]),
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2]),
+            "metallicity_distribution_array": np.array([[1, 2, 3], [4, 5, 6]]).T,
+        }
+
+        # When calling the function
+        sfr_dict = update_sfr_dict(sfr_dict, config)
+
+        # Expected outputs
+        expected_metallicity_bin_centers = np.array([0.055, 0.15])
+        expected_metallicity_bin_sizes = np.array([0.09, 0.1])
+        expected_weighted_sfr = np.array(
+            [
+                [10 * 0.09 * 1, 10 * 0.1 * 4],  # First row
+                [20 * 0.09 * 2, 20 * 0.1 * 5],  # Second row
+                [30 * 0.09 * 3, 30 * 0.1 * 6],  # Third row
+            ]
+        )
+
+        # Assertions
+        assert (
+            "include_metallicity_info" in sfr_dict
+        ), "Key 'include_metallicity_info' is missing in the updated dictionary"
+        assert (
+            sfr_dict["include_metallicity_info"] is True
+        ), "'include_metallicity_info' should be True when 'metallicity_distribution_array' is present"
+
+        assert (
+            "metallicity_bin_centers" in sfr_dict
+        ), "Key 'metallicity_bin_centers' is missing"
+        np.testing.assert_array_almost_equal(
+            sfr_dict["metallicity_bin_centers"],
+            expected_metallicity_bin_centers,
+            err_msg="metallicity_bin_centers values are incorrect",
+        )
+
+        assert (
+            "metallicity_bin_sizes" in sfr_dict
+        ), "Key 'metallicity_bin_sizes' is missing"
+        np.testing.assert_array_almost_equal(
+            sfr_dict["metallicity_bin_sizes"],
+            expected_metallicity_bin_sizes,
+            err_msg="metallicity_bin_sizes values are incorrect",
+        )
+
+        assert (
+            "metallicity_weighted_starformation_rate_array" in sfr_dict
+        ), "Key 'metallicity_weighted_starformation_rate_array' is missing"
+        np.testing.assert_array_almost_equal(
+            sfr_dict["metallicity_weighted_starformation_rate_array"],
+            expected_weighted_sfr,
+            err_msg="metallicity_weighted_starformation_rate_array values are incorrect",
+        )
+
+    def test_update_sfr_dict_store_redshift_shell_info(self):
+        config = {
+            "logger": logging.getLogger(__name__),
+            "time_type": "redshift",
+            "cosmology": cosmo,
+        }
+        sfr_dict = {
+            "redshift_bin_edges": np.array([0.1, 0.2, 0.3, 0.4]),
+        }
+        sfr_dict = update_sfr_dict(sfr_dict, config)
+
+        assert (
+            "redshift_shell_volume_dict" in sfr_dict.keys()
+        ), "'redshift_shell_volume_dict' is not present in the sfr dictionary"
+
+
 if __name__ == "__main__":
     unittest.main()
-
-    # test_pad_sfr_dict_obj = test_pad_sfr_dict()
-    # test_pad_sfr_dict_obj.setUp()
-    # test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_square()
-    # test_pad_sfr_dict_obj.test_pad_sfr_dict_metallicity_non_square()

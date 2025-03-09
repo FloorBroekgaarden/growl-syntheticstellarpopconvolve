@@ -18,24 +18,27 @@ dimensionless_unit = u.m / u.m
 default_convolution_instruction_dict = {
     ########################
     # Unsorted
-    # "assign_formation_lookback_time": {
-    #     "value": True,
-    #     "description": "Flag to indicate to assign formation-lookback times during convolution-by-sampling. If false, assigning event-lookback times and filtering future events will not be possible, and `assign_event_lookback_time` and `filter_future_events` are ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
-    #     "validation": boolean_int_validation,
-    # },
+    "multiply_by_convolution_time_binsize": {
+        "value": False,
+        "description": "Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.",
+        "validation": boolean_int_validation,
+    },
+    "multiply_by_sfr_time_binsize": {
+        "value": False,
+        "description": "Flag to multiply the convolution results by the starformation rate time bin size. Not supported when time_type=='redshift'.",
+        "validation": boolean_int_validation,
+    },
+    "convolution_direction": {
+        "value": "backward",
+        "description": "Choice of convolution direction. 'backward' convolves the data such that every event occurs at the current time by looking what the starformation rate is for each given delay time. 'forward' convolution generates each system at the same time and looks at when events happen afterwards based on their delay times. Note: neither option is supported in all choices of `convolution_type` and `contains_binned_data`.",
+        "validation": vol.All(
+            str,
+            vol.In(["backward", "forward"]),
+        ),
+    },
     "reverse_convolution": {
         "value": False,
         "description": "Flag to reverse the convolution direction. If True, we start with the bin furthest back in time and work to. Useful in combination with `convolution_config['multiprocessing']=False`, and the `previous_convolution_results` and `persistant_data` objects.",
-        "validation": boolean_int_validation,
-    },
-    "assign_event_lookback_time": {
-        "value": True,
-        "description": "Flag to indicate to assign event-lookback times during convolution-by-sampling. If false, filtering future events will not be possible, and `filter_future_events` is ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
-        "validation": boolean_int_validation,
-    },
-    "filter_future_events": {
-        "value": True,
-        "description": "Flag to control filtering out future events during convolution-by-sampling. See also `assign_event_lookback_time`. Not recommended when using binned data.",
         "validation": boolean_int_validation,
     },
     "contains_binned_data": {
@@ -93,6 +96,21 @@ default_convolution_instruction_dict = {
         "description": "Dictionary containing additional arguments that can be accessed by the extra_weights_function. Note: using this can often be avoided by using functools.partial to fix certain input parameters.",
         "validation": dict,
     },
+    # "assign_formation_lookback_time": {
+    #     "value": True,
+    #     "description": "Flag to indicate to assign formation-lookback times during convolution-by-sampling. If false, assigning event-lookback times and filtering future events will not be possible, and `assign_event_lookback_time` and `filter_future_events` are ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
+    #     "validation": boolean_int_validation,
+    # },
+    # "assign_event_lookback_time": {
+    #     "value": True,
+    #     "description": "Flag to indicate to assign event-lookback times during convolution-by-sampling. If false, filtering future events will not be possible, and `filter_future_events` is ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.",
+    #     "validation": boolean_int_validation,
+    # },
+    # "filter_future_events": {
+    #     "value": True,
+    #     "description": "Flag to control filtering out future events during convolution-by-sampling. See also `assign_event_lookback_time`. Not recommended when using binned data.",
+    #     "validation": boolean_int_validation,
+    # },
 }
 
 

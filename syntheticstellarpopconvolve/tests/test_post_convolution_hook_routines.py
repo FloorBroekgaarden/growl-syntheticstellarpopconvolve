@@ -210,7 +210,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
 
         # store the data frame in the hdf5file
         wd_binaries.to_hdf(
-            self.convolution_config["input_filename"], key="input_data/dummy"
+            self.convolution_config["output_filename"], key="input_data/dummy"
         )
 
     def test_postprocessing_multiple_dictionaries_with_name(self):

@@ -22,8 +22,6 @@ def pad_sfr_dict(config, sfr_dict):
     Function to pad the entries in the sfr dictionary with empty bins.
 
     These functions update all the sfr properties and adds new entries that are prepended with 'padded_'
-
-    TODO: add time binsizes
     """
 
     #
@@ -65,6 +63,7 @@ def pad_sfr_dict(config, sfr_dict):
             right_val=0,
             relative_to_edge_val=False,
         )
+        sfr_dict["padded_time_bin_sizes"] = sfr_dict["padded_lookback_time_bin_sizes"]
 
         # log the binsizes
         config["logger"].debug(
@@ -176,8 +175,8 @@ def pad_sfr_dict(config, sfr_dict):
         #
         sfr_dict["padded_metallicity_bin_edges"] = pad_function(
             array=sfr_dict["metallicity_bin_edges"],
-            left_val=1e-20,
-            right_val=1,
+            left_val=-1e-20,
+            right_val=2,
             relative_to_edge_val=False,
         )
 

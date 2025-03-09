@@ -3,7 +3,6 @@ Tests for backward convolution of binned data.
 """
 
 import copy
-import json
 import logging
 import os
 import unittest
@@ -12,14 +11,12 @@ import astropy.units as u
 import h5py
 import numpy as np
 import pandas as pd
-import pkg_resources
 
 from syntheticstellarpopconvolve import (
     convolve,
     default_convolution_config,
     default_convolution_instruction,
 )
-from syntheticstellarpopconvolve.convolve_populations import extract_data
 from syntheticstellarpopconvolve.general_functions import (
     extract_unit_dict,
     generate_boilerplate_outputfile,
@@ -217,7 +214,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
             groupname = "output_data/dummy/dummy/convolution_results/0.5 yr/"
 
             data = output_hdf5file[groupname + "/sampled_indices"][()]
-            unit_dict = extract_unit_dict(output_hdf5file, groupname)
 
             unique, counts = np.unique(data, return_counts=True)
 
@@ -257,7 +253,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
             groupname = "output_data/dummy/dummy/convolution_results/0.5 yr/"
 
             data = output_hdf5file[groupname + "/sampled_indices"][()]
-            unit_dict = extract_unit_dict(output_hdf5file, groupname)
             unique, counts = np.unique(data, return_counts=True)
 
             np.testing.assert_array_equal(unique, np.array([0, 1, 2, 3]))
@@ -301,7 +296,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
 
             data = output_hdf5file[groupname + "/sampled_value"][()]
 
-            unit_dict = extract_unit_dict(output_hdf5file, groupname)
             unique, counts = np.unique(data, return_counts=True)
 
             np.testing.assert_array_equal(unique, np.array([0, 1, 2, 3]))

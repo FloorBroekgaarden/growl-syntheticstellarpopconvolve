@@ -3,15 +3,12 @@ Testcases for convolve_populations file
 """
 
 import copy
-import json
 import os
 import unittest
 
 import astropy.units as u
-import h5py
 import numpy as np
 import pandas as pd
-import pkg_resources
 
 from syntheticstellarpopconvolve import (
     default_convolution_config,

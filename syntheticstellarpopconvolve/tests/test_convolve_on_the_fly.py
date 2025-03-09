@@ -8,7 +8,6 @@ import os
 import unittest
 
 import astropy.units as u
-import h5py
 import numpy as np
 
 from syntheticstellarpopconvolve import (

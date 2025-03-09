@@ -12,19 +12,14 @@ TODO: forward integrate metallicity-weighted
 """
 
 import copy
-import json
 import logging
 import os
 import unittest
 
 import astropy.units as u
-import h5py
 import numpy as np
-import pandas as pd
-import pkg_resources
 
 from syntheticstellarpopconvolve import (
-    convolve,
     default_convolution_config,
     default_convolution_instruction,
 )
@@ -34,12 +29,7 @@ from syntheticstellarpopconvolve.calculate_starformation_rate import (
 from syntheticstellarpopconvolve.check_and_update_sfr_dict import (
     check_and_update_sfr_dict,
 )
-from syntheticstellarpopconvolve.convolve_populations import extract_data
-from syntheticstellarpopconvolve.general_functions import (
-    extract_unit_dict,
-    generate_boilerplate_outputfile,
-    temp_dir,
-)
+from syntheticstellarpopconvolve.general_functions import temp_dir
 
 np.random.seed(0)
 

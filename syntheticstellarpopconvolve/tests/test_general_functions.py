@@ -12,18 +12,10 @@ import unittest
 import astropy.units as u
 import h5py
 import numpy as np
-import pandas as pd
-import pkg_resources
 
 from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
-)
-from syntheticstellarpopconvolve.check_and_prepare_output_file import (
-    check_and_prepare_output_file,
-)
-from syntheticstellarpopconvolve.check_and_update_convolution_config import (
-    check_and_update_convolution_config,
 )
 from syntheticstellarpopconvolve.general_functions import (  # calculate_digitized_sfr_rates,; calculate_origin_time_array,
     JsonCustomEncoder,
@@ -41,9 +33,6 @@ from syntheticstellarpopconvolve.general_functions import (  # calculate_digitiz
     is_time_unit,
     pad_function,
     temp_dir,
-)
-from syntheticstellarpopconvolve.prepare_redshift_interpolator import (
-    prepare_redshift_interpolator,
 )
 
 TMP_DIR = temp_dir(

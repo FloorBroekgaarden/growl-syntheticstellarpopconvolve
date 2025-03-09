@@ -3,13 +3,10 @@ Util functions for the tests
 """
 
 import copy
-import json
 import os
 
 import astropy.units as u
-import h5py
 import numpy as np
-import pkg_resources
 
 from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.general_functions import (

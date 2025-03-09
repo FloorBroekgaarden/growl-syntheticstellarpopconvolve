@@ -30,6 +30,9 @@ from syntheticstellarpopconvolve.tests.test_convolution_with_events import (
 from syntheticstellarpopconvolve.tests.test_convolve_binned_data import (
     test_calculate_overlap_fractions,
 )
+from syntheticstellarpopconvolve.tests.test_convolve_binned_data_with_backward_convolution import (
+    test_convolve_binned_data_with_backward_convolution,
+)
 from syntheticstellarpopconvolve.tests.test_convolve_nonbinned_data_with_backward_convolution import (
     test_convolve_nonbinned_data_with_backward_convolution,
 )

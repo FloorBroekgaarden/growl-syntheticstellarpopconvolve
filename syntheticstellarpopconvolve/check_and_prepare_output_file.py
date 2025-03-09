@@ -32,7 +32,15 @@ def check_and_prepare_output_file(config):
 
     # Store config
     with h5py.File(config["output_filename"], "a") as output_hdf5file:
-        # Store convolution configuration in
-        output_hdf5file["config"].create_dataset(
-            "convolution", data=json.dumps(config, cls=JsonCustomEncoder)
-        )
+
+        if "config" not in output_hdf5file.keys():
+
+            # Store convolution configuration in
+            output_hdf5file["config"].create_dataset(
+                "convolution", data=json.dumps(config, cls=JsonCustomEncoder)
+            )
+
+        else:
+            config["logger"].warning(
+                "tried to store config in output file, but was already present. "
+            )

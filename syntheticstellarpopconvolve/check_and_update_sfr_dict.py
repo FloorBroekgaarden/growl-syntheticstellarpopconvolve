@@ -175,8 +175,8 @@ def pad_sfr_dict(config, sfr_dict):
         #
         sfr_dict["padded_metallicity_bin_edges"] = pad_function(
             array=sfr_dict["metallicity_bin_edges"],
-            left_val=1e-20,
-            right_val=1,
+            left_val=-1e-20,
+            right_val=2,
             relative_to_edge_val=False,
         )
 

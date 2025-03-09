@@ -41,6 +41,8 @@ def general_sfr_digitise_function(sfr_dict, time_values, metallicity_values=None
             - 1
         )
 
+        print(sfr_dict["padded_metallicity_weighted_starformation_rate_array"])
+
         # Calculate rates
         starformation_values = sfr_dict[
             "padded_metallicity_weighted_starformation_rate_array"

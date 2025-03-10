@@ -94,7 +94,7 @@ Convolution-config options
           Logger object.
 
        Default value:
-          <Logger syntheticstellarpopconvolve.default_convolution_config (INFO)>
+          <Logger syntheticstellarpopconvolve.default_convolution_config (CRITICAL)>
    * - max_job_queue_size
      - Description:
           Max number of jobs in the multiprocessing queue for the convolution.
@@ -233,24 +233,12 @@ Convolution-instruction options
 
        Default value:
           {}
-   * - ignore_metallicity
-     - Description:
-          Flag to ignore any metallicity dependence in the input data and the starformation rate.
-
-       Default value:
-          True
    * - input_data_name
      - Description:
           Name of to the current input dataset. Will be used to extract the data from the provided input-hdf5 file (expected in /input_data/<input data name>/), and will be used in the output-data path.
 
        Default value:
           input_data
-   * - metallicity_value
-     - Description:
-          Fallback metallicity used when `ignore_metallicity` is False but no `metallicity` data was provided in the `data_column_dict` or `data_layer_dict`.
-
-       Default value:
-          0.02
    * - multiply_by_convolution_time_binsize
      - Description:
           Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.

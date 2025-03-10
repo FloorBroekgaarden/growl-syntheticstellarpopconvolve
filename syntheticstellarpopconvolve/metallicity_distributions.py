@@ -207,4 +207,3 @@ if __name__ == "__main__":
         log_metallicities=np.array([0.01, 0.005, 0.002, 0.001]),
         redshifts=np.array([0, 1, 2]),
     )
-    print(dpdlogZ)

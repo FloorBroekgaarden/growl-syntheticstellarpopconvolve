@@ -24,6 +24,27 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
+def sample_around_bin_center(bin_edges, values):
+    """
+    Basic function to handle sampling around bincenter given bin edges and values.
+
+    Note: this does not handle values that fall outside of the bins well
+    """
+
+    bin_widths = np.diff(bin_edges)
+
+    indices = np.digitize(values, bin_edges) - 1
+
+    # get random values and scale
+    random_arr = np.random.random(indices.shape) - 0.5
+    random_arr = random_arr * bin_widths[indices]
+
+    # Add to values
+    sampled_values = values + random_arr
+
+    return sampled_values
+
+
 def create_job_dict(
     config, sfr_dict, data_dict, convolution_instruction, time_bin_info_dict, bin_number
 ):

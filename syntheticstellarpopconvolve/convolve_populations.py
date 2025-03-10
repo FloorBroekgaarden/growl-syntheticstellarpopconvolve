@@ -68,7 +68,6 @@ def extract_data(config, convolution_instruction):
                 )
 
         elif isinstance(data_column_dict[column], dict):
-            print(data_column_dict[column])
             if "column_name" not in data_column_dict[column]:
                 raise ValueError(
                     "Please provide the input-data column name through the 'column_name' key."

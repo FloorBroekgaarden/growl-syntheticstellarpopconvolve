@@ -201,7 +201,7 @@ def check_convolution_config(config):
 
     #######
     # check the convolution instructions
-    check_and_update_convolution_instructions(config=config)
+    check_and_update_convolution_instructions(convolution_config=config)
 
     #######
     # check the sfr dicts

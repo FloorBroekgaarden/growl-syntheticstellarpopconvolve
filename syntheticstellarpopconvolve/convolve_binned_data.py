@@ -131,10 +131,6 @@ if __name__ == "__main__":
     shifted_left_delay_time_data_bin_edges = left_delay_time_data_bin_edges + shift
     shifted_right_delay_time_data_bin_edges = right_delay_time_data_bin_edges + shift
 
-    # print("sfr_bin_edges", sfr_bin_edges)
-    # print("shifted_left_time_bin_edges", shifted_left_time_bin_edges)
-    # print("shifted_right_time_bin_edges", shifted_right_time_bin_edges)
-
     ##########
     # Loop over the data time-bins
     for time_bin_i, (
@@ -150,11 +146,6 @@ if __name__ == "__main__":
             )
         )[:1]
     ):
-
-        # print("time bin", time_bin_i)
-        # print("time bin size", time_bin_size_i)
-        # print("shifted_left_time_bin_edge", shifted_left_time_bin_edge)
-        # print("shifted_right_time_bin_edge", shifted_right_time_bin_edge)
 
         #
         overlap_fractions = calculate_overlap_fractions(

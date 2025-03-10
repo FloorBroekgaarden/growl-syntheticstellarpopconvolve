@@ -60,6 +60,18 @@ def metallicity_required_not_included_on_the_fly_function(total_star_formation_i
     """
 
 
+def metallicity_required_on_the_fly_function(
+    total_star_formation_in_bin, metallicity_distribution
+):
+    """
+    On-the-fly function that returns the wrong type of object (None in this case)
+    """
+
+    print(metallicity_distribution)
+
+    return {}
+
+
 class test_convolve_on_the_fly(unittest.TestCase):
     """ """
 
@@ -100,11 +112,11 @@ class test_convolve_on_the_fly(unittest.TestCase):
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
+                "convolution_direction": "forward",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
                 "on_the_fly_function": dummy_on_the_fly_function,
             },
         ]
@@ -126,11 +138,11 @@ class test_convolve_on_the_fly(unittest.TestCase):
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
+                "convolution_direction": "forward",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
                 "on_the_fly_function": wrong_arguments_on_the_fly_function,
             },
         ]
@@ -189,11 +201,11 @@ class test_convolve_on_the_fly(unittest.TestCase):
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
+                "convolution_direction": "forward",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
                 "on_the_fly_function": wrong_return_type_on_the_fly_function,
             },
         ]
@@ -231,6 +243,7 @@ class test_convolve_on_the_fly(unittest.TestCase):
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
+                "convolution_direction": "forward",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
@@ -277,6 +290,63 @@ class test_convolve_on_the_fly(unittest.TestCase):
                 time_bin_info_dict=time_bin_info_dict,
             )
 
+    def test_convolve_on_the_fly_metallicity_required_on_the_fly_function(
+        self,
+    ):
+
+        #
+        self.convolution_config["convolution_instructions"] = [
+            {
+                **default_convolution_instruction,
+                "input_data_name": "binary_c",
+                "output_data_name": "BHBH",
+                "convolution_type": "on-the-fly",
+                "convolution_direction": "forward",
+                "data_column_dict": {
+                    "delay_time": "delay_time",
+                    "normalized_yield": "probability",
+                },
+                "on_the_fly_function": metallicity_required_on_the_fly_function,
+            },
+        ]
+
+        # Set up SFR
+        sfr_dict = {
+            "lookback_time_bin_edges": np.array([0, 1, 2, 3]) * u.yr,
+            "starformation_rate_array": np.array([1, 1, 1]) * u.Msun / u.yr,
+            "metallicity_bin_edges": np.array([0.01, 0.1, 0.2, 0.3]),
+            "metallicity_distribution_array": np.array(
+                [[1, 2, 3], [4, 5, 6], [4, 5, 6]]
+            ),
+        }
+
+        #
+        self.convolution_config["SFR_info"] = sfr_dict
+
+        #
+        check_and_update_convolution_config(self.convolution_config)
+
+        #
+        sfr_dict = self.convolution_config["SFR_info"]
+
+        time_bin_info_dict = {
+            "bin_number": 0,
+            "bin_center": 0.5 * u.yr,
+            "bin_edge_lower": 0,
+            "bin_size": 1 * u.yr,
+            "bin_type": "starformation time",
+            "time_type": self.convolution_config["time_type"],
+        }
+
+        convolve_on_the_fly(
+            config=self.convolution_config,
+            sfr_dict=sfr_dict,
+            convolution_instruction=self.convolution_config["convolution_instructions"][
+                0
+            ],
+            time_bin_info_dict=time_bin_info_dict,
+        )
+
     def test_convolve_on_the_fly_convolve(self):
 
         #
@@ -286,11 +356,11 @@ class test_convolve_on_the_fly(unittest.TestCase):
                 "input_data_name": "binary_c",
                 "output_data_name": "BHBH",
                 "convolution_type": "on-the-fly",
+                "convolution_direction": "forward",
                 "data_column_dict": {
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
                 "on_the_fly_function": dummy_on_the_fly_function,
             },
         ]

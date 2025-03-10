@@ -219,7 +219,7 @@ default_convolution_config_dict = {
     # unsorted
     #
     "tmp_dir": {
-        "value": "/tmp",
+        "value": "/tmp/sspc",
         "description": "Target directory for the tmp files.",  # TODO: expand explanation. Also consider if this is the best way
         "validation": str,
     },

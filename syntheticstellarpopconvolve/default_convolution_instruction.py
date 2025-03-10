@@ -53,7 +53,7 @@ default_convolution_instruction_dict = {
     },
     ########################
     #
-    "ignore_metallicity": {
+    "ignore_metallicity": {  # TODO: i don't like this anymore. Perhaps we can just remove it and have the code automatically pick up whether its needed if the user provides it
         "value": True,
         "description": "Flag to ignore any metallicity dependence in the input data and the starformation rate.",
         "validation": boolean_int_validation,

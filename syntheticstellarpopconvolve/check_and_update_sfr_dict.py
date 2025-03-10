@@ -359,7 +359,7 @@ def check_sfr_dict(
     if requires_metallicity_info:
         # Check if the metallicity bins are present
         if "metallicity_bin_edges" not in sfr_dict:
-            raise ValueError("metallicity_bin_edges is required in the sfr dictionary")
+            raise ValueError("metallicity_bin_edges is required in the SFR dictionary.")
 
         # Check for metallicity distribution
         # NOTE: from 2024-06-08 I have decided to require only the
@@ -441,10 +441,10 @@ def check_and_update_sfr_dicts(config):
     Function to check the SFR dict for the appropriate content and update
     """
 
-    # determine whether any of the convolution instructions require metallicity
+    # determine whether any of the convolution instructions use metallicity
     requires_metallicity_info = any(
         [
-            not convolution_instruction.get("ignore_metallicity", False)
+            "metallicity" in convolution_instruction["data_column_dict"].keys()
             for convolution_instruction in config["convolution_instructions"]
         ]
     )
@@ -452,7 +452,6 @@ def check_and_update_sfr_dicts(config):
     #######
     # check the SFR information
     if "SFR_info" in config:
-
         if isinstance(config["SFR_info"], dict):
             config["SFR_info"] = check_and_update_sfr_dict(
                 sfr_dict=config["SFR_info"],

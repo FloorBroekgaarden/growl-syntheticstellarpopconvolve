@@ -188,6 +188,8 @@ def check_convolution_config_other(config):
 def check_convolution_config(config):
     """
     Function to handle checking the convolution config
+
+    TODO: move this to another file
     """
 
     #

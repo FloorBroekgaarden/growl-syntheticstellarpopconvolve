@@ -53,16 +53,6 @@ default_convolution_instruction_dict = {
     },
     ########################
     #
-    "ignore_metallicity": {  # TODO: i don't like this anymore. Perhaps we can just remove it and have the code automatically pick up whether its needed if the user provides it
-        "value": True,
-        "description": "Flag to ignore any metallicity dependence in the input data and the starformation rate.",
-        "validation": boolean_int_validation,
-    },
-    "metallicity_value": {
-        "value": 0.02,
-        "description": "Fallback metallicity used when `ignore_metallicity` is False but no `metallicity` data was provided in the `data_column_dict` or `data_layer_dict`",
-        "validation": float,
-    },
     "input_data_name": {
         "value": "input_data",
         "description": "Name of to the current input dataset. Will be used to extract the data from the provided input-hdf5 file (expected in /input_data/<input data name>/), and will be used in the output-data path. ",

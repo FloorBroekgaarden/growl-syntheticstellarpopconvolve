@@ -69,50 +69,85 @@ Planned features:
 
 Using SSPC is designed to be simple, and only requires the following ingredients
 - **input data**: pre-calculated population-synthesis results which contain at least delay time information and a normalized yield value
-- **starformation rate model**: a dictionairy-type containing information about the rate of star formation and the corresponding times, and optionally information about metallicity distributions.
-- **data-column dict**: a dictionary that allows SSPC to fetch the relevant data columns, optionally with units and value conversions.
 - **general configuration**: a global configuration.
+- **starformation rate model**: a dictionairy-type containing information about the rate of star formation and the corresponding times, and optionally information about metallicity distributions.
 - **convolution instruction**: instructions for a particular convolution.
+- **data-column dict**: a dictionary that allows SSPC to fetch the relevant data columns, optionally with units and value conversions.
 
 ### **Quick Start Guide**
 
 Here’s a minimal example demonstrating how to use SSPC:
 
 ```python
-import syntheticstellarpopconvolve as sspc
-from astropy import units as u
+import os, copy, h5py
+import astropy.units as u
 import numpy as np
+import pandas as pd
+from syntheticstellarpopconvolve import convolve, default_convolution_config, default_convolution_instruction
+from syntheticstellarpopconvolve.general_functions import generate_boilerplate_outputfile, extract_unit_dict, temp_dir
 
-# Example star formation rate dictionary
-sfr_dict = {
-    "lookback_time_bin_edges": np.arange(0, 10, 1) * u.Gyr,
-    "starformation_rate_array": np.ones(9) * u.Msun / u.yr,
+TMP_DIR = temp_dir(
+    "examples", "minimal_working_example", clean_path=True
+)
+
+# Create instance of output
+output_hdf5_filename = os.path.join(TMP_DIR, "output_example.h5")
+generate_boilerplate_outputfile(output_hdf5_filename)
+
+# SET UP DATA
+example_data = {
+    "delay_time": np.array([0, 1, 2, 3]),
+    "value": np.array([3, 2, 1, 0]),
+    "probability": np.array([1, 2, 3, 4]),
+}
+example_df = pd.DataFrame.from_records(example_data)
+example_df.to_hdf(output_hdf5_filename, key="input_data/example")
+
+# Set up global configuration
+convolution_config = copy.copy(default_convolution_config)
+convolution_config["output_filename"] = output_hdf5_filename
+
+# Set up SFR
+convolution_config["SFR_info"] = {
+    "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
+    "starformation_rate_array": np.array([1, 2, 3, 4, 5]) * u.Msun / u.yr
 }
 
-# Example event data
-event_data = {
-    "delay_time": np.array([0.5, 1.2, 3.7]) * u.Gyr,
-    "normalized_yield": np.array([1.0, 0.8, 0.5]),
-}
+# set up convolution bin edges
+convolution_config["convolution_lookback_time_bin_edges"] = (
+    np.array([0, 1]) * u.yr
+)
 
-# Perform convolution
-result = sspc.convolve()
+# Set up the convolution instructions
+convolution_config["convolution_instructions"] = [
+    {
+        **default_convolution_instruction,
+        "input_data_name": "example",
+        "output_data_name": "example",
+        "data_column_dict": {
+            "delay_time": "delay_time",
+            "normalized_yield": {"column_name": "probability", "unit": 1/u.Msun},
+        },
+    }
+]
 
-# Print results
-print(result)
+# run convolution
+convolve(convolution_config)
+
+# read out results
+with h5py.File(
+    convolution_config["output_filename"], "r"
+) as output_hdf5file:
+    groupname = "output_data/example/example/convolution_results/0.5 yr/"
+
+    data = output_hdf5file[groupname + "/yield"][()]
+    unit_dict = extract_unit_dict(output_hdf5file, groupname)
+
+    print(data)
 ```
-
-This example demonstrates how to:
-- Define a **star formation history**.
-- Provide **event-based** input data.
-- Perform a **convolution** to obtain astrophysical predictions.
 
 For more detailed examples, check out the **tutorial notebooks**:
 📖 **[Example Notebooks](https://synthetic-stellar-pop-convolve.readthedocs.io/en/latest/example_notebooks.html)**
-
-
-
-
 
 ---
 

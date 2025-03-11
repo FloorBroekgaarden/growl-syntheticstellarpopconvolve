@@ -1,5 +1,7 @@
 """
 File containing a selection of functions to calculate the star formation rates.
+
+TODO: reconsider if this whole padding is really necessary
 """
 
 import astropy.units as u
@@ -11,18 +13,24 @@ from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
 from syntheticstellarpopconvolve.convolve_binned_data import calculate_overlap_fractions
 
 
-def general_sfr_digitise_function(sfr_dict, time_values, metallicity_values=None):
+def general_sfr_digitise_function(
+    config, sfr_dict, time_values, metallicity_values=None
+):
     """
     General function to handle the selection of SFR values given time values and metallicity values
     """
 
+    # handle value extraction for non-redshift
+    time_values_ = time_values
+    padded_time_bin_edges = sfr_dict["padded_time_bin_edges"]
+    if config["time_type"] != "redshift":
+        time_values_ = time_values_.value
+        padded_time_bin_edges = padded_time_bin_edges.value
+
     ################
     # Calculate time indices and determine the SFR values
     time_indices = (
-        np.digitize(
-            time_values.value, bins=sfr_dict["padded_time_bin_edges"].value, right=False
-        )
-        - 1
+        np.digitize(time_values_, bins=padded_time_bin_edges, right=False) - 1
     )
 
     # retrieve SFR values
@@ -31,6 +39,9 @@ def general_sfr_digitise_function(sfr_dict, time_values, metallicity_values=None
     ###
     # Handle whether we want to select on metallicity too
     if metallicity_values is not None:
+        print(metallicity_values)
+        print(sfr_dict["padded_metallicity_bin_edges"])
+
         # Get indices for metallicity values
         metallicity_indices = (
             np.digitize(
@@ -110,6 +121,7 @@ def calculate_digitized_sfr_rates_for_forward_convolution(
 
     #
     total_star_formation_in_lookback_time_bin = general_sfr_digitise_function(
+        config=config,
         sfr_dict=sfr_dict,
         time_values=time_bin_info_dict["bin_center"],
         metallicity_values=(
@@ -345,6 +357,7 @@ def calculate_digitized_sfr_rates_binned_data_for_backward_convolution(
 
             # Automatic method
             matching_delay_time_data_bin_sfr_rates = general_sfr_digitise_function(
+                config=config,
                 sfr_dict=sfr_dict,
                 time_values=sfr_dict["time_bin_centers"][
                     np.repeat(
@@ -492,6 +505,7 @@ def calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution(
     #########
     #
     digitised_sfr_rates = general_sfr_digitise_function(
+        config=config,
         sfr_dict=sfr_dict,
         time_values=origin_time_array,
         metallicity_values=(

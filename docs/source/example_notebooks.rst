@@ -23,3 +23,4 @@ We have a set of notebooks that explain and show the usage of the SSPC features.
     examples/notebook_example_GW_merger_rate_density.ipynb
     examples/notebook_example_LISA_UCB.ipynb
     examples/notebook_example_orbit_integration_and_supernova_kicks.ipynb
+    examples/notebook_example_GAIA_populations.ipynb

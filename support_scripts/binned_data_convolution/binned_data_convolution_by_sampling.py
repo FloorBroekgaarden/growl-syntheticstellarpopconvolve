@@ -13,24 +13,11 @@ from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
 )
-from syntheticstellarpopconvolve.general_functions import calculate_bin_edges, temp_dir
-
-
-def sample_around_bin_center(bin_edges, values):
-    """ """
-
-    bin_widths = np.diff(bin_edges)
-
-    indices = np.digitize(values, bin_edges) - 1
-
-    # get random values and scale
-    random_arr = np.random.random(indices.shape) - 0.5
-    random_arr = random_arr * bin_widths[indices]
-
-    # Add to values
-    sampled_values = values + random_arr
-
-    return sampled_values
+from syntheticstellarpopconvolve.general_functions import (
+    calculate_bin_edges,
+    sample_around_bin_center,
+    temp_dir,
+)
 
 
 def post_convolution_function(

@@ -30,20 +30,32 @@ class test_check_metallicity(unittest.TestCase):
             "data_column_dict": {"no_metallicity_key": "some_value"}
         }
 
+        self.config = default_convolution_config
+
     def test_check_metallicity_with_metallicity(self):
         data_key = "data_column_dict"
-        check_metallicity(self.convolution_instruction_with_metallicity, data_key)
+        check_metallicity(
+            convolution_config=self.config,
+            convolution_instruction=self.convolution_instruction_with_metallicity,
+            data_key=data_key,
+        )
         # No exception should be raised
 
     def test_check_metallicity_with_metallicity_value(self):
         data_key = "data_column_dict"
-        check_metallicity(self.convolution_instruction_with_metallicity_value, data_key)
+        check_metallicity(
+            convolution_config=self.config,
+            convolution_instruction=self.convolution_instruction_with_metallicity_value,
+            data_key=data_key,
+        )
         # No exception should be raised
 
     def test_check_metallicity_with_ignore_metallicity(self):
         data_key = "data_column_dict"
         check_metallicity(
-            self.convolution_instruction_with_ignore_metallicity, data_key
+            convolution_config=self.config,
+            convolution_instruction=self.convolution_instruction_with_ignore_metallicity,
+            data_key=data_key,
         )
         # No exception should be raised
 
@@ -51,7 +63,9 @@ class test_check_metallicity(unittest.TestCase):
         data_key = "data_column_dict"
         with self.assertRaises(ValueError):
             check_metallicity(
-                self.convolution_instruction_missing_metallicity, data_key
+                convolution_config=self.config,
+                convolution_instruction=self.convolution_instruction_missing_metallicity,
+                data_key=data_key,
             )
 
 
@@ -71,7 +85,7 @@ class test_check_convolution_instruction(unittest.TestCase):
     def test_check_convolution_instruction_event_type(self):
         check_convolution_instruction(
             convolution_instruction=self.event_convolution_instruction,
-            config=self.config,
+            convolution_config=self.config,
         )
         # No exception should be raised
 
@@ -84,7 +98,7 @@ class test_check_convolution_instruction(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_convolution_instruction(
                 convolution_instruction=event_convolution_instruction_missing_key,
-                config=self.config,
+                convolution_config=self.config,
             )
 
     def test_check_convolution_instruction_event_missing_metallicity(self):
@@ -101,7 +115,7 @@ class test_check_convolution_instruction(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_convolution_instruction(
                 convolution_instruction=event_convolution_instruction,
-                config=self.config,
+                convolution_config=self.config,
             )
 
 

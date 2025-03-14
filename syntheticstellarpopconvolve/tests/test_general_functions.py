@@ -23,6 +23,7 @@ from syntheticstellarpopconvolve.general_functions import (  # calculate_digitiz
     calculate_bincenters,
     check_required,
     extract_unit_dict,
+    generate_boilerplate_outputfile,
     generate_group_name,
     get_normalized_yield_unit,
     get_tmp_dir,
@@ -38,6 +39,25 @@ from syntheticstellarpopconvolve.general_functions import (  # calculate_digitiz
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_general_functions", clean_path=True
 )
+
+
+class test_generate_boilerplate_outputfile(unittest.TestCase):
+    """ """
+
+    def test_generate_boilerplate_outputfile(self):
+
+        output_filename = os.path.join(
+            TMP_DIR, "test_generate_boilerplate_outputfile.hdf5"
+        )
+        generate_boilerplate_outputfile(output_filename)
+
+        # check if it is a file
+        self.assertTrue(os.path.isfile(output_filename))
+
+        with h5py.File(output_filename, "r") as output_hdf5_file:
+
+            self.assertTrue("input_data" in output_hdf5_file.keys())
+            self.assertTrue("config" in output_hdf5_file.keys())
 
 
 class test_get_normalized_yield_unit(unittest.TestCase):

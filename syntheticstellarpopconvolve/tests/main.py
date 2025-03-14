@@ -53,7 +53,9 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
     test_array_validation,
     test_callable_or_none_validation,
     test_callable_validation,
+    test_dict_or_list_of_dicts_validation,
     test_existing_path_validation,
+    test_list_of_dicts_validation,
     test_logger_validation,
     test_unit_validation,
 )
@@ -61,6 +63,7 @@ from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_c
     test_calculate_bin_edges,
     test_calculate_bincenters,
     test_check_required,
+    test_generate_boilerplate_outputfile,
     test_generate_group_name,
     test_get_tmp_dir,
     test_get_username,

@@ -436,7 +436,7 @@ def check_and_update_sfr_dict(  # DH0001
     return sfr_dict
 
 
-def check_and_update_sfr_dicts(config):
+def check_and_update_sfr_dicts(config):  # DH0001
     """
     Function to check the SFR dict for the appropriate content and update
     """
@@ -451,24 +451,28 @@ def check_and_update_sfr_dicts(config):
 
     #######
     # check the SFR information
-    if "SFR_info" in config:
-        if isinstance(config["SFR_info"], dict):
-            config["SFR_info"] = check_and_update_sfr_dict(
-                sfr_dict=config["SFR_info"],
-                requires_name=False,
+    if "SFR_info" not in config or not config["SFR_info"]:
+        raise ValueError(
+            'please provide a non-empty list or dictionary to config["SFR_INFO"]'
+        )
+
+    if isinstance(config["SFR_info"], dict):
+        config["SFR_info"] = check_and_update_sfr_dict(
+            sfr_dict=config["SFR_info"],
+            requires_name=False,
+            requires_metallicity_info=requires_metallicity_info,
+            time_type=config["time_type"],
+            config=config,
+        )
+    elif isinstance(config["SFR_info"], list):
+        # check all sfr dicts
+        for sfr_dict in config["SFR_info"]:
+            sfr_dict = check_and_update_sfr_dict(
+                sfr_dict=sfr_dict,
+                requires_name=True,
                 requires_metallicity_info=requires_metallicity_info,
                 time_type=config["time_type"],
                 config=config,
             )
-        elif isinstance(config["SFR_info"], list):
-            # check all sfr dicts
-            for sfr_dict in config["SFR_info"]:
-                sfr_dict = check_and_update_sfr_dict(
-                    sfr_dict=sfr_dict,
-                    requires_name=True,
-                    requires_metallicity_info=requires_metallicity_info,
-                    time_type=config["time_type"],
-                    config=config,
-                )
-    else:
-        raise ValueError("No SFR info has been provided. Aborting")
+
+    # TODO: handle a generator type

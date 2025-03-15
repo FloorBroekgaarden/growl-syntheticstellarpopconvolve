@@ -6,6 +6,7 @@ Main convolution test script
 # flake8: noqa
 import unittest
 
+from syntheticstellarpopconvolve.tests.general_tests import test_postprocessing
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
 )
@@ -63,19 +64,22 @@ from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_c
     test_calculate_bin_edges,
     test_calculate_bincenters,
     test_check_required,
+    test_create_job_dict,
+    test_create_time_bin_info_dict,
     test_generate_boilerplate_outputfile,
     test_generate_group_name,
+    test_get_physical_dimensions,
     test_get_tmp_dir,
     test_get_username,
     test_handle_custom_scaling_or_conversion,
     test_has_unit,
     test_is_time_unit,
     test_pad_function,
+    test_sample_around_bin_center,
     test_temp_dir,
 )
 from syntheticstellarpopconvolve.tests.test_post_convolution_hook_routines import (
     test_extract_arguments,
-    test_postprocessing,
 )
 from syntheticstellarpopconvolve.tests.test_prepare_redshift_interpolator import (
     test_create_interpolation_datasets,

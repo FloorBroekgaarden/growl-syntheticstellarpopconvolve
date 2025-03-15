@@ -113,7 +113,6 @@
 #         #
 #         convolution_config["convolution_instructions"] = [
 #             {
-#                 "input_data_type": "ensemble",
 #                 "input_data_name": "dummy",
 #                 "convolution_type": "integrate",
 #                 "output_data_name": "dummy",

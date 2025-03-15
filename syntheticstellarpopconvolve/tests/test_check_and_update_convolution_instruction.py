@@ -110,7 +110,6 @@ class test_check_convolution_instruction(unittest.TestCase):
             "data_column_dict": {"delay_time": "delay", "normalized_yield": "rate"},
             "ignore_metallicity": False,
         }
-        del event_convolution_instruction["metallicity_value"]
 
         with self.assertRaises(ValueError):
             check_convolution_instruction(

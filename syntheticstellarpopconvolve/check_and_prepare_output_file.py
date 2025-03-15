@@ -30,10 +30,10 @@ def check_and_prepare_output_file(config):
 
     output_file.close()
 
-    # Store config
+    # Store config.
     with h5py.File(config["output_filename"], "a") as output_hdf5file:
 
-        if "config" not in output_hdf5file.keys():
+        if "convolution" not in output_hdf5file["config"].keys():
 
             # Store convolution configuration in
             output_hdf5file["config"].create_dataset(

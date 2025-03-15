@@ -179,7 +179,6 @@ convolution_config["convolution_instructions"] = [
         "convolution_type": "sample",
         "input_data_name": "stochastic_example",
         "output_data_name": "stochastic_example",
-        "ignore_metallicity": True,
         "filter_future_events": False,
         "post_convolution_function": post_convolution_function,
         "data_column_dict": {

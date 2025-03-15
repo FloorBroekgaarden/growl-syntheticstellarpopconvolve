@@ -62,7 +62,7 @@ class test_extract_arguments(unittest.TestCase):
         def funca(a, b):
             pass
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             extract_arguments(funca, {"a": 2})
 
 

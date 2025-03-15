@@ -10,7 +10,7 @@ from syntheticstellarpopconvolve.default_convolution_instruction import (
 from syntheticstellarpopconvolve.general_functions import check_required, is_time_unit
 
 
-def check_metallicity(convolution_config, convolution_instruction, data_key):
+def check_metallicity(convolution_config, convolution_instruction):
     """
     Function to check the metallicity
     """
@@ -103,7 +103,6 @@ def check_convolution_instruction(convolution_instruction, convolution_config):
         check_metallicity(
             convolution_config=convolution_config,
             convolution_instruction=convolution_instruction,
-            data_key="data_column_dict",
         )
 
         check_required(

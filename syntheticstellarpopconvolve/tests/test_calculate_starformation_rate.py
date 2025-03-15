@@ -99,7 +99,6 @@ class test_calculate_starformation_rate_nonbinned_data_backward(unittest.TestCas
                 "delay_time": "delay_time",
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
         }
         sfr_dict = self.convolution_config["SFR_info"]
         convolution_lookback_time_bin_edges = self.convolution_config[

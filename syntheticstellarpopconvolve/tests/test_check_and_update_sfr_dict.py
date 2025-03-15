@@ -85,10 +85,11 @@ class test_pad_sfr_dict(unittest.TestCase):
         self.sfr_dict = update_sfr_dict(sfr_dict=self.sfr_dict, config=self.config)
         padded_sfr_dict = pad_sfr_dict(self.config, self.sfr_dict)
         self.assertTrue("padded_metallicity_bin_edges" in padded_sfr_dict)
+
         self.assertTrue(
             np.array_equal(
                 padded_sfr_dict["padded_metallicity_bin_edges"],
-                np.array([1e-20, 0.01, 0.1, 0.2, 1]),
+                np.array([-1e-20, 0.01, 0.1, 0.2, 2.0]),
             )
         )
 

@@ -119,7 +119,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
                 "delay_time": "delay_time",
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
         }
         self.convolution_config["convolution_instructions"] = [
             normal_convolution_instructions
@@ -155,7 +154,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
                 "delay_time": "delay_time",
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
             "post_convolution_function": integrate_post_convolution_function,
         }
 
@@ -191,7 +189,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
                 "delay_time": "delay_time",
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
             "multiply_by_sfr_time_binsize": True,
         }
 
@@ -232,7 +229,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
                 "delay_time": "delay_time",
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
             "multiply_by_sfr_time_binsize": True,
         }
 
@@ -273,7 +269,6 @@ class test_convolve_nonbinned_data_with_backward_convolution(unittest.TestCase):
                 "normalized_yield": "probability",
                 "value": "value",
             },
-            "ignore_metallicity": True,
             "multiply_by_sfr_time_binsize": True,
             "post_convolution_function": sample_post_convolution_function,
         }

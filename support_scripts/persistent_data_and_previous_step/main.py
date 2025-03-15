@@ -86,11 +86,9 @@ convolution_config["multiprocessing"] = False
 # convolution instructions
 convolution_config["convolution_instructions"] = [
     {
-        "input_data_type": "event",
         "convolution_type": "integrate",
         "input_data_name": "example",
         "output_data_name": "example",
-        "ignore_metallicity": True,
         "filter_future_events": False,
         "post_convolution_function": post_convolution_function,
         "data_column_dict": {

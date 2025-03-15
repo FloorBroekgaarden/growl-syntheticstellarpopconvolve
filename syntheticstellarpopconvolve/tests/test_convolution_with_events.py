@@ -91,10 +91,8 @@ class test_convolution_with_events(unittest.TestCase):
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
             },
         ]
-        # convolution_config["logger"].setLevel("DEBUG")
 
         #
         convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")

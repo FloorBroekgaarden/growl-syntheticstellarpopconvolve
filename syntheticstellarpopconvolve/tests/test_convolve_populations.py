@@ -91,7 +91,6 @@ class test_extract_data(unittest.TestCase):
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
             },
         ]
 
@@ -111,7 +110,6 @@ class test_extract_data(unittest.TestCase):
                 "delay_time": "delay_time",
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
         }
 
         #
@@ -134,7 +132,6 @@ class test_extract_data(unittest.TestCase):
                 "delay_time": {"column_name": "delay_time", "conversion_factor": 2},
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
         }
 
         #
@@ -162,7 +159,6 @@ class test_extract_data(unittest.TestCase):
                 },
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
         }
 
         #
@@ -190,7 +186,6 @@ class test_extract_data(unittest.TestCase):
                 },
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
         }
 
         with self.assertRaises(KeyError):
@@ -259,7 +254,6 @@ class test_generate_data_dict(unittest.TestCase):
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
             },
         ]
 
@@ -281,7 +275,6 @@ class test_generate_data_dict(unittest.TestCase):
                 "delay_time": "delay_time",
                 "normalized_yield": "probability",
             },
-            "ignore_metallicity": True,
         }
 
         _, data_dict, _ = generate_data_dict(

@@ -481,7 +481,6 @@ class test_check_required(unittest.TestCase):
 #                     "delay_time": "delay_time",
 #                     "normalized_yield": "probability",
 #                 },
-#                 "ignore_metallicity": True,
 #             },
 #         ]
 

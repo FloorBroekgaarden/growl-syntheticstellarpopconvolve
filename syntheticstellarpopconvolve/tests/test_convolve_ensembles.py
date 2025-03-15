@@ -121,7 +121,6 @@
 #                 "data_layer_dict": {
 #                     "delay_time": 3,
 #                 },
-#                 "ignore_metallicity": True,
 #             },
 #         ]
 
@@ -288,7 +287,6 @@
 #                 "data_layer_dict": {
 #                     "delay_time": 3,
 #                 },
-#                 "ignore_metallicity": True,
 #             },
 #         ]
 

@@ -67,8 +67,6 @@ def metallicity_required_on_the_fly_function(
     On-the-fly function that returns the wrong type of object (None in this case)
     """
 
-    print(metallicity_distribution)
-
     return {}
 
 

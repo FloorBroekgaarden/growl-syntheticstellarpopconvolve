@@ -119,7 +119,6 @@ convolution_config["convolution_instructions"] = [
         "input_data_name": "binned_example",
         "output_data_name": "binned_example",
         "contains_binned_data": True,
-        "ignore_metallicity": True,
         "delay_time_data_bin_info_dict": {
             "delay_time_data_bin_edges": time_bin_edges * u.yr
         },

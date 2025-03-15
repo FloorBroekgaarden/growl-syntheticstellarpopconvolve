@@ -24,6 +24,8 @@ TMP_DIR = temp_dir(
     clean_path=True,
 )
 
+np.random.seed(0)
+
 
 ##################
 # Non unit-tests but sanity checks
@@ -42,7 +44,7 @@ def postprocessing_multiple_dicts(
     """
 
     # unpack data
-    system_indices = convolution_results["indices"]
+    system_indices = convolution_results["sampled_indices"]
     local_indices = np.arange(len(system_indices))
 
     # add distances
@@ -177,7 +179,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
                     "delay_time": {"column_name": "time", "unit": u.Myr},
                 },
                 "post_convolution_function": postprocessing_multiple_dicts_with_name,
-                "filter_future_events": False,
+                "multiply_by_sfr_time_binsize": True,
             },
         ]
 
@@ -188,6 +190,7 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
         with h5py.File(
             self.convolution_config["output_filename"], "r"
         ) as output_hdf5_file:
+
             self.assertTrue(
                 "set_1"
                 in output_hdf5_file[
@@ -203,15 +206,15 @@ class test_postprocessing(unittest.TestCase, Boilerplate):
 
             #
             indices_1 = output_hdf5_file[
-                "output_data/dummy/dummy/convolution_results/set_1/0.5 Gyr/indices"
+                "output_data/dummy/dummy/convolution_results/set_1/0.5 Gyr/sampled_indices"
             ][()]
-            self.assertTrue(len(indices_1) == 4464)
+            self.assertTrue(len(indices_1) == 2502)
 
             #
             indices_2 = output_hdf5_file[
-                "output_data/dummy/dummy/convolution_results/set_2/0.5 Gyr/indices"
+                "output_data/dummy/dummy/convolution_results/set_2/0.5 Gyr/sampled_indices"
             ][()]
-            self.assertTrue(len(indices_2) == 536)
+            self.assertTrue(len(indices_2) == 1139)
 
     def test_postprocessing_multiple_dictionaries_without_name(self):
 

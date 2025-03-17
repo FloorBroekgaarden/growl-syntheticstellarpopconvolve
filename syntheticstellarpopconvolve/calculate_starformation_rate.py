@@ -39,8 +39,6 @@ def general_sfr_digitise_function(
     ###
     # Handle whether we want to select on metallicity too
     if metallicity_values is not None:
-        print(metallicity_values)
-        print(sfr_dict["padded_metallicity_bin_edges"])
 
         # Get indices for metallicity values
         metallicity_indices = (

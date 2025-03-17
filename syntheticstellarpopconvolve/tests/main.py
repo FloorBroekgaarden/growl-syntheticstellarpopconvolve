@@ -10,6 +10,11 @@ from syntheticstellarpopconvolve.tests.general_tests import test_postprocessing
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
 )
+from syntheticstellarpopconvolve.tests.test_calculate_starformation_rate import (
+    test_calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution,
+    test_calculate_origin_time_array,
+    test_general_sfr_digitise_function,
+)
 from syntheticstellarpopconvolve.tests.test_check_and_prepare_output_file import (
     test_check_and_prepare_output_file,
 )

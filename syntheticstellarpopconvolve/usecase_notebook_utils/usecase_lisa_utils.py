@@ -468,7 +468,48 @@ def sample_distances_interpolated(NBin, Hr, inverse_cdf):  # DH0001
     ZSet_rel = positions[:, 2]
 
     distances = np.sqrt(XSet_rel**2 + YSet_rel**2 + ZSet_rel**2)
+
     return distances * u.kpc
+
+def sample_distances_and_angles_interpolated(NBin, Hr, inverse_cdf):  # DH0001
+    """
+    Main function to sample distances using interpolation for the radial CDF.
+    """
+
+    Hz = 0.5  # Vertical scale height
+    galcen_distance = 8.122  # kpc
+
+    # Sample positions
+    positions = Sample1DPop_interpolated(NBin, Hr, Hz, inverse_cdf)
+
+    # Compute relative coordinates and distances
+    XSet_rel = positions[:, 0] - galcen_distance
+    YSet_rel = positions[:, 1]
+    ZSet_rel = positions[:, 2]
+
+	# Compute distance from the Sun
+	d = np.sqrt(XSet_rel**2 + YSet_rel**2 + ZSet_rel**2) * u.kpc  # Distance
+
+	# Compute Galactic longitude and latitude
+	l = np.arctan2(y, x_sun_rel) * u.rad  # Galactic longitude
+	b = np.arcsin(z / d) * u.rad  # Galactic latitude
+
+	# Convert to degrees
+	l = l.to(u.deg)
+	b = b.to(u.deg)
+
+	# Create SkyCoord in Galactic frame
+	galactic_coords = SkyCoord(l=l, b=b, distance=d, frame="galactic")
+
+	# Convert to ICRS (RA/Dec)
+	icrs_coords = galactic_coords.transform_to("icrs")
+
+	# Extract RA and Dec
+	ra = icrs_coords.ra.deg
+	dec = icrs_coords.dec.deg
+
+    return d, ra, dec
+
 
 
 if __name__ == "__main__":

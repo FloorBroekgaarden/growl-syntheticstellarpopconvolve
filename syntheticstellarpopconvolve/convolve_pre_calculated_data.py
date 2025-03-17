@@ -110,7 +110,6 @@ def convolve_pre_calculated_data(
         # TODO: add persistent data and previous conv results?
         convolution_results = sample_systems(
             yield_array=yield_array,
-            data_dict=data_dict,
             lookback_time_bin_size=time_bin_info_dict["bin_size"],
             lookback_time_bin_lower_edge=time_bin_info_dict["bin_edge_lower"],
             convolution_instruction=convolution_instruction,

@@ -536,7 +536,7 @@ def calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution(
     return digitised_sfr_rates
 
 
-def calculate_starformation(
+def calculate_starformation(  # DH0001
     config, convolution_instruction, data_dict, sfr_dict, time_bin_info_dict
 ):
     """

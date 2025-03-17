@@ -41,11 +41,13 @@ TMP_DIR = temp_dir(
 )
 
 
-class test_calculate_starformation_rate_nonbinned_data_backward(unittest.TestCase):
+class test_calculate_starformation_rate_nonbinned_data_for_backward_convolution(
+    unittest.TestCase
+):
 
-    # def setUp(self):
-
-    def test_calculate_starformation_rate_nonbinned_data_backward_absolute(self):
+    def test_calculate_starformation_rate_nonbinned_data_for_backward_convolution_absolute(
+        self,
+    ):
 
         ##############
         self.dummy_data = {
@@ -119,19 +121,6 @@ class test_calculate_starformation_rate_nonbinned_data_backward(unittest.TestCas
                 convolution_instruction=convolution_instruction,
                 convolution_time_bin_center=convolution_time_bin_center,
                 data_dict=data_dict,
-                sfr_dict=sfr_dict,
-            )
-        )
-
-        print(starformation)
-
-        #
-        starformation = (
-            calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution(
-                config=config,
-                convolution_instruction=convolution_instruction,
-                convolution_time_bin_center=convolution_time_bin_center,
-                data_dict=self.dummy_data_with_metallicity,
                 sfr_dict=sfr_dict,
             )
         )

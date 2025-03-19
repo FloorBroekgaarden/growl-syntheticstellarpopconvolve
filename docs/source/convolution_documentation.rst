@@ -203,6 +203,24 @@ Convolution-instruction options
 
    * - Option
      - Description
+   * - chunk_size
+     - Description:
+          Chunk size for the data readout.
+
+       Default value:
+          0
+   * - chunk_total
+     - Description:
+          Total number of chunks to be considered. Should be an integer rounded up.
+
+       Default value:
+          0
+   * - chunked_readout
+     - Description:
+          Flag to read the input data in chunks. See `chunk_size`.
+
+       Default value:
+          False
    * - contains_binned_data
      - Description:
           Flag to indicate whether the input data is binned (in time). If so, the user should provide additional information.

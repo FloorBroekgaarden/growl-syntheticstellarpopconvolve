@@ -18,6 +18,21 @@ dimensionless_unit = u.m / u.m
 default_convolution_instruction_dict = {
     ########################
     # Unsorted
+    "chunked_readout": {
+        "value": False,
+        "description": "Flag to read the input data in chunks. See `chunk_size`.",
+        "validation": boolean_int_validation,
+    },
+    "chunk_size": {
+        "value": 0,
+        "description": "chunk size for the data readout.",
+        "validation": int,
+    },
+    "chunk_total": {
+        "value": 0,
+        "description": "Total number of chunks to be considered. Should be an integer rounded up.",
+        "validation": int,
+    },
     "multiply_by_convolution_time_binsize": {
         "value": False,
         "description": "Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.",

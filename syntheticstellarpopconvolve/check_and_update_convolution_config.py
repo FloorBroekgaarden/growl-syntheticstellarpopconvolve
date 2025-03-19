@@ -92,7 +92,7 @@ def update_convolution_config(config):
     return config
 
 
-def check_convolution_config_general(config):
+def check_convolution_config_general(config):  # DH0001
     """
     Function to handle the general checking of convolution config input.
 
@@ -136,7 +136,7 @@ def check_convolution_config_general(config):
         validation_schema({parameter: parameter_dict})
 
 
-def check_convolution_config_other(config):
+def check_convolution_config_other(config):  # DH0001
     """
     Function to perform some extra custom checks on the convolution
     config. This can contain more complicated logic
@@ -188,6 +188,8 @@ def check_convolution_config_other(config):
 def check_convolution_config(config):
     """
     Function to handle checking the convolution config
+
+    TODO: move this to another file
     """
 
     #
@@ -199,7 +201,7 @@ def check_convolution_config(config):
 
     #######
     # check the convolution instructions
-    check_and_update_convolution_instructions(config=config)
+    check_and_update_convolution_instructions(convolution_config=config)
 
     #######
     # check the sfr dicts
@@ -210,7 +212,7 @@ def check_convolution_config(config):
     check_convolution_config_other(config=config)
 
 
-def check_and_update_convolution_config(config):
+def check_and_update_convolution_config(config):  # DH0001
     """
     Main function to check and update the convolution config
     """

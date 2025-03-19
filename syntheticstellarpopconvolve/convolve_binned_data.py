@@ -131,10 +131,6 @@ if __name__ == "__main__":
     shifted_left_delay_time_data_bin_edges = left_delay_time_data_bin_edges + shift
     shifted_right_delay_time_data_bin_edges = right_delay_time_data_bin_edges + shift
 
-    # print("sfr_bin_edges", sfr_bin_edges)
-    # print("shifted_left_time_bin_edges", shifted_left_time_bin_edges)
-    # print("shifted_right_time_bin_edges", shifted_right_time_bin_edges)
-
     ##########
     # Loop over the data time-bins
     for time_bin_i, (
@@ -151,11 +147,6 @@ if __name__ == "__main__":
         )[:1]
     ):
 
-        # print("time bin", time_bin_i)
-        # print("time bin size", time_bin_size_i)
-        # print("shifted_left_time_bin_edge", shifted_left_time_bin_edge)
-        # print("shifted_right_time_bin_edge", shifted_right_time_bin_edge)
-
         #
         overlap_fractions = calculate_overlap_fractions(
             shifted_left_delay_time_data_bin_edge=shifted_left_delay_time_data_bin_edge,
@@ -163,41 +154,3 @@ if __name__ == "__main__":
             sfr_bin_sizes=sfr_bin_sizes,
             sfr_bin_edges=sfr_bin_edges,
         )
-
-        print(overlap_fractions)
-
-        # ##
-        # #
-        # results = (
-        #     np.zeros()
-        # )  # TODO: make this the same shape as normalized_yield column
-
-        # # TODO: select data indices that coincides with the current data time-bin
-        # data_indices_for_current_time_bin
-
-        # ##
-        # # loop over
-        # for overlap_sfr_bin_index in overlap_fractions[
-        #     "non_zero_overlap_with_sfr_bins"
-        # ]:
-
-        #     # TODO:
-        #     sfr_bin_index = overlap_sfr_bin_index * np.ones(
-        #         data_indices_for_current_time_bin
-        #     )
-
-        #     # TODO: calculate sfr in those bins (incl metallicity)
-
-    # plt.plot(sfr_bin_edges, np.ones(sfr_bin_edges.shape), "bo")
-    # plt.plot(
-    #     shifted_left_time_bin_edges,
-    #     2 * np.ones(shifted_left_time_bin_edges.shape),
-    #     "ro",
-    # )
-    # plt.plot(
-    #     shifted_right_time_bin_edges,
-    #     2 * np.ones(shifted_right_time_bin_edges.shape),
-    #     "go",
-    # )
-    # plt.ylim(0, 5)
-    # plt.show()

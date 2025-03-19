@@ -359,7 +359,7 @@ def check_sfr_dict(
     if requires_metallicity_info:
         # Check if the metallicity bins are present
         if "metallicity_bin_edges" not in sfr_dict:
-            raise ValueError("metallicity_bin_edges is required in the sfr dictionary")
+            raise ValueError("metallicity_bin_edges is required in the SFR dictionary.")
 
         # Check for metallicity distribution
         # NOTE: from 2024-06-08 I have decided to require only the
@@ -436,40 +436,43 @@ def check_and_update_sfr_dict(  # DH0001
     return sfr_dict
 
 
-def check_and_update_sfr_dicts(config):
+def check_and_update_sfr_dicts(config):  # DH0001
     """
     Function to check the SFR dict for the appropriate content and update
     """
 
-    # determine whether any of the convolution instructions require metallicity
+    # determine whether any of the convolution instructions use metallicity
     requires_metallicity_info = any(
         [
-            not convolution_instruction.get("ignore_metallicity", False)
+            "metallicity" in convolution_instruction["data_column_dict"].keys()
             for convolution_instruction in config["convolution_instructions"]
         ]
     )
 
     #######
     # check the SFR information
-    if "SFR_info" in config:
+    if "SFR_info" not in config or not config["SFR_info"]:
+        raise ValueError(
+            'please provide a non-empty list or dictionary to config["SFR_INFO"]'
+        )
 
-        if isinstance(config["SFR_info"], dict):
-            config["SFR_info"] = check_and_update_sfr_dict(
-                sfr_dict=config["SFR_info"],
-                requires_name=False,
+    if isinstance(config["SFR_info"], dict):
+        config["SFR_info"] = check_and_update_sfr_dict(
+            sfr_dict=config["SFR_info"],
+            requires_name=False,
+            requires_metallicity_info=requires_metallicity_info,
+            time_type=config["time_type"],
+            config=config,
+        )
+    elif isinstance(config["SFR_info"], list):
+        # check all sfr dicts
+        for sfr_dict in config["SFR_info"]:
+            sfr_dict = check_and_update_sfr_dict(
+                sfr_dict=sfr_dict,
+                requires_name=True,
                 requires_metallicity_info=requires_metallicity_info,
                 time_type=config["time_type"],
                 config=config,
             )
-        elif isinstance(config["SFR_info"], list):
-            # check all sfr dicts
-            for sfr_dict in config["SFR_info"]:
-                sfr_dict = check_and_update_sfr_dict(
-                    sfr_dict=sfr_dict,
-                    requires_name=True,
-                    requires_metallicity_info=requires_metallicity_info,
-                    time_type=config["time_type"],
-                    config=config,
-                )
-    else:
-        raise ValueError("No SFR info has been provided. Aborting")
+
+    # TODO: handle a generator type

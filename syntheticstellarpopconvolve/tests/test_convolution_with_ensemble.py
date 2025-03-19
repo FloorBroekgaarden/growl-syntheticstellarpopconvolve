@@ -113,11 +113,9 @@
 #         #
 #         convolution_config["convolution_instructions"] = [
 #             {
-#                 "input_data_type": "ensemble",
 #                 "input_data_name": "dummy",
 #                 "convolution_type": "integrate",
 #                 "output_data_name": "dummy",
-#                 "ignore_metallicity": True,
 #                 "data_layer_dict": {
 #                     # "delay_time": 3,
 #                     "delay_time": {

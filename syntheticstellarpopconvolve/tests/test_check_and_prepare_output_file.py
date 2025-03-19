@@ -36,10 +36,9 @@ class test_check_and_prepare_output_file(unittest.TestCase):
         )
 
         #
-        self.working_hdf5_file = h5py.File(self.config_working["input_filename"], "w")
+        self.working_hdf5_file = h5py.File(self.config_working["output_filename"], "w")
         self.working_hdf5_file.create_group("input_data")
         self.working_hdf5_file.create_group("config")
-        self.working_hdf5_file.create_group("config/population")
         self.working_hdf5_file.close()
 
     def test_check_and_prepare_output_file(self):
@@ -51,6 +50,9 @@ class test_check_and_prepare_output_file(unittest.TestCase):
         self.assertTrue(os.path.isfile(self.config_working["output_filename"]))
 
         with h5py.File(self.config_working["output_filename"], "r") as output_hdf5file:
+
+            self.assertTrue("input_data" in output_hdf5file.keys())
+            self.assertTrue("config" in output_hdf5file.keys())
             self.assertTrue("convolution" in output_hdf5file["config"].keys())
 
 

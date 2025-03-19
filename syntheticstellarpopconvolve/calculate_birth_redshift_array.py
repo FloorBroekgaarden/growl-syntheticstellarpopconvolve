@@ -27,6 +27,7 @@ def calculate_origin_redshift_array(
     - Converting the resulting birth time back to redshift using cosmological parameters.
 
     Parameters:
+
     - config (dict): Configuration dictionary containing:
         - "logger": Logger object for debug information.
         - "cosmology": Astropy cosmology object for calculations.
@@ -54,6 +55,7 @@ def calculate_origin_redshift_array(
     data_dict = {"delay_time": np.array([1.0, 2.0]) * u.Gyr}
     birth_redshifts = calculate_origin_redshift_array(config, convolution_redshift_value, data_dict)
     ```
+
     """
 
     config["logger"].debug(

@@ -18,6 +18,21 @@ dimensionless_unit = u.m / u.m
 default_convolution_instruction_dict = {
     ########################
     # Unsorted
+    "chunked_readout": {
+        "value": False,
+        "description": "Flag to read the input data in chunks. See `chunk_size`.",
+        "validation": boolean_int_validation,
+    },
+    "chunk_size": {
+        "value": 0,
+        "description": "chunk size for the data readout.",
+        "validation": int,
+    },
+    "chunk_total": {
+        "value": 0,
+        "description": "Total number of chunks to be considered. Should be an integer rounded up.",
+        "validation": int,
+    },
     "multiply_by_convolution_time_binsize": {
         "value": False,
         "description": "Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.",
@@ -53,16 +68,6 @@ default_convolution_instruction_dict = {
     },
     ########################
     #
-    "ignore_metallicity": {
-        "value": True,
-        "description": "Flag to ignore any metallicity dependence in the input data and the starformation rate.",
-        "validation": boolean_int_validation,
-    },
-    "metallicity_value": {
-        "value": 0.02,
-        "description": "Fallback metallicity used when `ignore_metallicity` is False but no `metallicity` data was provided in the `data_column_dict` or `data_layer_dict`",
-        "validation": float,
-    },
     "input_data_name": {
         "value": "input_data",
         "description": "Name of to the current input dataset. Will be used to extract the data from the provided input-hdf5 file (expected in /input_data/<input data name>/), and will be used in the output-data path. ",

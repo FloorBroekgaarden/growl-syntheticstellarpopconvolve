@@ -26,6 +26,7 @@ from syntheticstellarpopconvolve.general_functions import (
     create_time_bin_info_dict,
     generate_group_name,
     get_tmp_dir,
+    get_total_chunk_number,
     handle_custom_scaling_or_conversion,
     has_unit,
 )
@@ -37,16 +38,35 @@ def extract_data(config, convolution_instruction):
     Function to extract the data from the correct table and store the information in the correct column.
 
     Only extracts what is required by the data column dict
+
+    TODO: check whether this is chunked!
     """
 
     #
     data_dict = {}
 
-    #
-    df = pd.read_hdf(
-        config["output_filename"],
-        "/input_data/{}".format(convolution_instruction["input_data_name"]),
-    )
+    if convolution_instruction["chunked_readout"]:
+
+        chunk_number = convolution_instruction["chunk_number"]
+        chunksize = convolution_instruction["chunk_size"]  # Number of rows per chunk
+
+        # Calculate row range
+        start = chunk_number * chunksize
+        stop = start + chunksize
+
+        #
+        df = pd.read_hdf(
+            config["output_filename"],
+            "/input_data/{}".format(convolution_instruction["input_data_name"]),
+            start=start,
+            stop=stop,
+        )
+    else:
+        #
+        df = pd.read_hdf(
+            config["output_filename"],
+            "/input_data/{}".format(convolution_instruction["input_data_name"]),
+        )
 
     data_column_dict = convolution_instruction["data_column_dict"]
 
@@ -68,6 +88,11 @@ def extract_data(config, convolution_instruction):
                 )
 
         elif isinstance(data_column_dict[column], dict):
+            if "column_name" not in data_column_dict[column]:
+                raise ValueError(
+                    "Please provide the input-data column name through the 'column_name' key."
+                )
+
             # extract data with the explicit column name entry
             data = df[data_column_dict[column]["column_name"]].to_numpy()
 
@@ -230,7 +255,9 @@ def pre_convolution(config, convolution_instruction, sfr_dict):  # DH0001
 
         # Create further structure of data group
         for depth in range(len(elements)):
-            output_hdf5file["output_data"].create_group("/".join(elements[: depth + 1]))
+            group = "/".join(elements[: depth + 1])
+            if group not in output_hdf5file["output_data"]:
+                output_hdf5file["output_data"].create_group(group)
 
         ########
         # store SFR dict
@@ -793,6 +820,25 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
             )
 
 
+def handle_sequential_or_multiprocessing_convolution(
+    config, convolution_instruction, sfr_dict
+):
+    """ """
+
+    if config["multiprocessing"] is True:
+        handle_multiprocessing_convolution(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            sfr_dict=sfr_dict,
+        )
+    else:
+        handle_sequential_convolution(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            sfr_dict=sfr_dict,
+        )
+
+
 def convolve_populations(config):
     """
     Main function to handle the convolution of populations
@@ -822,34 +868,67 @@ def convolve_populations(config):
         # Convolution
         for convolution_instruction in config["convolution_instructions"]:
 
+            # ########
+            # # Pre multiprocessing calculation
+            # pre_convolution(
+            #     config=config,
+            #     convolution_instruction=convolution_instruction,
+            #     sfr_dict=sfr_dict,
+            # )
+
             ########
-            # Pre multiprocessing calculation
-            pre_convolution(
-                config=config,
-                convolution_instruction=convolution_instruction,
-                sfr_dict=sfr_dict,
-            )
+            # check if we chunk
+            if convolution_instruction["chunked_readout"]:
 
-            # handle choice for multiprocessing
-            if config["multiprocessing"] is True:
-                # TODO: move whatever is below to a function
+                # check how many chunks we have
+                # total_chunk_number = get_total_chunk_number(
+                #     config=config,
+                #     convolution_instruction=convolution_instruction,
+                # )
 
-                handle_multiprocessing_convolution(
-                    config=config,
-                    convolution_instruction=convolution_instruction,
-                    sfr_dict=sfr_dict,
-                )
+                total_chunk_number = convolution_instruction["chunk_total"]
+
+                # loop over chunk
+                for chunk in range(total_chunk_number):
+                    convolution_instruction["chunk_number"] = chunk
+
+                    pre_convolution(
+                        config=config,
+                        convolution_instruction=convolution_instruction,
+                        sfr_dict=sfr_dict,
+                    )
+
+                    handle_sequential_or_multiprocessing_convolution(
+                        config=config,
+                        convolution_instruction=convolution_instruction,
+                        sfr_dict=sfr_dict,
+                    )
+
+                    ########
+                    # Post multiprocessing calculation
+                    post_convolution(
+                        config=config,
+                        convolution_instruction=convolution_instruction,
+                        sfr_dict=sfr_dict,
+                    )
             else:
-                handle_sequential_convolution(
+                # TODO: the block below should just be 1 function call
+                pre_convolution(
                     config=config,
                     convolution_instruction=convolution_instruction,
                     sfr_dict=sfr_dict,
                 )
 
-            ########
-            # Post multiprocessing calculation
-            post_convolution(
-                config=config,
-                convolution_instruction=convolution_instruction,
-                sfr_dict=sfr_dict,
-            )
+                handle_sequential_or_multiprocessing_convolution(
+                    config=config,
+                    convolution_instruction=convolution_instruction,
+                    sfr_dict=sfr_dict,
+                )
+
+                ########
+                # Post multiprocessing calculation
+                post_convolution(
+                    config=config,
+                    convolution_instruction=convolution_instruction,
+                    sfr_dict=sfr_dict,
+                )

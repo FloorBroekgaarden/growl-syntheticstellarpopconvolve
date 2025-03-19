@@ -6,8 +6,14 @@ Main convolution test script
 # flake8: noqa
 import unittest
 
+from syntheticstellarpopconvolve.tests.general_tests import test_postprocessing
 from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array import (
     test_calculate_origin_redshift_array,
+)
+from syntheticstellarpopconvolve.tests.test_calculate_starformation_rate import (
+    test_calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution,
+    test_calculate_origin_time_array,
+    test_general_sfr_digitise_function,
 )
 from syntheticstellarpopconvolve.tests.test_check_and_prepare_output_file import (
     test_check_and_prepare_output_file,
@@ -23,6 +29,9 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
     test_check_sfr_dict,
     test_pad_sfr_dict,
     test_update_sfr_dict,
+)
+from syntheticstellarpopconvolve.tests.test_convolution_by_sampling import (
+    test_select_dict_entries_with_new_indices,
 )
 from syntheticstellarpopconvolve.tests.test_convolution_with_events import (
     test_convolution_with_events,
@@ -53,7 +62,9 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
     test_array_validation,
     test_callable_or_none_validation,
     test_callable_validation,
+    test_dict_or_list_of_dicts_validation,
     test_existing_path_validation,
+    test_list_of_dicts_validation,
     test_logger_validation,
     test_unit_validation,
 )
@@ -61,18 +72,22 @@ from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_c
     test_calculate_bin_edges,
     test_calculate_bincenters,
     test_check_required,
+    test_create_job_dict,
+    test_create_time_bin_info_dict,
+    test_generate_boilerplate_outputfile,
     test_generate_group_name,
+    test_get_physical_dimensions,
     test_get_tmp_dir,
     test_get_username,
     test_handle_custom_scaling_or_conversion,
     test_has_unit,
     test_is_time_unit,
     test_pad_function,
+    test_sample_around_bin_center,
     test_temp_dir,
 )
 from syntheticstellarpopconvolve.tests.test_post_convolution_hook_routines import (
     test_extract_arguments,
-    test_postprocessing,
 )
 from syntheticstellarpopconvolve.tests.test_prepare_redshift_interpolator import (
     test_create_interpolation_datasets,

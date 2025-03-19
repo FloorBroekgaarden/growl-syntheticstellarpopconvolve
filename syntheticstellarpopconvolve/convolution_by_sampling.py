@@ -114,7 +114,6 @@ def sample_systems(
     yield_array,
     lookback_time_bin_size,
     lookback_time_bin_lower_edge,
-    data_dict,
     config,
     convolution_instruction,
 ):

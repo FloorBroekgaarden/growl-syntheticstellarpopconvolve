@@ -86,6 +86,23 @@ def handle_call_on_the_fly_function(
             )
         )
 
+    # ##################
+    # # check whether the yield is dimensionless
+
+    # # it has to be dimensionless, otherwise its not really a count.
+    # # force into cgs (basically to ensure that Gyr/yr is seen as dimensionless with a scale)
+    # if has_unit(yield_array.cgs, fail_on_dimensionless=True):
+    #     raise ValueError(
+    #         "Combined formation yield (unit: {}. dimension: {}) has to be dimensionless for convolution by sampling. The total star formation in bin (unit: {}. dimension: {}) times the normalized yield (unit: {}. dimension: {}) should not have a unit anymore.".format(
+    #             yield_array.unit.to_string(),
+    #             get_physical_dimensions(yield_array.unit),
+    #             starformation.unit.to_string(),
+    #             get_physical_dimensions(starformation.unit),
+    #             normalized_yield_unit.unit.to_string(),
+    #             get_physical_dimensions(normalized_yield_unit.unit),
+    #         )
+    #     )
+
     #
     config["logger"].warning(
         "Lower time bin {} upper time bin {} total mass formed {}".format(
@@ -96,8 +113,8 @@ def handle_call_on_the_fly_function(
     )
 
     #
-    metallicity_weighted_sfr = (
-        sfr_dict["metallicity_weighted_starformation_rate_array"][:, bin_number]
+    metallicity_distribution = (
+        sfr_dict["metallicity_distribution_array"][:, bin_number]
         if sfr_dict["include_metallicity_info"]
         else None
     )
@@ -120,7 +137,7 @@ def handle_call_on_the_fly_function(
         "convolution_instruction": convolution_instruction,
         # Explicit info
         "total_star_formation_in_bin": total_star_formation_in_bin,
-        "metallicity_weighted_star_formation_in_bin": metallicity_weighted_sfr,
+        "metallicity_distribution": metallicity_distribution,
         **convolution_instruction.get("on_the_fly_function_extra_parameters", {}),
     }
 
@@ -137,9 +154,9 @@ def handle_call_on_the_fly_function(
         )
 
     if sfr_dict["include_metallicity_info"]:
-        if "metallicity_weighted_star_formation_in_bin" not in on_the_fly_function_args:
+        if "metallicity_distribution" not in on_the_fly_function_args:
             raise ValueError(
-                "`metallicity_weighted_star_formation_in_bin` is a required argument in the `on_the_fly_function` call when including metallicity information in the starformation rate dict"
+                "`metallicity_distribution` is a required argument in the `on_the_fly_function` call when including metallicity information in the starformation rate dict"
             )
 
     #

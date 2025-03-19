@@ -146,7 +146,6 @@ class test_update_convolution_config(unittest.TestCase):
                     "delay_time": "delay_time",
                     "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
             },
         ]
 

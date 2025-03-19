@@ -19,7 +19,7 @@ dimensionless_unit = u.m / u.m
 logger = logging.getLogger(__name__)
 FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s ] %(asctime)s: %(message)s"
 logging.basicConfig(format=FORMAT)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.CRITICAL)
 
 
 #################
@@ -219,7 +219,7 @@ default_convolution_config_dict = {
     # unsorted
     #
     "tmp_dir": {
-        "value": "/tmp",
+        "value": "/tmp/sspc",
         "description": "Target directory for the tmp files.",  # TODO: expand explanation. Also consider if this is the best way
         "validation": str,
     },

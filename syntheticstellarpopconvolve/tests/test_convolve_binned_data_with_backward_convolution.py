@@ -136,7 +136,6 @@ class test_convolve_binned_data_with_backward_convolution(unittest.TestCase):
             "delay_time_data_bin_info_dict": {
                 "delay_time_data_bin_edges": time_bin_edges * u.yr
             },
-            "ignore_metallicity": True,
         }
         self.convolution_config["convolution_instructions"] = [
             normal_convolution_instructions
@@ -179,7 +178,6 @@ class test_convolve_binned_data_with_backward_convolution(unittest.TestCase):
             "delay_time_data_bin_info_dict": {
                 "delay_time_data_bin_edges": time_bin_edges * u.yr
             },
-            "ignore_metallicity": True,
         }
         self.convolution_config["convolution_instructions"] = [
             normal_convolution_instructions
@@ -225,7 +223,6 @@ class test_convolve_binned_data_with_backward_convolution(unittest.TestCase):
             "delay_time_data_bin_info_dict": {
                 "delay_time_data_bin_edges": time_bin_edges * u.yr
             },
-            "ignore_metallicity": True,
             "post_convolution_function": integrate_post_convolution_function,
         }
         self.convolution_config["convolution_instructions"] = [
@@ -268,7 +265,6 @@ class test_convolve_binned_data_with_backward_convolution(unittest.TestCase):
             "delay_time_data_bin_info_dict": {
                 "delay_time_data_bin_edges": time_bin_edges * u.yr
             },
-            "ignore_metallicity": True,
             "multiply_by_sfr_time_binsize": True,
         }
         self.convolution_config["convolution_instructions"] = [
@@ -313,7 +309,6 @@ class test_convolve_binned_data_with_backward_convolution(unittest.TestCase):
             "delay_time_data_bin_info_dict": {
                 "delay_time_data_bin_edges": time_bin_edges * u.yr
             },
-            "ignore_metallicity": True,
             "multiply_by_sfr_time_binsize": True,
             "post_convolution_function": sample_post_convolution_function,
         }

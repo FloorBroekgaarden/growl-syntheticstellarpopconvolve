@@ -89,36 +89,18 @@ Convolution-config options
 
        Default value:
           False
-   * - input_filename
-     - Description:
-          Full path to input hdf5 filename.
-
-       Default value:
-
    * - logger
      - Description:
           Logger object.
 
        Default value:
-          <Logger syntheticstellarpopconvolve.default_convolution_config (INFO)>
+          <Logger syntheticstellarpopconvolve.default_convolution_config (CRITICAL)>
    * - max_job_queue_size
      - Description:
           Max number of jobs in the multiprocessing queue for the convolution.
 
        Default value:
           8
-   * - multiply_by_convolution_time_binsize
-     - Description:
-          Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.
-
-       Default value:
-          False
-   * - multiply_by_sfr_time_binsize
-     - Description:
-          Flag to multiply the convolution results by the starformation rate time bin size. Not supported when time_type=='redshift'.
-
-       Default value:
-          False
    * - multiprocessing
      - Description:
           Flag whether to enable multiprocessing. True for multiprocessing, which allows faster convolution but does not allow the use of the previous convolution results and the persistent data. False for sequential convolution, which is slower but previous convolution results and the persistent data is available here.
@@ -133,7 +115,7 @@ Convolution-config options
           1
    * - output_filename
      - Description:
-          Full path to output hdf5 filename.
+          Full path to output hdf5 filename. This should point to a file that already contains the input data that will be used to do the convolution with.
 
        Default value:
 
@@ -196,13 +178,13 @@ Convolution-config options
           Time-type used in convolution. Can be either 'redshift' or 'lookback_time'.
 
        Default value:
-          redshift
+          lookback_time
    * - tmp_dir
      - Description:
           Target directory for the tmp files.
 
        Default value:
-          /tmp
+          /tmp/sspc
    * - write_to_hdf5
      - Description:
           Whether to write the pickle-files from the convolution back to the main hdf5 file.
@@ -221,18 +203,18 @@ Convolution-instruction options
 
    * - Option
      - Description
-   * - assign_event_lookback_time
-     - Description:
-          Flag to indicate to assign event-lookback times during convolution-by-sampling. If false, filtering future events will not be possible, and `filter_future_events` is ignored. Based on the current convolution bin and delay time of the events. Not recommended when using binned data.
-
-       Default value:
-          True
    * - contains_binned_data
      - Description:
           Flag to indicate whether the input data is binned (in time). If so, the user should provide additional information.
 
        Default value:
           False
+   * - convolution_direction
+     - Description:
+          Choice of convolution direction. 'backward' convolves the data such that every event occurs at the current time by looking what the starformation rate is for each given delay time. 'forward' convolution generates each system at the same time and looks at when events happen afterwards based on their delay times. Note: neither option is supported in all choices of `convolution_type` and `contains_binned_data`.
+
+       Default value:
+          backward
    * - convolution_type
      - Description:
           Method of convolution. The three choices are as follows. 'integrate': Convolution by integration uses backward convolution to multiply the normalized_yield of the systems with the starformation rate at the time the system would be born, given the delay time and the target event time. This is particularly useful when you are just interested in the (transient) event. 'sample': Convolution by sampling uses forward convolution to 'sample' systems according to the yield () and assigns an event-time based on the delay time and the birth time. This is particularly useful if you want to post-process systems after they are born/the event occurs, like integrating the orbit of double compact object forward in time due to gravitational wave radiation (see LISA project example in `examples/notebook_usecases`). 'on-the-fly': Convolution by simulating the systems on-the-fly. Requires a method that uses the total mass in star formation, and optionally the metallicity distribution, combined with a population synthesis code, to evolve systems on the fly.
@@ -251,30 +233,24 @@ Convolution-instruction options
 
        Default value:
           {}
-   * - filter_future_events
-     - Description:
-          Flag to control filtering out future events during convolution-by-sampling. See also `assign_event_lookback_time`. Not recommended when using binned data.
-
-       Default value:
-          True
-   * - ignore_metallicity
-     - Description:
-          Flag to ignore any metallicity dependence in the input data and the starformation rate.
-
-       Default value:
-          True
    * - input_data_name
      - Description:
           Name of to the current input dataset. Will be used to extract the data from the provided input-hdf5 file (expected in /input_data/<input data name>/), and will be used in the output-data path.
 
        Default value:
           input_data
-   * - metallicity_value
+   * - multiply_by_convolution_time_binsize
      - Description:
-          Fallback metallicity used when `ignore_metallicity` is False but no `metallicity` data was provided in the `data_column_dict` or `data_layer_dict`.
+          Flag to multiply the convolution results by the convolution time-bin size. Not supported when time_type=='redshift'.
 
        Default value:
-          0.02
+          False
+   * - multiply_by_sfr_time_binsize
+     - Description:
+          Flag to multiply the convolution results by the starformation rate time bin size. Not supported when time_type=='redshift'.
+
+       Default value:
+          False
    * - output_data_name
      - Description:
           Name assigned to the current output dataset. Will be used in the output-data path. Can be useful when running a convolution with the same input-data but e.g. with a different post-convolution function.
@@ -293,3 +269,9 @@ Convolution-instruction options
 
        Default value:
           {}
+   * - reverse_convolution
+     - Description:
+          Flag to reverse the convolution direction. If True, we start with the bin furthest back in time and work to. Useful in combination with `convolution_config['multiprocessing']=False`, and the `previous_convolution_results` and `persistant_data` objects.
+
+       Default value:
+          False

@@ -22,9 +22,13 @@ from syntheticstellarpopconvolve.general_functions import (  # calculate_digitiz
     calculate_bin_edges,
     calculate_bincenters,
     check_required,
+    create_job_dict,
+    create_time_bin_info_dict,
     extract_unit_dict,
+    generate_boilerplate_outputfile,
     generate_group_name,
     get_normalized_yield_unit,
+    get_physical_dimensions,
     get_tmp_dir,
     get_username,
     handle_custom_scaling_or_conversion,
@@ -32,12 +36,165 @@ from syntheticstellarpopconvolve.general_functions import (  # calculate_digitiz
     is_mass_unit,
     is_time_unit,
     pad_function,
+    sample_around_bin_center,
     temp_dir,
 )
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_general_functions", clean_path=True
 )
+
+np.random.seed(0)
+
+
+class test_create_time_bin_info_dict(unittest.TestCase):
+    def test_create_time_bin_info_dict(self):
+        """ """
+
+        time_bin_info_dict = create_time_bin_info_dict(
+            config=default_convolution_config,
+            convolution_instruction=default_convolution_instruction,
+            bin_number=1,
+            bin_edge_lower=0.5,
+            bin_center=0.75,
+            bin_size=1,
+            bin_type="lookback",
+        )
+
+        self.assertEqual(
+            time_bin_info_dict["time_type"], default_convolution_config["time_type"]
+        )
+        self.assertEqual(
+            time_bin_info_dict["convolution_direction"],
+            default_convolution_instruction["convolution_direction"],
+        )
+        self.assertEqual(
+            time_bin_info_dict["reverse_bin_order"],
+            default_convolution_instruction["reverse_convolution"],
+        )
+
+
+class test_sample_around_bin_center(unittest.TestCase):
+    def test_sample_around_bin_center_basic(self):
+        """ """
+
+        bin_edges = np.array([0, 1])
+        values = np.repeat(0.5, 10)
+
+        sampled_values = sample_around_bin_center(bin_edges, values)
+
+        expected_values = [
+            0.5488135,
+            0.71518937,
+            0.60276338,
+            0.54488318,
+            0.4236548,
+            0.64589411,
+            0.43758721,
+            0.891773,
+            0.96366276,
+            0.38344152,
+        ]
+
+        np.testing.assert_array_almost_equal(sampled_values, expected_values)
+
+    def test_sample_around_bin_center_shifted_multiple_values(self):
+        """ """
+
+        bin_edges = np.array([2.5, 7.5, 12.5])
+        values = np.concatenate([np.repeat(5, 10), np.repeat(10, 10)])
+
+        sampled_values = sample_around_bin_center(bin_edges, values)
+
+        expected_values = [
+            6.45862519,
+            5.1444746,
+            5.34022281,
+            7.12798319,
+            2.85518029,
+            2.9356465,
+            2.60109199,
+            6.66309923,
+            6.39078375,
+            6.85006074,
+            12.39309171,
+            11.49579282,
+            9.80739681,
+            11.40264588,
+            8.09137213,
+            10.69960511,
+            8.21676644,
+            12.22334459,
+            10.10924161,
+            9.5733097,
+        ]
+
+        np.testing.assert_array_almost_equal(sampled_values, expected_values)
+
+
+class test_create_job_dict(unittest.TestCase):
+
+    def test_create_job_dict(self):
+        """ """
+
+        job_dict = create_job_dict(
+            config=default_convolution_config,
+            convolution_instruction=default_convolution_instruction,
+            time_bin_info_dict={"bin_number": 1},
+            bin_number=1,
+            sfr_dict={"lookback_time_edges": np.array([1, 2])},
+            data_dict={"dummy": np.array([1, 2])},
+        )
+
+        self.assertTrue("job_number" in job_dict.keys())
+
+        self.assertTrue("output_dir" in job_dict.keys())
+        self.assertEqual(job_dict["output_dir"], "/tmp/sspc/input_data/output_data")
+
+
+class test_get_physical_dimensions(unittest.TestCase):
+    """ """
+
+    def test_get_physical_dimensions_dimensionless(self):
+
+        dimensionless_unit = u.m / u.m
+
+        physical_dimensions = get_physical_dimensions(dimensionless_unit)
+
+        self.assertEqual(physical_dimensions, "[dimensionless]")
+
+    def test_get_physical_dimensions_starformation_rate(self):
+        starformation_rate = u.Msun / u.yr
+
+        physical_dimensions = get_physical_dimensions(starformation_rate)
+
+        self.assertEqual(physical_dimensions, "[M][T^-1]")
+
+    def test_get_physical_dimensions_mixed_base(self):
+        mixed_base = u.cm / u.Msun
+
+        physical_dimensions = get_physical_dimensions(mixed_base)
+
+        self.assertEqual(physical_dimensions, "[L][M^-1]")
+
+
+class test_generate_boilerplate_outputfile(unittest.TestCase):
+    """ """
+
+    def test_generate_boilerplate_outputfile(self):
+
+        output_filename = os.path.join(
+            TMP_DIR, "test_generate_boilerplate_outputfile.hdf5"
+        )
+        generate_boilerplate_outputfile(output_filename)
+
+        # check if it is a file
+        self.assertTrue(os.path.isfile(output_filename))
+
+        with h5py.File(output_filename, "r") as output_hdf5_file:
+
+            self.assertTrue("input_data" in output_hdf5_file.keys())
+            self.assertTrue("config" in output_hdf5_file.keys())
 
 
 class test_get_normalized_yield_unit(unittest.TestCase):
@@ -324,7 +481,6 @@ class test_check_required(unittest.TestCase):
 #                     "delay_time": "delay_time",
 #                     "normalized_yield": "probability",
 #                 },
-#                 "ignore_metallicity": True,
 #             },
 #         ]
 
@@ -380,46 +536,6 @@ class test_check_required(unittest.TestCase):
 #     #     np.testing.assert_array_equal(
 #     #         digitized_sfr_rates, np.array([0.0, 2.0, 3.0, 4.0, 0.0])
 #     #     )
-
-
-# class test_calculate_origin_time_array(unittest.TestCase):
-#     def test_calculate_origin_time_array_lookback(self):
-#         convolution_config = copy.copy(default_convolution_config)
-#         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
-#             TMP_DIR, "interpolator_dict.p"
-#         )
-#         convolution_config = prepare_redshift_interpolator(convolution_config)
-#         convolution_config["time_type"] = "lookback_time"
-
-#         origin_time_array = calculate_origin_time_array(
-#             config=convolution_config,
-#             data_dict={"delay_time": np.array([1, 2, 3]) * 1e9 * u.yr},
-#             convolution_time_bin_center=0.5 * 1e9 * u.yr,
-#         )
-
-#         np.testing.assert_array_equal(
-#             origin_time_array, np.array([1.5, 2.5, 3.5]) * 1e9 * u.yr
-#         )
-
-#     def test_calculate_origin_time_array_redshift(self):
-#         convolution_config = copy.copy(default_convolution_config)
-#         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
-#             TMP_DIR, "interpolator_dict.p"
-#         )
-#         convolution_config = prepare_redshift_interpolator(convolution_config)
-#         convolution_config["time_type"] = "redshift"
-
-#         origin_time_array = calculate_origin_time_array(
-#             config=convolution_config,
-#             data_dict={"delay_time": np.array([1, 2, 3]) * 1e9 * u.yr},
-#             convolution_time_bin_center=0.5,
-#         )
-#         # output_unit = u.Msun/u.yr/u.Gpc**3
-
-#         np.testing.assert_array_almost_equal(
-#             origin_time_array,
-#             np.array([0.6501032923316669, 0.8336451543045214, 1.0661079791875108]),
-#         )
 
 
 class test_handle_custom_scaling_or_conversion(unittest.TestCase):

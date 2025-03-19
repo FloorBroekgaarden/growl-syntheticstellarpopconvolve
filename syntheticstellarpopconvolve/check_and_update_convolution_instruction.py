@@ -10,20 +10,29 @@ from syntheticstellarpopconvolve.default_convolution_instruction import (
 from syntheticstellarpopconvolve.general_functions import check_required, is_time_unit
 
 
-def check_metallicity(convolution_instruction, data_key):
+def check_metallicity(convolution_config, convolution_instruction):
     """
     Function to check the metallicity
     """
 
-    if (
-        "ignore_metallicity" not in convolution_instruction.keys()
-        or convolution_instruction["ignore_metallicity"] is False
-    ):
-        if "metallicity" not in convolution_instruction.get(data_key, {}).keys():
-            if "metallicity_value" not in convolution_instruction.keys():
-                raise ValueError(
-                    "If no metallicity value column / layer is provided, you either need to give 'metallicity_value' or set 'ignore_metallicity' to True"
-                )
+    #
+    if isinstance(convolution_config["SFR_info"], dict):
+        requires_metallicity_data = any(
+            [key.startswith("metallicity") for key in convolution_config["SFR_info"]]
+        )
+    elif isinstance(convolution_config["SFR_info"], list):
+        requires_metallicity_data = any(
+            [
+                any([key.startswith("metallicity") for key in sfr_dict])
+                for sfr_dict in convolution_config["SFR_info"]
+            ]
+        )
+
+    if requires_metallicity_data:
+        if "metallicity" not in convolution_instruction["data_column_dict"].keys():
+            raise ValueError(
+                "If metallicity information is provided in the starformation dictionary, then you need to provide metallicity info in the 'data_column_dict' too."
+            )
 
 
 def check_delay_time_data_bin_info_dict(delay_time_data_bin_info_dict):
@@ -40,7 +49,7 @@ def check_delay_time_data_bin_info_dict(delay_time_data_bin_info_dict):
         raise ValueError("Please express 'delay_time_data_bin_edges' in units of time")
 
 
-def check_convolution_instruction(convolution_instruction, config):
+def check_convolution_instruction(convolution_instruction, convolution_config):
     """
     Function to check convolution instructions
     """
@@ -56,7 +65,7 @@ def check_convolution_instruction(convolution_instruction, config):
 
     ##########
     # do the basic validation
-    for parameter, parameter_dict in config.items():
+    for parameter, parameter_dict in convolution_config.items():
 
         ##########
         # Custom rules. we can decide to skip checking the input on some occasions
@@ -92,8 +101,8 @@ def check_convolution_instruction(convolution_instruction, config):
 
         # check how metallicity is treated
         check_metallicity(
+            convolution_config=convolution_config,
             convolution_instruction=convolution_instruction,
-            data_key="data_column_dict",
         )
 
         check_required(
@@ -158,28 +167,32 @@ def check_convolution_instruction(convolution_instruction, config):
         )
 
 
-def check_and_update_convolution_instruction(convolution_instruction, config):  # DH0001
+def check_and_update_convolution_instruction(
+    convolution_instruction, convolution_config
+):  # DH0001
     """
     Function to check convolution instructions
     """
 
     # check
     check_convolution_instruction(
-        convolution_instruction=convolution_instruction, config=config
+        convolution_instruction=convolution_instruction,
+        convolution_config=convolution_config,
     )
 
     # TODO: add call to update convolution instruction
 
 
-def check_and_update_convolution_instructions(config):
+def check_and_update_convolution_instructions(convolution_config):
     """
     Main function to check the convolution instructions.
     """
 
-    if config["convolution_instructions"]:
-        for convolution_instruction in config["convolution_instructions"]:
+    if convolution_config["convolution_instructions"]:
+        for convolution_instruction in convolution_config["convolution_instructions"]:
             check_and_update_convolution_instruction(
-                convolution_instruction=convolution_instruction, config=config
+                convolution_instruction=convolution_instruction,
+                convolution_config=convolution_config,
             )
     else:
         raise ValueError("Please provide at least one convolution intruction")

@@ -7,6 +7,7 @@ Mostly unsorted, likely better placed in together with related functionality.
 import functools
 import json
 import logging
+import math
 import os
 import shutil
 import tempfile
@@ -15,6 +16,7 @@ from inspect import isfunction
 import astropy.units as u
 import h5py
 import numpy as np
+import pandas as pd
 import psutil
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 from scipy import interpolate
@@ -22,6 +24,19 @@ from scipy import interpolate
 logger = logging.getLogger(__name__)
 
 dimensionless_unit = u.m / u.m
+
+
+def get_total_chunk_number(config, convolution_instruction):
+    """
+    Function to determine the total number of chunks required to read out an input dataset with a chunk_number chunk size.
+    """
+
+    with pd.HDFStore(config["output_filename"], "r") as store:
+        key = "/input_data/{}".format(convolution_instruction["input_data_name"])
+        n_rows = store.get_storer(key).nrows
+        print(n_rows)
+
+    return int(math.ceil(n_rows / convolution_instruction["chunk_size"]))
 
 
 def sample_around_bin_center(bin_edges, values):
@@ -387,8 +402,17 @@ def generate_group_name(convolution_instruction, sfr_dict):
     if sfr_dict.get("name", None) is not None:
         elements.append(sfr_dict["name"])
 
-    #
+    # store input name
     elements.append(convolution_instruction["input_data_name"])
+
+    # store chunkname
+    if (
+        convolution_instruction["chunked_readout"]
+        and "chunk_number" in convolution_instruction
+    ):
+        elements.append(str(convolution_instruction["chunk_number"]))
+
+    # store output name
     elements.append(convolution_instruction["output_data_name"])
 
     # construct groupname

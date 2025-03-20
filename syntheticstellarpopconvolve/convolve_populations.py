@@ -839,6 +839,30 @@ def handle_sequential_or_multiprocessing_convolution(
         )
 
 
+def handle_convolution_steps(config, convolution_instruction, sfr_dict):
+    """ """
+
+    pre_convolution(
+        config=config,
+        convolution_instruction=convolution_instruction,
+        sfr_dict=sfr_dict,
+    )
+
+    handle_sequential_or_multiprocessing_convolution(
+        config=config,
+        convolution_instruction=convolution_instruction,
+        sfr_dict=sfr_dict,
+    )
+
+    ########
+    # Post multiprocessing calculation
+    post_convolution(
+        config=config,
+        convolution_instruction=convolution_instruction,
+        sfr_dict=sfr_dict,
+    )
+
+
 def convolve_populations(config):
     """
     Main function to handle the convolution of populations
@@ -868,66 +892,24 @@ def convolve_populations(config):
         # Convolution
         for convolution_instruction in config["convolution_instructions"]:
 
-            # ########
-            # # Pre multiprocessing calculation
-            # pre_convolution(
-            #     config=config,
-            #     convolution_instruction=convolution_instruction,
-            #     sfr_dict=sfr_dict,
-            # )
-
             ########
             # check if we chunk
             if convolution_instruction["chunked_readout"]:
 
-                # check how many chunks we have
-                # total_chunk_number = get_total_chunk_number(
-                #     config=config,
-                #     convolution_instruction=convolution_instruction,
-                # )
-
+                # extract total number of chunks we should go over.
                 total_chunk_number = convolution_instruction["chunk_total"]
 
                 # loop over chunk
                 for chunk in range(total_chunk_number):
                     convolution_instruction["chunk_number"] = chunk
 
-                    pre_convolution(
-                        config=config,
-                        convolution_instruction=convolution_instruction,
-                        sfr_dict=sfr_dict,
-                    )
-
-                    handle_sequential_or_multiprocessing_convolution(
-                        config=config,
-                        convolution_instruction=convolution_instruction,
-                        sfr_dict=sfr_dict,
-                    )
-
-                    ########
-                    # Post multiprocessing calculation
-                    post_convolution(
+                    handle_convolution_steps(
                         config=config,
                         convolution_instruction=convolution_instruction,
                         sfr_dict=sfr_dict,
                     )
             else:
-                # TODO: the block below should just be 1 function call
-                pre_convolution(
-                    config=config,
-                    convolution_instruction=convolution_instruction,
-                    sfr_dict=sfr_dict,
-                )
-
-                handle_sequential_or_multiprocessing_convolution(
-                    config=config,
-                    convolution_instruction=convolution_instruction,
-                    sfr_dict=sfr_dict,
-                )
-
-                ########
-                # Post multiprocessing calculation
-                post_convolution(
+                handle_convolution_steps(
                     config=config,
                     convolution_instruction=convolution_instruction,
                     sfr_dict=sfr_dict,

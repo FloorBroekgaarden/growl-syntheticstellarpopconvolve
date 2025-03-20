@@ -61,12 +61,13 @@ SSPC provides a robust framework for convolving stellar population synthesis dat
 - ✅ **Multiprocessing and sequential convolution support**: Uses multiprocessing when each convolution target time is independent, but can use sequential convolution when the next step depends on the previous one.
 - ✅ **Astropy support**: Uses Astropy units to perform unit checks and dimensional analysis of yields.
 - ✅ **Post-convolution processing**: Allows user-provided **post-convolution** functions to refine results (e.g., LISA frequency range selection), re-weighting based on detection probability, and
+- ✅ **Chunked convolution** for large datasets that don’t fit into memory (after convolution-by-sampling).
 
 Planned features:
 
-- **Chunked convolution** for large datasets that don’t fit into memory.
 - **Better support for spatially resolved star-formation rates**.
-- **Support for star formation using generators** for use-cases where the previous convolution time affects the star formation of the next convolution time.
+- **Support for star formation using custom generators** for use-cases where the previous convolution time affects the star formation (or metallicity distribution) of the next convolution time.
+- **Support for uncertainty propagation of star-formation rates**.
 
 ---
 

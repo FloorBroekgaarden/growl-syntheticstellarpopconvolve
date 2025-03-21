@@ -211,7 +211,7 @@ Convolution-instruction options
           0
    * - chunk_total
      - Description:
-          Total number of chunks to be considered. Should be an integer rounded up.
+          Total number of chunks to be considered. Should be an integer rounded up calculated as ceil(<total entries in input dataframe>/<chunk size>).
 
        Default value:
           0

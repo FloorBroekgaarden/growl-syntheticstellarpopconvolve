@@ -9,11 +9,9 @@ import os
 import pickle
 import traceback
 import warnings
+from functools import partial
 
-import astropy.units as u
 import h5py
-import numpy as np
-import pandas as pd
 import setproctitle
 
 from syntheticstellarpopconvolve.convolve_on_the_fly import convolve_on_the_fly
@@ -24,175 +22,69 @@ from syntheticstellarpopconvolve.general_functions import (
     JsonCustomEncoder,
     create_job_dict,
     create_time_bin_info_dict,
+    extract_data,
     generate_group_name,
     get_tmp_dir,
-    get_total_chunk_number,
-    handle_custom_scaling_or_conversion,
     has_unit,
 )
 
 
-## TODO: move to general_functions.py
-def extract_data(config, convolution_instruction):
+def _handle_storing_convolution_results(
+    config, grp, convolution_results, bin_center
+):  # DH0001
     """
-    Function to extract the data from the correct table and store the information in the correct column.
-
-    Only extracts what is required by the data column dict
-
-    TODO: check whether this is chunked!
+    Worker function for '_handle_storing_convolution_results'
     """
-
-    #
-    data_dict = {}
-
-    if convolution_instruction["chunked_readout"]:
-
-        chunk_number = convolution_instruction["chunk_number"]
-        chunksize = convolution_instruction["chunk_size"]  # Number of rows per chunk
-
-        # Calculate row range
-        start = chunk_number * chunksize
-        stop = start + chunksize
-
-        #
-        df = pd.read_hdf(
-            config["output_filename"],
-            "/input_data/{}".format(convolution_instruction["input_data_name"]),
-            start=start,
-            stop=stop,
-        )
-    else:
-        #
-        df = pd.read_hdf(
-            config["output_filename"],
-            "/input_data/{}".format(convolution_instruction["input_data_name"]),
-        )
-
-    data_column_dict = convolution_instruction["data_column_dict"]
-
-    # add all the columns to the data dictionary. This automatically handles the correct additional columns for the extra weights function
-    for column in data_column_dict.keys():
-        config["logger"].debug(
-            "Extracting {} as the {} data".format(data_column_dict[column], column)
-        )
-
-        # if its a string we just assume its the column name
-        if isinstance(data_column_dict[column], str):
-            data_dict[column] = df[data_column_dict[column]].to_numpy()
-
-            #################
-            # Handle unit for delay-time
-            if column == "delay_time":
-                data_dict[column] = (
-                    data_dict[column] * config["delay_time_default_unit"]
-                )
-
-        elif isinstance(data_column_dict[column], dict):
-            if "column_name" not in data_column_dict[column]:
-                raise ValueError(
-                    "Please provide the input-data column name through the 'column_name' key."
-                )
-
-            # extract data with the explicit column name entry
-            data = df[data_column_dict[column]["column_name"]].to_numpy()
-
-            #################
-            # Handle conversion
-            data = handle_custom_scaling_or_conversion(
-                config=config,
-                data_layer_or_column_dict_entry=data_column_dict[column],
-                value=data,
-            )
-
-            # Store
-            data_dict[column] = data
-
-            #################
-            # Handle unit for delay-time
-            # TODO: this should just take whatever unit is provided
-            if column == "delay_time":
-                if "unit" in data_column_dict[column].keys():
-                    unit = data_column_dict[column]["unit"]
-                else:
-                    unit = config["delay_time_default_unit"]
-
-                #
-                data_dict[column] = data_dict[column] * unit
-        else:
-            raise ValueError("input type not supported.")
 
     ##########
-    # If we have binned data we should addd the delay time bin indices to the
-    if convolution_instruction["contains_binned_data"]:
-        data_dict["delay_time_data_bin_index"] = (
-            np.digitize(
-                data_dict["delay_time"].to(u.yr),
-                convolution_instruction["delay_time_data_bin_info_dict"][
-                    "delay_time_data_bin_edges"
-                ].to(u.yr),
-            )
-            - 1
+    # Create group
+    current_time_bin_grp = grp.create_group(
+        "convolution_results/{}/{}".format(convolution_result["name"], str(bin_center))
+    )
+
+    ############
+    # handle storing entries and units
+    config["logger"].debug(
+        "Storing convolution results {} of bin-center {}".format(
+            convolution_result["name"], str(bin_center)
         )
+    )
 
     #
-    return config, data_dict, convolution_instruction
+    store_convolution_result_entries(
+        config=config,
+        current_time_bin_group=current_time_bin_grp,
+        convolution_result=convolution_result,
+    )
 
 
-def handle_storing_convolution_results(config, grp, convolution_results, bin_center):
+def handle_storing_convolution_results(
+    config, grp, convolution_results, bin_center
+):  # DH0001
     """
     Function to manage the storing of the convolution results
     """
 
-    ##########
-    # Handle multiple convolution results
+    #########
+    # Handle storing convolution results
+    bound__handle_storing_convolution_results = partial(
+        _handle_storing_convolution_results,
+        config=config,
+        grp=grp,
+        bin_center=bin_center,
+    )
     if isinstance(convolution_results, list):
         for convolution_result in convolution_results:
-
-            ##########
-            # Create group
-            current_time_bin_grp = grp.create_group(
-                "convolution_results/{}/{}".format(
-                    convolution_result["name"], str(bin_center)
-                )
-            )
-
-            ############
-            # handle storing entries and units
-            config["logger"].debug(
-                "Storing convolution results {} of bin-center {}".format(
-                    convolution_result["name"], str(bin_center)
-                )
-            )
-
-            #
-            store_convolution_result_entries(
-                config=config,
-                current_time_bin_group=current_time_bin_grp,
-                convolution_result=convolution_result,
+            bound__handle_storing_convolution_results(
+                convolution_results=convolution_results,
             )
     else:
-
-        ##########
-        # Create group
-        current_time_bin_grp = grp.create_group(
-            "convolution_results/{}".format(str(bin_center))
-        )
-
-        ############
-        # handle storing entries and units
-        config["logger"].debug(
-            "Storing convolution results of bin-center {}".format(str(bin_center))
-        )
-
-        #
-        store_convolution_result_entries(
-            config=config,
-            current_time_bin_group=current_time_bin_grp,
-            convolution_result=convolution_results,
+        bound__handle_storing_convolution_results(
+            convolution_results=convolution_results,
         )
 
 
-def store_convolution_result_entries(
+def store_convolution_result_entries(  # DH0001
     config, current_time_bin_group, convolution_result
 ):
     """
@@ -358,7 +250,7 @@ def post_convolution(config, convolution_instruction, sfr_dict):  # DH0001
                 os.remove(full_path)
 
 
-def handle_convolution_choice(
+def handle_convolution_choice(  # DH0001
     config,
     job_dict,
     sfr_dict,
@@ -485,7 +377,7 @@ def convolution_job_worker(job_queue, error_queue, worker_ID, config):  # DH0001
             )
 
 
-def create_bin_iterator(config, convolution_instruction, sfr_dict):
+def create_bin_iterator(config, convolution_instruction, sfr_dict):  # DH0001
     """
     Function to create the bin iterator data
     """
@@ -637,9 +529,9 @@ def generate_data_dict(config, convolution_instruction):
     return config, data_dict, convolution_instruction
 
 
-def handle_multiprocessing_convolution(
+def handle_multiprocessing_convolution(  # DH0001
     config, convolution_instruction, sfr_dict
-):  # DH0001
+):
     """
     Main function to handle convolution by multiprocessing
 
@@ -706,7 +598,7 @@ def handle_multiprocessing_convolution(
             raise result_value
 
 
-def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
+def handle_sequential_convolution(config, convolution_instruction, sfr_dict):  # DH0001
     """
     Main function to handle sequential convolution.
 
@@ -812,15 +704,16 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):
             # Readout group
             grp = output_hdf5file[full_groupname]
 
+            # Handle storing
             handle_storing_convolution_results(
                 config=config,
                 grp=grp,
                 bin_center=bin_center,
-                convolution_results=convolution_results["convolution_results"],
+                convolution_results=convolution_results,
             )
 
 
-def handle_sequential_or_multiprocessing_convolution(
+def handle_sequential_or_multiprocessing_convolution(  # DH0001
     config, convolution_instruction, sfr_dict
 ):
     """ """
@@ -839,23 +732,26 @@ def handle_sequential_or_multiprocessing_convolution(
         )
 
 
-def handle_convolution_steps(config, convolution_instruction, sfr_dict):
-    """ """
+def handle_convolution_steps(config, convolution_instruction, sfr_dict):  # DH0001
+    """
+    Function to handle the pre-convolution, convolution, and post-convolution steps for a particular set of SFR dict and convolution_instruction
+    """
 
+    # pre-convolution
     pre_convolution(
         config=config,
         convolution_instruction=convolution_instruction,
         sfr_dict=sfr_dict,
     )
 
+    # actual convolution
     handle_sequential_or_multiprocessing_convolution(
         config=config,
         convolution_instruction=convolution_instruction,
         sfr_dict=sfr_dict,
     )
 
-    ########
-    # Post multiprocessing calculation
+    #
     post_convolution(
         config=config,
         convolution_instruction=convolution_instruction,
@@ -863,7 +759,7 @@ def handle_convolution_steps(config, convolution_instruction, sfr_dict):
     )
 
 
-def convolve_populations(config):
+def convolve_populations(config):  # DH0001
     """
     Main function to handle the convolution of populations
     """
@@ -871,12 +767,11 @@ def convolve_populations(config):
     #######
     # Check if we need to provide info for the SFR loop of not
     actual_sfr_dict_loop = False
-    sfr_dicts = []
     if isinstance(config["SFR_info"], dict):
         sfr_dicts = [config["SFR_info"]]
     else:
-        sfr_dicts = config["SFR_info"]
         actual_sfr_dict_loop = True
+        sfr_dicts = config["SFR_info"]
 
     ########
     # Loop over all sfr dicts
@@ -894,6 +789,11 @@ def convolve_populations(config):
 
             ########
             # check if we chunk
+            bound_handle_convolution_steps = partial(
+                handle_convolution_steps,
+                config=config,
+                sfr_dict=sfr_dict,
+            )
             if convolution_instruction["chunked_readout"]:
 
                 # extract total number of chunks we should go over.
@@ -902,15 +802,10 @@ def convolve_populations(config):
                 # loop over chunk
                 for chunk in range(total_chunk_number):
                     convolution_instruction["chunk_number"] = chunk
-
-                    handle_convolution_steps(
-                        config=config,
-                        convolution_instruction=convolution_instruction,
-                        sfr_dict=sfr_dict,
+                    bound_handle_convolution_steps(
+                        convolution_instruction=convolution_instruction
                     )
             else:
-                handle_convolution_steps(
-                    config=config,
-                    convolution_instruction=convolution_instruction,
-                    sfr_dict=sfr_dict,
+                bound_handle_convolution_steps(
+                    convolution_instruction=convolution_instruction
                 )

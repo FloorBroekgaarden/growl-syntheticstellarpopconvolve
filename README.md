@@ -9,15 +9,21 @@ stellar-population convolution code-base `Synthetic Stellar Pop Convolve
 repository](https://gitlab.com/dhendriks/syntheticstellarpopconvolve) as well
 as on [Pypi](https://pypi.org/project/syntheticstellarpopconvolve/).
 
+For detailed tutorials and use-case examples, check out the **tutorial notebooks**:
+📖 **[Example Notebooks](https://synthetic-stellar-pop-convolve.readthedocs.io/en/latest/example_notebooks.html)**
+
 **warning: the code is not fully released yet, some things may not work reliably**
 
-## **Overview**
-**SSPC** (*Synthetic Stellar Pop Convolve*) is a Python package designed to convolve
-stellar population synthesis outputs ([binary_c](https://binary_c.gitlab.io/binary_c/)([-python](https://binary_c.gitlab.io/binary_c-python/)), [COMPAS](https://compas.science/), [COSMIC](https://cosmic-popsynth.github.io/COSMIC/), [SEVN](https://demoblack.com/catalog_codes/sevn-public-version/)) with star formation histories, enabling
-detailed predictions of astrophysical event rates over cosmic time. By
-integrating synthetic stellar and binary evolution models with cosmological
-and observational constraints, SSPC helps generate realistic event
-distributions.
+## **Overview** **SSPC** (*Synthetic Stellar Pop Convolve*) is a Python
+package designed to convolve stellar population synthesis outputs
+([binary_c](https://binary_c.gitlab.io/binary_c/)([-python](https://binary_c.gitlab.io/binary_c-python/)),
+[COMPAS](https://compas.science/),
+[COSMIC](https://cosmic-popsynth.github.io/COSMIC/),
+[SEVN](https://demoblack.com/catalog_codes/sevn-public-version/)) with star
+formation histories, enabling detailed predictions of astrophysical event
+rates over cosmic time. By integrating synthetic stellar and binary evolution
+models with cosmological and observational constraints, SSPC helps generate
+realistic event distributions.
 
 The code was originally developed by [David
 Hendriks](https://www.davidhendriks.com/) (with invaluable help from [Lieke

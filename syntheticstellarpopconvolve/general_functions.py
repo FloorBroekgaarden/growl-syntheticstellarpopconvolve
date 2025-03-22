@@ -7,7 +7,6 @@ Mostly unsorted, likely better placed in together with related functionality.
 import functools
 import json
 import logging
-import math
 import os
 import shutil
 import tempfile
@@ -26,7 +25,31 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
-## TODO: move to general_functions.py
+def generate_data_dict(config, convolution_instruction):
+    """
+    Function to generate the data dict.
+    """
+
+    # on the fly sampling generates its own data
+    if "convolution_type" in convolution_instruction:
+        if convolution_instruction["convolution_type"] == "on-the-fly":
+            return config, {}, convolution_instruction
+
+    #
+    config["logger"].debug(
+        "Generating data_dict using the extractor function {}".format(
+            extract_data.__name__,
+        )
+    )
+
+    # otherwise extract
+    config, data_dict, convolution_instruction = extract_data(
+        config=config, convolution_instruction=convolution_instruction
+    )
+
+    return config, data_dict, convolution_instruction
+
+
 def extract_data(config, convolution_instruction):
     """
     Function to extract the data from the correct table and store the information in the correct column.

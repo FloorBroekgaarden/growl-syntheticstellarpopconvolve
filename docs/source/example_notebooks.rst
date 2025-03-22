@@ -5,15 +5,6 @@ We have a set of notebooks that explain and show the usage of the SSPC features.
 .. raw:: html
 
 
-
-
-
-
-
-
-
-
-
     <style>
         .flip-card {
             background-color: transparent;

@@ -22,7 +22,7 @@ from syntheticstellarpopconvolve.general_functions import (
     JsonCustomEncoder,
     create_job_dict,
     create_time_bin_info_dict,
-    extract_data,
+    generate_data_dict,
     generate_group_name,
     get_tmp_dir,
     has_unit,
@@ -30,7 +30,7 @@ from syntheticstellarpopconvolve.general_functions import (
 
 
 def _handle_storing_convolution_results(
-    config, grp, convolution_results, bin_center
+    config, grp, convolution_result, bin_center
 ):  # DH0001
     """
     Worker function for '_handle_storing_convolution_results'
@@ -67,20 +67,48 @@ def handle_storing_convolution_results(
 
     #########
     # Handle storing convolution results
-    bound__handle_storing_convolution_results = partial(
-        _handle_storing_convolution_results,
-        config=config,
-        grp=grp,
-        bin_center=bin_center,
-    )
     if isinstance(convolution_results, list):
         for convolution_result in convolution_results:
-            bound__handle_storing_convolution_results(
-                convolution_results=convolution_results,
+
+            # Create group
+            current_time_bin_grp = grp.create_group(
+                "convolution_results/{}/{}".format(
+                    convolution_result["name"], str(bin_center)
+                )
             )
+
+            ############
+            # handle storing entries and units
+            config["logger"].debug(
+                "Storing convolution results {} of bin-center {}".format(
+                    convolution_result["name"], str(bin_center)
+                )
+            )
+
+            #
+            store_convolution_result_entries(
+                config=config,
+                current_time_bin_group=current_time_bin_grp,
+                convolution_result=convolution_result,
+            )
+
     else:
-        bound__handle_storing_convolution_results(
-            convolution_results=convolution_results,
+        # Create group
+        current_time_bin_grp = grp.create_group(
+            "convolution_results/{}".format(str(bin_center))
+        )
+
+        ############
+        # handle storing entries and units
+        config["logger"].debug(
+            "Storing convolution results of bin-center {}".format(str(bin_center))
+        )
+
+        #
+        store_convolution_result_entries(
+            config=config,
+            current_time_bin_group=current_time_bin_grp,
+            convolution_result=convolution_results,
         )
 
 
@@ -502,31 +530,6 @@ def convolution_queue_filler(  # DH0001
     config["logger"].debug("Sending job termination signals")
     for _ in range(num_cores):
         job_queue.put("STOP")
-
-
-def generate_data_dict(config, convolution_instruction):
-    """
-    Function to generate the data dict.
-    """
-
-    # on the fly sampling generates its own data
-    if "convolution_type" in convolution_instruction:
-        if convolution_instruction["convolution_type"] == "on-the-fly":
-            return config, {}, convolution_instruction
-
-    #
-    config["logger"].debug(
-        "Generating data_dict using the extractor function {}".format(
-            extract_data.__name__,
-        )
-    )
-
-    # otherwise extract
-    config, data_dict, convolution_instruction = extract_data(
-        config=config, convolution_instruction=convolution_instruction
-    )
-
-    return config, data_dict, convolution_instruction
 
 
 def handle_multiprocessing_convolution(  # DH0001

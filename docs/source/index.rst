@@ -5,8 +5,7 @@
 
 Welcome to the documentation of Synthetic Stellar Pop Convolve (SSPC)!
 ======================================================================
-.. mdinclude:: ../../README.md
-
+.. include:: _includes/readme.rst
 
 .. toctree::
    :maxdepth: 2

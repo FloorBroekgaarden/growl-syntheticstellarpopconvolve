@@ -32,6 +32,9 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
     test_pad_sfr_dict,
     test_update_sfr_dict,
 )
+from syntheticstellarpopconvolve.tests.test_convolution_by_integration import (
+    test_convolution_by_integration_post_convolution_hook_wrapper,
+)
 from syntheticstellarpopconvolve.tests.test_convolution_by_sampling import (
     test_convolution_by_sampling_post_convolution_hook_wrapper,
     test_sample_systems,
@@ -71,6 +74,9 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
 from syntheticstellarpopconvolve.tests.test_ensemble_utils import (
     test_convert_ensemble_to_dataframe,
     test_find_columnames_recursively,
+    test_flatten_data_ensemble1d,
+    test_inflate_ensemble_with_lists_and_named_layers,
+    test_inflate_ensemble_with_lists_without_named_layers,
 )
 from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_calculate_digitized_sfr_rates,; test_calculate_origin_time_array,
     test_calculate_bin_edges,

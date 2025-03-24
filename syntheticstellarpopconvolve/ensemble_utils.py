@@ -1052,18 +1052,18 @@ def flatten_data_ensemble1d(input_dict, named_subkey_1=None):
     }
     """
 
+    #
     if named_subkey_1 is None:
-        data = []
-        for key_1 in sorted(input_dict):
-            value = input_dict[key_1]
-            data.append([key_1, float(value)])
-        data = np.array(data).T
+        _input_dict = input_dict
     else:
-        data = []
-        for key_1 in sorted(input_dict[named_subkey_1]):
-            value = input_dict[named_subkey_1][key_1]
-            data.append([key_1, float(value)])
-        data = np.array(data).T
+        _input_dict = input_dict[named_subkey_1]
+
+    #
+    data = []
+    for key_1 in sorted(_input_dict):
+        value = _input_dict[key_1]
+        data.append([key_1, float(value)])
+    data = np.array(data).T
 
     return data
 

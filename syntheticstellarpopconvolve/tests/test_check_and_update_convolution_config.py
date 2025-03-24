@@ -125,6 +125,7 @@ class test_update_convolution_config(unittest.TestCase):
         #
         config["input_filename"] = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
         config["output_filename"] = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
+        config["time_type"] = "redshift"
 
         # Set up SFR
         config["SFR_info"] = {

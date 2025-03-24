@@ -115,7 +115,7 @@ def handle_call_on_the_fly_function(
     #
     metallicity_distribution = (
         sfr_dict["metallicity_distribution_array"][:, bin_number]
-        if sfr_dict["include_metallicity_info"]
+        if "metallicity_distribution_array" in sfr_dict
         else None
     )
 
@@ -153,7 +153,7 @@ def handle_call_on_the_fly_function(
             "`total_star_formation_in_bin` is a required argument in the `on_the_fly_function` call."
         )
 
-    if sfr_dict["include_metallicity_info"]:
+    if "metallicity_distribution_array" in sfr_dict:
         if "metallicity_distribution" not in on_the_fly_function_args:
             raise ValueError(
                 "`metallicity_distribution` is a required argument in the `on_the_fly_function` call when including metallicity information in the starformation rate dict"

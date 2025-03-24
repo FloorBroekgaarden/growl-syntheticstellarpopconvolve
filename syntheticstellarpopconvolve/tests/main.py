@@ -56,6 +56,8 @@ from syntheticstellarpopconvolve.tests.test_convolve_nonbinned_data_with_backwar
 )
 from syntheticstellarpopconvolve.tests.test_convolve_on_the_fly import (
     test_convolve_on_the_fly,
+    test_convolve_on_the_fly_post_convolution_hook_wrapper,
+    test_handle_call_on_the_fly_function,
 )
 from syntheticstellarpopconvolve.tests.test_cosmology_utils import (
     test_age_of_universe_to_redshift,

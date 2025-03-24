@@ -11,6 +11,7 @@ from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array impor
     test_calculate_origin_redshift_array,
 )
 from syntheticstellarpopconvolve.tests.test_calculate_starformation_rate import (
+    test_calculate_digitized_sfr_rates_binned_data_for_backward_convolution,
     test_calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution,
     test_calculate_origin_time_array,
     test_general_sfr_digitise_function,
@@ -79,7 +80,7 @@ from syntheticstellarpopconvolve.tests.test_ensemble_utils import (
     test_inflate_ensemble_with_lists_and_named_layers,
     test_inflate_ensemble_with_lists_without_named_layers,
 )
-from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_calculate_digitized_sfr_rates,; test_calculate_origin_time_array,
+from syntheticstellarpopconvolve.tests.test_general_functions import (
     test_calculate_bin_edges,
     test_calculate_bincenters,
     test_check_required,

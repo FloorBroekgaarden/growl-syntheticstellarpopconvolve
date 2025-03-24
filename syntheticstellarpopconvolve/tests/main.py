@@ -25,6 +25,7 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config 
 from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_instruction import (
     test_check_and_update_convolution_instructions,
     test_check_convolution_instruction,
+    test_check_delay_time_data_bin_info_dict,
     test_check_metallicity,
 )
 from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (

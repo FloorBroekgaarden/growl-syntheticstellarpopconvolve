@@ -29,38 +29,9 @@ from syntheticstellarpopconvolve.general_functions import (
 )
 
 
-def _handle_storing_convolution_results(
-    config, grp, convolution_result, bin_center
-):  # DH0001
-    """
-    Worker function for '_handle_storing_convolution_results'
-    """
-
-    ##########
-    # Create group
-    current_time_bin_grp = grp.create_group(
-        "convolution_results/{}/{}".format(convolution_result["name"], str(bin_center))
-    )
-
-    ############
-    # handle storing entries and units
-    config["logger"].debug(
-        "Storing convolution results {} of bin-center {}".format(
-            convolution_result["name"], str(bin_center)
-        )
-    )
-
-    #
-    store_convolution_result_entries(
-        config=config,
-        current_time_bin_group=current_time_bin_grp,
-        convolution_result=convolution_result,
-    )
-
-
-def handle_storing_convolution_results(
+def handle_storing_convolution_results(  # DH0001
     config, grp, convolution_results, bin_center
-):  # DH0001
+):
     """
     Function to manage the storing of the convolution results
     """

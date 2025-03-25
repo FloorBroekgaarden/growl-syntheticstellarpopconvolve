@@ -4,6 +4,9 @@ This is the unittest file for the check_and_update_convolution_instruction.py so
 
 import unittest
 
+import astropy.units as u
+import numpy as np
+
 from syntheticstellarpopconvolve import (
     default_convolution_config,
     default_convolution_instruction,
@@ -11,8 +14,33 @@ from syntheticstellarpopconvolve import (
 from syntheticstellarpopconvolve.check_and_update_convolution_instruction import (
     check_and_update_convolution_instructions,
     check_convolution_instruction,
+    check_delay_time_data_bin_info_dict,
     check_metallicity,
 )
+
+
+class test_check_delay_time_data_bin_info_dict(unittest.TestCase):
+    def test_check_delay_time_data_bin_info_dict_missing_key(self):
+        delay_time_data_bin_info_dict = {}
+
+        with self.assertRaises(ValueError):
+            check_delay_time_data_bin_info_dict(delay_time_data_bin_info_dict)
+
+    def test_check_delay_time_data_bin_info_dict_wrong_unit(self):
+        delay_time_data_bin_info_dict = {
+            "delay_time_data_bin_edges": np.array([0, 1] * u.Msun)
+        }
+
+        with self.assertRaises(ValueError):
+            check_delay_time_data_bin_info_dict(delay_time_data_bin_info_dict)
+
+    # if "delay_time_data_bin_edges" not in delay_time_data_bin_info_dict:
+    #     raise ValueError(
+    #         "`delay_time_data_bin_edges` is required in the delay_time_data_bin_info_dict when convolving binned data"
+    #     )
+
+    # if not is_time_unit(delay_time_data_bin_info_dict["delay_time_data_bin_edges"]):
+    #     raise ValueError("Please express 'delay_time_data_bin_edges' in units of time")
 
 
 class test_check_metallicity(unittest.TestCase):

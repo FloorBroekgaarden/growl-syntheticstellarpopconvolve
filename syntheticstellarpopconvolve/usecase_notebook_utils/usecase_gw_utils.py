@@ -2,7 +2,6 @@ import os
 
 import deepdish as dd
 import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 
 KAPPA_DEFAULT = 2.9
@@ -172,15 +171,152 @@ def add_confidence_interval_powerlaw_peak_primary_mass(
     return fig, ax
 
 
-# # Add confidence interval of observations
-# if add_LVK_observations:
-#     fig, axes_list[0] = add_confidence_interval_powerlaw_peak_primary_mass(
-#         fig=fig,
-#         ax=axes_list[0],
-#         data_root=os.path.join(os.environ["DATAFILES_ROOT"], "GW"),
-#         fill_between_kwargs=plot_settings.get(
-#             "observations_fill_between_kwargs", {}
-#         ),
-#         add_text=plot_settings.get("add_GW_text", False),
-#         redshift=redshift_value,
-#     )
+#########################
+
+
+def get_median_percentiles(value_array):
+    """
+    Function to get the median and the percentiles from the data
+    """
+
+    result_dict = {}
+
+    result_dict["median"] = np.percentile(value_array, [50], axis=0)
+
+    result_dict["90%_CI"] = np.percentile(value_array, [5, 95], axis=0)
+
+    # result_dict["1_sigma"] = np.percentile(value_array, [15.89, 84.1], axis=0)
+
+    # result_dict["2_sigma"] = np.percentile(value_array, [2.27, 97.725], axis=0)
+
+    return result_dict
+
+
+def get_histogram_data(bins, data_array, weight_array):
+    """
+    Function to get the histogram data.
+
+    Also returns the truncated bins where the ends containin only zeros are chopped off
+    """
+
+    # Determine the mass bins
+    bin_size = np.diff(bins)
+    bincenter = (bins[1:] + bins[:-1]) / 2
+
+    # bin and take into account the divison by mass
+    hist = np.histogram(data_array, bins=bins, weights=weight_array)[0]
+
+    # Select the non-zero bins and split off the empty ones
+    # NOTE: without this, toms method does not work
+    non_zero_bins_indices = np.nonzero(hist)[0]
+
+    if non_zero_bins_indices.size != 0:
+        truncated_bins = bins[
+            non_zero_bins_indices.min() : non_zero_bins_indices.max() + 1
+        ]
+    else:
+        truncated_bins = bins
+    return hist, bincenter, truncated_bins
+
+
+def run_bootstrap(bin_centers, rates, masses, bootstraps=50, verbose=False):
+    """
+    Function to multiprocess the bootstrapping
+    """
+
+    # Get a list of indices
+    indices = np.arange(len(rates))
+
+    #########
+    # Set up bootstrap array for rates:
+    bootstrapped_hist_vals = np.zeros((bootstraps, len(bin_centers)))  # center_bins
+
+    ##########
+    # Run bootstrap loop
+    for bootstrap_i in range(bootstraps):
+        if verbose:
+            print("Bootstrap {}".format(bootstrap_i))
+        ##############################
+        # Get bootstrap indices
+        boot_index = np.random.choice(
+            indices,
+            size=len(indices),
+            replace=True,
+        )
+
+        #########
+        # Calculate rates data with the bootstrapped set of indices
+        # Select the quantity values with these indices
+        bootstrapped_masses = masses[boot_index]
+
+        # Select the rate values with these indices
+        bootstrapped_rates = rates[:, boot_index]
+
+        ##############################
+        # Calculate the rate histogram
+        (
+            bootstrapped_hist,
+            _,
+            _,
+        ) = get_histogram_data(
+            bins=quantity_bins,
+            data_array=bootstrapped_masses,
+            weight_array=bootstrapped_rates[0],
+        )
+
+        # Store unfiltered rate in array
+        bootstrapped_hist_vals[bootstrap_i] = bootstrapped_hist
+
+    ###########
+    # Calculate median and percentiles
+    bootstrapped_median_percentiles_dict = get_median_percentiles(
+        bootstrapped_hist_vals
+    )
+    rates_return_dict["median_percentiles"] = bootstrapped_median_percentiles_dict
+
+
+def plot_bootstrapped_data(
+    fig,
+    ax,
+    bin_centers,
+    bin_edges,
+    median_percentile_data,
+    linestyle_i="black",
+    linestyle_i="solid",
+):
+    """ """
+
+    # Plot median and bootstrap
+    ax.plot(
+        bin_centers,
+        median_percentile_data["median"][0],
+        lw=linewidth,
+        c=color_i,
+        zorder=13,
+        linestyle=linestyle_i,
+        label=convolved_dataset_label,
+    )
+
+    # fill between for the bounds
+    ax.fill_between(
+        bin_centers,
+        median_percentile_data["90%_CI"][0],
+        median_percentile_data["90%_CI"][1],
+        alpha=0.4,
+        zorder=11,
+        color=color_i,
+    )  # 1-sigma
+
+    # Plot step histogram
+    if plot_settings.get("include_hist_step", False):
+        ax.hist(
+            bin_centers,
+            weights=median_percentile_data["median"][0],
+            bins=bin_edges,
+            histtype="step",
+            lw=linewidth,
+            color=color_i,
+            zorder=200,
+            alpha=plot_settings.get("hist_step_alpha", 0.5),
+            linestyle=linestyle_i,
+        )

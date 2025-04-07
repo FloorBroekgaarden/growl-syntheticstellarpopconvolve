@@ -41,7 +41,7 @@ We have a set of notebooks that explain and show the usage of the SSPC features.
         .flip-card-back img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
         }
 
         .flip-card-back {

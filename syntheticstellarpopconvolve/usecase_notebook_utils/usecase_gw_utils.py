@@ -219,7 +219,7 @@ def get_histogram_data(bins, data_array, weight_array):
     return hist, bincenter, truncated_bins
 
 
-def run_bootstrap(bin_centers, rates, masses, bootstraps=50, verbose=False):
+def run_bootstrap(bins, bin_centers, rates, masses, bootstraps=50, verbose=False):
     """
     Function to multiprocess the bootstrapping
     """
@@ -236,6 +236,7 @@ def run_bootstrap(bin_centers, rates, masses, bootstraps=50, verbose=False):
     for bootstrap_i in range(bootstraps):
         if verbose:
             print("Bootstrap {}".format(bootstrap_i))
+
         ##############################
         # Get bootstrap indices
         boot_index = np.random.choice(
@@ -250,7 +251,7 @@ def run_bootstrap(bin_centers, rates, masses, bootstraps=50, verbose=False):
         bootstrapped_masses = masses[boot_index]
 
         # Select the rate values with these indices
-        bootstrapped_rates = rates[:, boot_index]
+        bootstrapped_rates = rates[boot_index]
 
         ##############################
         # Calculate the rate histogram
@@ -259,9 +260,9 @@ def run_bootstrap(bin_centers, rates, masses, bootstraps=50, verbose=False):
             _,
             _,
         ) = get_histogram_data(
-            bins=quantity_bins,
+            bins=bins,
             data_array=bootstrapped_masses,
-            weight_array=bootstrapped_rates[0],
+            weight_array=bootstrapped_rates,
         )
 
         # Store unfiltered rate in array
@@ -272,7 +273,8 @@ def run_bootstrap(bin_centers, rates, masses, bootstraps=50, verbose=False):
     bootstrapped_median_percentiles_dict = get_median_percentiles(
         bootstrapped_hist_vals
     )
-    rates_return_dict["median_percentiles"] = bootstrapped_median_percentiles_dict
+
+    return bootstrapped_median_percentiles_dict
 
 
 def plot_bootstrapped_data(
@@ -281,10 +283,15 @@ def plot_bootstrapped_data(
     bin_centers,
     bin_edges,
     median_percentile_data,
-    linestyle_i="black",
+    label,
+    color_i="black",
     linestyle_i="solid",
+    include_hist_step=False
 ):
     """ """
+
+    linewidth = 3
+    hist_step_alpha = 0.5
 
     # Plot median and bootstrap
     ax.plot(
@@ -294,7 +301,7 @@ def plot_bootstrapped_data(
         c=color_i,
         zorder=13,
         linestyle=linestyle_i,
-        label=convolved_dataset_label,
+        label=label,
     )
 
     # fill between for the bounds
@@ -308,7 +315,7 @@ def plot_bootstrapped_data(
     )  # 1-sigma
 
     # Plot step histogram
-    if plot_settings.get("include_hist_step", False):
+    if include_hist_step:
         ax.hist(
             bin_centers,
             weights=median_percentile_data["median"][0],
@@ -317,6 +324,6 @@ def plot_bootstrapped_data(
             lw=linewidth,
             color=color_i,
             zorder=200,
-            alpha=plot_settings.get("hist_step_alpha", 0.5),
+            alpha=hist_step_alpha,
             linestyle=linestyle_i,
         )

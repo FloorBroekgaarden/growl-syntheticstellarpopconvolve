@@ -25,6 +25,23 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
+def print_hdf5_structure(f, subkey=None, detailed=True):
+    if detailed:
+        def _print_tree(name, obj): # DH0001
+            if isinstance(obj, h5py.Dataset):
+                print(f"{name}: Dataset, shape={obj.shape}, dtype={obj.dtype}")
+            elif isinstance(obj, h5py.Group):
+                print(f"{name}: Group")
+    else:
+        def _print_tree(name, obj):  # DH0001
+            print(subkey + "/" + name)
+    
+    if subkey is not None:
+        f[subkey].visititems(_print_tree)
+    else:
+        f.visititems(_print_tree)
+
+
 def generate_data_dict(config, convolution_instruction):
     """
     Function to generate the data dict.

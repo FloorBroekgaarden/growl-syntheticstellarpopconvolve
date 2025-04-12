@@ -26,6 +26,7 @@ from syntheticstellarpopconvolve.general_functions import (
     generate_group_name,
     get_tmp_dir,
     has_unit,
+    maybe_strip_scaled_dimensionless,
 )
 
 
@@ -100,11 +101,12 @@ def store_convolution_result_entries(  # DH0001
 
         #
         config["logger"].error(f"Storing {entry}")
-        print(entry)
 
         # unpack data
         entry_data = convolution_result[entry]
-        print(entry_data)
+
+        # handle fake units (dimensionless but scaled)
+        entry_data = maybe_strip_scaled_dimensionless(entry_data)
 
         # handle storing data with units
         if has_unit(entry_data):
@@ -112,7 +114,6 @@ def store_convolution_result_entries(  # DH0001
             units_to_store[entry] = entry_data.unit
         # handle storing data without units
         else:
-            print(entry_data)
             current_time_bin_group.create_dataset(entry, data=entry_data)
 
     ###########

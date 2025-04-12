@@ -14,8 +14,9 @@ For detailed tutorials and use-case examples, check out the **tutorial notebooks
 
 **warning: the code is not fully released yet, some things may not work reliably**
 
-## **Overview** **SSPC** (*Synthetic Stellar Pop Convolve*) is a Python
-package designed to convolve stellar population synthesis outputs
+## **Overview**
+**SSPC** (*Synthetic Stellar Pop Convolve*) is a Python package designed to
+convolve stellar population synthesis outputs
 ([binary_c](https://binary_c.gitlab.io/binary_c/)([-python](https://binary_c.gitlab.io/binary_c-python/)),
 [COMPAS](https://compas.science/),
 [COSMIC](https://cosmic-popsynth.github.io/COSMIC/),

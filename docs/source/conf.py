@@ -207,6 +207,11 @@ html_css_files = [
 ]
 
 
+#######
+# logo
+html_logo = "_static/logo/sspc_logo.png"
+
+
 # """Patching m2r2"""
 # current_m2r2_setup = m2r2.setup
 

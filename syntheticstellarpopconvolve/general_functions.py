@@ -10,6 +10,7 @@ import logging
 import os
 import shutil
 import tempfile
+import warnings
 from inspect import isfunction
 
 import astropy.units as u
@@ -25,17 +26,33 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
+def maybe_strip_scaled_dimensionless(q):
+    if not isinstance(q, u.Quantity):
+        return q
+    try:
+        scale = q.to_value(u.dimensionless_unscaled)
+        warnings.warn(
+            f"Detected dimensionless-but-scaled quantity: {q.unit}. Stripping units."
+        )
+        return scale
+    except u.UnitConversionError:
+        return q
+
+
 def print_hdf5_structure(f, subkey=None, detailed=True):
     if detailed:
-        def _print_tree(name, obj): # DH0001
+
+        def _print_tree(name, obj):  # DH0001
             if isinstance(obj, h5py.Dataset):
                 print(f"{name}: Dataset, shape={obj.shape}, dtype={obj.dtype}")
             elif isinstance(obj, h5py.Group):
                 print(f"{name}: Group")
+
     else:
+
         def _print_tree(name, obj):  # DH0001
             print(subkey + "/" + name)
-    
+
     if subkey is not None:
         f[subkey].visititems(_print_tree)
     else:

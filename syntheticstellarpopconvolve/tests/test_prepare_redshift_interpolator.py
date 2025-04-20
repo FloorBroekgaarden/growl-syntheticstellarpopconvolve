@@ -32,7 +32,10 @@ class test_prepare_redshift_interpolator(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -151,7 +154,10 @@ class test_load_interpolation_data(unittest.TestCase):
         # Set up SFR
         self.convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins

@@ -33,8 +33,8 @@ class test_calculate_origin_redshift_array(unittest.TestCase):
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
             TMP_DIR, "interpolator_dict.p"
         )
-        convolution_config = prepare_redshift_interpolator(convolution_config)
         convolution_config["time_type"] = "redshift"
+        convolution_config = prepare_redshift_interpolator(convolution_config)
 
         #
         origin_redshift_array = calculate_origin_redshift_array(
@@ -53,8 +53,8 @@ class test_calculate_origin_redshift_array(unittest.TestCase):
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
             TMP_DIR, "interpolator_dict.p"
         )
-        convolution_config = prepare_redshift_interpolator(convolution_config)
         convolution_config["time_type"] = "redshift"
+        convolution_config = prepare_redshift_interpolator(convolution_config)
 
         #
         origin_redshift_array = calculate_origin_redshift_array(

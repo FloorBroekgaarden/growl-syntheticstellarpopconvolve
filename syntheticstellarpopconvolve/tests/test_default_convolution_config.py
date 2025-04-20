@@ -13,7 +13,9 @@ from syntheticstellarpopconvolve.default_convolution_config import (
     array_validation,
     callable_or_none_validation,
     callable_validation,
+    dict_or_list_of_dicts_validation,
     existing_path_validation,
+    list_of_dicts_validation,
     logger_validation,
     unit_validation,
 )
@@ -34,6 +36,29 @@ def assertDoesNotRaise(self, exception, expr, *args, **kwargs):
 
 
 unittest.TestCase.assertDoesNotRaise = assertDoesNotRaise
+
+
+class test_list_of_dicts_validation(unittest.TestCase):
+    def test_list_of_dicts_validation(self):
+
+        # should raise a valueerror if the object we pass is not a logging object
+        self.assertRaises(ValueError, list_of_dicts_validation, [[]])
+
+    def test_list_of_dicts_validation_no_raise(self):
+        self.assertDoesNotRaise(ValueError, list_of_dicts_validation, [{}])
+
+
+class test_dict_or_list_of_dicts_validation(unittest.TestCase):
+    def test_dict_or_list_of_dicts_validation(self):
+
+        # should raise a valueerror if the object we pass is not a logging object
+        self.assertRaises(ValueError, dict_or_list_of_dicts_validation, [[]])
+
+    def test_dict_or_list_of_dicts_validation_no_raise_dict(self):
+        self.assertDoesNotRaise(ValueError, dict_or_list_of_dicts_validation, {})
+
+    def test_dict_or_list_of_dicts_validation_no_raise_list_of_dicts(self):
+        self.assertDoesNotRaise(ValueError, dict_or_list_of_dicts_validation, [{}])
 
 
 class test_unit_validation(unittest.TestCase):

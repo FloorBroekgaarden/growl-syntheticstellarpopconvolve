@@ -1,26 +1,322 @@
 """
-Some general functions related to the convolution
+Some general functions related to the convolution codebase.
+
+Mostly unsorted, likely better placed in together with related functionality.
 """
 
-import inspect
+import functools
 import json
 import logging
 import os
 import shutil
 import tempfile
+import warnings
 from inspect import isfunction
 
 import astropy.units as u
+import h5py
 import numpy as np
+import pandas as pd
 import psutil
 from astropy.cosmology import Planck13 as cosmo  # Planck 2013
 from scipy import interpolate
 
-from syntheticstellarpopconvolve.calculate_birth_redshift_array import (
-    calculate_origin_redshift_array,
-)
-
 logger = logging.getLogger(__name__)
+
+dimensionless_unit = u.m / u.m
+
+
+def maybe_strip_scaled_dimensionless(q):
+    if not isinstance(q, u.Quantity):
+        return q
+    try:
+        scale = q.to_value(u.dimensionless_unscaled)
+        warnings.warn(
+            f"Detected dimensionless-but-scaled quantity: {q.unit}. Stripping units."
+        )
+        return scale
+    except u.UnitConversionError:
+        return q
+
+
+def print_hdf5_structure(f, subkey=None, detailed=True):
+    if detailed:
+
+        def _print_tree(name, obj):  # DH0001
+            if isinstance(obj, h5py.Dataset):
+                print(f"{name}: Dataset, shape={obj.shape}, dtype={obj.dtype}")
+            elif isinstance(obj, h5py.Group):
+                print(f"{name}: Group")
+
+    else:
+
+        def _print_tree(name, obj):  # DH0001
+            print(subkey + "/" + name)
+
+    if subkey is not None:
+        f[subkey].visititems(_print_tree)
+    else:
+        f.visititems(_print_tree)
+
+
+def generate_data_dict(config, convolution_instruction):
+    """
+    Function to generate the data dict.
+    """
+
+    # on the fly sampling generates its own data
+    if "convolution_type" in convolution_instruction:
+        if convolution_instruction["convolution_type"] == "on-the-fly":
+            return config, {}, convolution_instruction
+
+    #
+    config["logger"].debug(
+        "Generating data_dict using the extractor function {}".format(
+            extract_data.__name__,
+        )
+    )
+
+    # otherwise extract
+    config, data_dict, convolution_instruction = extract_data(
+        config=config, convolution_instruction=convolution_instruction
+    )
+
+    return config, data_dict, convolution_instruction
+
+
+def extract_data(config, convolution_instruction):
+    """
+    Function to extract the data from the correct table and store the information in the correct column.
+
+    Only extracts what is required by the data column dict
+    """
+
+    #
+    data_dict = {}
+
+    if convolution_instruction["chunked_readout"]:
+
+        chunk_number = convolution_instruction["chunk_number"]
+        chunksize = convolution_instruction["chunk_size"]  # Number of rows per chunk
+
+        # Calculate row range
+        start = chunk_number * chunksize
+        stop = start + chunksize
+
+        #
+        df = pd.read_hdf(
+            config["output_filename"],
+            "/input_data/{}".format(convolution_instruction["input_data_name"]),
+            start=start,
+            stop=stop,
+        )
+    else:
+        #
+        df = pd.read_hdf(
+            config["output_filename"],
+            "/input_data/{}".format(convolution_instruction["input_data_name"]),
+        )
+
+    data_column_dict = convolution_instruction["data_column_dict"]
+
+    # add all the columns to the data dictionary. This automatically handles the correct additional columns for the extra weights function
+    for column in data_column_dict.keys():
+        config["logger"].debug(
+            "Extracting {} as the {} data".format(data_column_dict[column], column)
+        )
+
+        # if its a string we just assume its the column name
+        if isinstance(data_column_dict[column], str):
+            data_dict[column] = df[data_column_dict[column]].to_numpy()
+
+            #################
+            # Handle unit for delay-time
+            if column == "delay_time":
+                data_dict[column] = (
+                    data_dict[column] * config["delay_time_default_unit"]
+                )
+
+        elif isinstance(data_column_dict[column], dict):
+            if "column_name" not in data_column_dict[column]:
+                raise ValueError(
+                    "Please provide the input-data column name through the 'column_name' key."
+                )
+
+            # extract data with the explicit column name entry
+            data = df[data_column_dict[column]["column_name"]].to_numpy()
+
+            #################
+            # Handle conversion
+            data = handle_custom_scaling_or_conversion(
+                config=config,
+                data_layer_or_column_dict_entry=data_column_dict[column],
+                value=data,
+            )
+
+            # Store
+            data_dict[column] = data
+
+            #################
+            # Handle unit for delay-time
+            # TODO: this should just take whatever unit is provided
+            if column == "delay_time":
+                if "unit" in data_column_dict[column].keys():
+                    unit = data_column_dict[column]["unit"]
+                else:
+                    unit = config["delay_time_default_unit"]
+
+                #
+                data_dict[column] = data_dict[column] * unit
+        else:
+            raise ValueError("input type not supported.")
+
+    ##########
+    # If we have binned data we should addd the delay time bin indices to the
+    if convolution_instruction["contains_binned_data"]:
+        data_dict["delay_time_data_bin_index"] = (
+            np.digitize(
+                data_dict["delay_time"].to(u.yr),
+                convolution_instruction["delay_time_data_bin_info_dict"][
+                    "delay_time_data_bin_edges"
+                ].to(u.yr),
+            )
+            - 1
+        )
+
+    #
+    return config, data_dict, convolution_instruction
+
+
+def sample_around_bin_center(bin_edges, values):
+    """
+    Basic function to handle sampling around bincenter given bin edges and values.
+
+    Note: this does not handle values that fall outside of the bins well
+    """
+
+    bin_widths = np.diff(bin_edges)
+
+    indices = np.digitize(values, bin_edges) - 1
+
+    # get random values and scale
+    random_arr = np.random.random(indices.shape) - 0.5
+    random_arr = random_arr * bin_widths[indices]
+
+    # Add to values
+    sampled_values = values + random_arr
+
+    return sampled_values
+
+
+def create_job_dict(
+    config, sfr_dict, data_dict, convolution_instruction, time_bin_info_dict, bin_number
+):
+    """
+    Function to create the job dict
+    """
+
+    # Set up job dict
+    job_dict = {
+        "job_number": bin_number,
+        "time_bin_info_dict": time_bin_info_dict,
+        "sfr_dict": sfr_dict,
+        "convolution_instruction": convolution_instruction,
+        "data_dict": data_dict,
+        "output_dir": get_tmp_dir(
+            config=config,
+            convolution_instruction=convolution_instruction,
+            sfr_dict=sfr_dict,
+        ),
+    }
+
+    return job_dict
+
+
+def create_time_bin_info_dict(
+    config,
+    convolution_instruction,
+    bin_number,
+    bin_center,
+    bin_edge_lower,
+    bin_size,
+    bin_type,
+):
+    """
+    Function to set up the time bin info dict
+    """
+
+    time_bin_info_dict = {
+        "bin_number": bin_number,
+        "bin_center": bin_center,
+        "bin_edge_lower": bin_edge_lower,
+        "bin_size": bin_size,
+        "bin_type": bin_type,
+        "time_type": config["time_type"],
+        "reverse_bin_order": convolution_instruction["reverse_convolution"],
+        "convolution_direction": convolution_instruction["convolution_direction"],
+    }
+
+    return time_bin_info_dict
+
+
+def get_physical_dimensions(unit):
+    """Return the physical dimensions of a unit in sorted [M][L][T] notation using SI base units."""
+    # Decompose into SI base units
+    decomposed = unit.decompose(bases=u.si.bases)
+
+    # Extract base units and their powers
+    si_dimensions = {
+        str(base.physical_type): power
+        for base, power in zip(decomposed.bases, decomposed.powers)
+    }
+
+    # Define standard SI dimension notation
+    notation_map = {
+        "mass": "M",
+        "length": "L",
+        "time": "T",
+        "current": "I",
+        "temperature": "Θ",
+        "amount of substance": "N",
+        "luminous intensity": "J",
+    }
+
+    # Convert to notation, ensuring unknown types don't appear
+    sorted_notation = [
+        f"[{notation_map[ptype]}^{power}]" if power != 1 else f"[{notation_map[ptype]}]"
+        for ptype, power in sorted(si_dimensions.items())  # Sorting works correctly now
+        if ptype in notation_map  # Ignore unknown types
+    ]
+
+    return "".join(sorted_notation) or "[dimensionless]"
+
+
+def generate_boilerplate_outputfile(outputfile_name):
+    """
+    Function to generate a boilerplate output file structure so the user does not have to worry about including the correct groups.
+    """
+
+    # create file
+    output_hdf5_file = h5py.File(outputfile_name, "w")
+
+    # Create groups main
+    output_hdf5_file.create_group("input_data")
+    output_hdf5_file.create_group("config")
+
+    # close
+    output_hdf5_file.close()
+
+
+def extract_unit_dict(output_hdf5_file, key):
+    """
+    FUnction to extract the unit dict from the hdf5 file
+    """
+
+    # convert units
+    unit_dict = json.loads(output_hdf5_file[key].attrs["units"])
+    unit_dict = {key: u.Unit(val) for key, val in unit_dict.items()}
+
+    return unit_dict
 
 
 def get_username():
@@ -29,35 +325,6 @@ def get_username():
     """
 
     return psutil.Process().username()
-
-
-def extract_arguments(func, arg_dict):
-    """
-    Function that extracts the entries in 'arg_dict' that are arguments to the function 'func'
-    """
-
-    # get various arg types
-    signature = inspect.signature(func)
-    all_args = inspect.getfullargspec(func).args
-    args_with_defaults = [
-        k
-        for k, v in signature.parameters.items()
-        if v.default is not inspect.Parameter.empty
-    ]
-    args_without_defaults = [arg for arg in all_args if arg not in args_with_defaults]
-
-    # construct args
-    args = {arg: arg_dict[arg] for arg in args_without_defaults}
-
-    # check if kwonlyargs are also passed along
-    args_for_args_with_defaults = {
-        arg: arg_dict[arg] for arg in args_with_defaults if arg in arg_dict.keys()
-    }
-
-    # combine args
-    combined_args = {**args, **args_for_args_with_defaults}
-
-    return combined_args
 
 
 class JsonCustomEncoder(json.JSONEncoder):
@@ -104,6 +371,7 @@ class JsonCustomEncoder(json.JSONEncoder):
         elif isinstance(obj, (u.UnitBase, u.FunctionUnitBase)):
             if obj == u.dimensionless_unscaled:
                 obj = "dimensionless_unit"
+                return str(obj)
             else:
                 return obj.to_string()
         elif isinstance(obj, type(logger)):
@@ -169,183 +437,6 @@ def vb(message, verbosity, minimal_verbosity):  # DH0001
     verbose_print(message, verbosity, minimal_verbosity)
 
 
-def handle_extra_weights_function(
-    config,
-    convolution_time_bin_center,
-    convolution_instruction,
-    sfr_dict,
-    data_dict,
-    output_shape,
-):
-    """
-    Function to handle the calculation of a set of extra weights that will be applied to the systems / sub-ensemble
-
-    TODO: move this function elsewhere
-    """
-
-    # set default
-    extra_weights = np.ones(output_shape)
-
-    # handle calculation extra weights
-    if convolution_instruction.get("extra_weights_function", None) is not None:
-        # Construct what parameters are available for the extra function
-        available_parameters = {
-            "config": config,
-            "time_value": convolution_time_bin_center,
-            "convolution_instruction": convolution_instruction,
-            "sfr_dict": sfr_dict,
-            "data_dict": data_dict,
-            **convolution_instruction.get(
-                "extra_weights_function_additional_parameters", {}
-            ),  #
-        }
-
-        # Make sure we extract the correct things from the available parameters
-        extra_weights_function_args = extract_arguments(
-            func=convolution_instruction["extra_weights_function"],
-            arg_dict=available_parameters,
-        )
-
-        #
-        config["logger"].debug(
-            "Calculating extra weights using function {} and arguments {}".format(
-                convolution_instruction["extra_weights_function"].__name__,
-                extra_weights_function_args,
-            )
-        )
-
-        # Call extra function and calculate extra weights (with something like detection probability)
-        extra_weights = convolution_instruction["extra_weights_function"](
-            **extra_weights_function_args
-        )
-        if extra_weights is None:
-            raise ValueError(
-                "The extra function did not return a correct set of extra weights"
-            )
-
-    if extra_weights.shape != output_shape:
-        raise ValueError(
-            "Desired output shape does not match the shape of the extra weights"
-        )
-
-    return extra_weights
-
-
-def calculate_origin_time_array(config, data_dict, convolution_time_bin_center):
-    """
-    Function to calculate the origin time array
-
-    TODO: move elsewhere
-    """
-
-    config["logger"].debug("Calculating origin-time array")
-
-    # if convolution method and SFR is the in lookback time, then we can just subtract
-    if config["time_type"] == "lookback_time":
-        origin_time_array = (
-            np.ones(data_dict["delay_time"].shape) * convolution_time_bin_center
-            + data_dict["delay_time"]
-        )
-        config["logger"].debug(
-            "Calculating origin-time array based on lookback_time: {}".format(
-                origin_time_array
-            )
-        )
-
-    if config["time_type"] == "redshift":
-        origin_time_array = calculate_origin_redshift_array(
-            config=config,
-            convolution_redshift_value=convolution_time_bin_center,
-            data_dict=data_dict,
-        )
-        config["logger"].debug(
-            "Calculating origin-time array based on redshift: {}".format(
-                origin_time_array
-            )
-        )
-    else:
-        raise ValueError("Choice for time-type unknown")
-
-    return origin_time_array
-
-
-def calculate_digitized_sfr_rates(
-    config, convolution_time_bin_center, data_dict, sfr_dict
-):
-    """
-    Function to calculate the digitized rates
-
-    TODO: update docstring
-    TODO: more elsewhere
-    """
-
-    ###########
-    # calculate origin time
-    origin_time_array = calculate_origin_time_array(
-        config=config,
-        data_dict=data_dict,
-        convolution_time_bin_center=convolution_time_bin_center,
-    )
-
-    # Get indices for birth redshift
-    config["logger"].debug("Calculating digitized origin-time indices")
-
-    digitized_time_indices = (
-        np.digitize(
-            origin_time_array, bins=sfr_dict["padded_time_bin_edges"], right=False
-        )
-        - 1
-    )
-
-    # Handle whether we want to specify metallicity as well
-    if "metallicity" in data_dict.keys():
-
-        # Get indices for metallicity values
-        config["logger"].debug("Calculating digitized metallicity indices")
-        metallicity_indices = (
-            np.digitize(
-                data_dict["metallicity"],
-                bins=config["padded_metallicity_bin_edges"],
-                right=False,
-            )
-            - 1
-        )
-
-        # Calculate rates
-        config["logger"].debug("Calculating metallicity weighted SFR rates")
-        digitised_sfr_rates = sfr_dict[
-            "padded_metallicity_weighted_starformation_array"
-        ][metallicity_indices, digitized_time_indices]
-    else:
-        # use JUST the SFR, not the metallicity dependent one
-
-        # Calculate rates
-        config["logger"].debug("Calculating absolute SFR rates")
-        digitised_sfr_rates = sfr_dict["padded_starformation_array"][
-            digitized_time_indices
-        ]
-
-    # handle multiplication by bin-size
-    # TODO: clean and handle implementation
-    # TODO: make sure that padded_time_binsizes exists.
-    if config["multiply_by_time_binsize"]:
-        # get indices
-        time_binsize_indices = (
-            np.digitize(
-                origin_time_array, bins=sfr_dict["padded_time_bin_edges"], right=False
-            )
-            - 1
-        )
-
-        # get time-binsizes
-        time_binsizes = sfr_dict["padded_time_binsizes"]
-
-        # update sfr_rates
-        digitised_sfr_rates = digitised_sfr_rates * time_binsizes[time_binsize_indices]
-
-    return digitised_sfr_rates
-
-
 def calculate_bincenters(array, convert="linear"):
     """
     Function to calculate bincenters
@@ -355,11 +446,13 @@ def calculate_bincenters(array, convert="linear"):
 
     if convert == "linear":
         bincenters = (array[1:] + array[:-1]) / 2
+    else:
+        raise ValueError(f"convert choice {convert} is unknown")
 
     return bincenters
 
 
-def calculate_edge_values(arr):
+def calculate_bin_edges(arr):
     """
     Function to calculate the edge values given a bunch of centers
     """
@@ -457,9 +550,17 @@ def generate_group_name(convolution_instruction, sfr_dict):
     if sfr_dict.get("name", None) is not None:
         elements.append(sfr_dict["name"])
 
-    #
-    elements.append(convolution_instruction["input_data_type"])
+    # store input name
     elements.append(convolution_instruction["input_data_name"])
+
+    # store chunkname
+    if (
+        convolution_instruction["chunked_readout"]
+        and "chunk_number" in convolution_instruction
+    ):
+        elements.append(str(convolution_instruction["chunk_number"]))
+
+    # store output name
     elements.append(convolution_instruction["output_data_name"])
 
     # construct groupname
@@ -542,7 +643,7 @@ def temp_dir(*child_dirs: str, clean_path=False) -> str:
 
     tmp_dir = tempfile.gettempdir()
     username = get_username()
-    full_path = os.path.join(tmp_dir, "binary_c_python-{}".format(username))
+    full_path = os.path.join(tmp_dir, "sspc-{}".format(username))
 
     # loop over the other paths if there are any:
     if child_dirs:
@@ -557,3 +658,87 @@ def temp_dir(*child_dirs: str, clean_path=False) -> str:
     os.makedirs(full_path, exist_ok=True)
 
     return full_path
+
+
+def check_required(config, required_list):
+    """
+    Function to check if the keys in the required_list are present in the convolution_instruction dict
+    """
+
+    for key in required_list:
+        if key not in config.keys():
+            raise ValueError(
+                "{} is required in the convolution_instruction".format(key)
+            )
+
+
+def is_time_unit(parameter):
+    """
+    Function to check if a parameter has time-units
+    """
+
+    try:
+        parameter.to(u.yr)
+        return True
+    except u.core.UnitConversionError:
+        return False
+    except AttributeError:
+        return False
+
+
+def is_mass_unit(parameter):
+    """
+    Function to check if a parameter has time-units
+    """
+
+    try:
+        parameter.to(u.kg)
+        return True
+    except u.core.UnitConversionError:
+        return False
+    except AttributeError:
+        return False
+
+
+def has_unit(parameter, fail_on_dimensionless=True):
+    """
+    Function to check if a parameter has any unit assigned to it
+    """
+
+    try:
+        unit = parameter.unit
+
+        if fail_on_dimensionless:
+            dimensionless_unit = u.m / u.m
+            if unit == dimensionless_unit:
+                return False
+        return True
+    except:
+        return False
+
+
+has_unit_dimensionless_okay = functools.partial(has_unit, fail_on_dimensionless=False)
+
+
+def get_normalized_yield_unit(config, convolution_instruction):
+    """
+    Function to get the normalized yield unit either from config or from convolution_instruction
+    """
+
+    #
+    normalized_yield_unit = config["default_normalized_yield_unit"]
+
+    if "normalized_yield" not in convolution_instruction["data_column_dict"]:
+        raise ValueError(
+            "'normalized_yield' should be provided in the 'data_column_dict'"
+        )
+
+    if isinstance(
+        convolution_instruction["data_column_dict"]["normalized_yield"], dict
+    ):
+        if "unit" in convolution_instruction["data_column_dict"]["normalized_yield"]:
+            normalized_yield_unit = convolution_instruction["data_column_dict"][
+                "normalized_yield"
+            ]["unit"]
+
+    return normalized_yield_unit

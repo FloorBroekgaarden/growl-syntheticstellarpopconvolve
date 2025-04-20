@@ -1,26 +1,33 @@
 """
 Metallicity distribution function from COMPAS
+
+DH0001_file
 """
 
 import numpy as np
 from scipy.stats import norm as NormDist
 
 
-def compas_metallicity_distribution(
-    config,
+def compas_log_skew_normal_distribution_metallicity_distribution(
     redshifts,
-    metallicity_centers,
-    mu0=0.035,
-    muz=-0.23,
-    sigma_0=0.39,
-    sigma_z=0.0,
-    alpha=0.0,
+    log_metallicity_centers,
+    mu0,
+    muz,
+    sigma_0,
+    sigma_z,
+    alpha,
+    global_logZ_distribution_min=-20,
+    global_logZ_distribution_max=0,
+    global_logZ_distribution_res=1000,
 ):
     """
     Calculate the distribution of metallicities at different redshifts using a log skew normal distribution
     the log-normal distribution is a special case of this log skew normal distribution distribution, and is retrieved by setting
     the skewness to zero (alpha = 0).
-    Based on the method in Neijssel+19. Default values of mu0=0.035, muz=-0.23, sigma_0=0.39, sigma_z=0.0, alpha =0.0,
+
+    Based on the method in Neijssel+19.
+
+    Default values of mu0=0.035, muz=-0.23, sigma_0=0.39, sigma_z=0.0, alpha =0.0,
     retrieve the dP/dZ distribution used in Neijssel+19
 
     NOTE: This assumes that metallicities in COMPAS are drawn from a flat in log distribution!
@@ -28,8 +35,7 @@ def compas_metallicity_distribution(
     Args:
         max_redshift       --> [float]          max redshift for calculation
         redshift_step      --> [float]          step used in redshift calculation
-        min_logZ_COMPAS    --> [float]          Minimum logZ value that COMPAS samples
-        max_logZ_COMPAS    --> [float]          Maximum logZ value that COMPAS samples
+
 
         mu0    =  0.035    --> [float]           location (mean in normal) at redshift 0
         muz    = -0.25    --> [float]           redshift scaling/evolution of the location
@@ -43,28 +49,21 @@ def compas_metallicity_distribution(
 
     Returns:
         dPdlogZ            --> [2D float array] Probability of getting a particular logZ at a certain redshift
-        metallicities      --> [list of floats] Metallicities at which dPdlogZ is evaluated
         p_draw_metallicity --> float            Probability of drawing a certain metallicity in COMPAS (float because assuming uniform)
-
-    TODO: break this apart and use other functions to fix.
     """
 
-    # extract the stuff
-    metallicity_distribution_min_value = config["metallicity_distribution_min_value"]
-    metallicity_distribution_max_value = config["metallicity_distribution_max_value"]
-    metallicity_distribution_resolution = config["metallicity_distribution_resolution"]
-
-    # for compas we convert to log
-    min_logZ = np.log(metallicity_distribution_min_value)
-    max_logZ = np.log(metallicity_distribution_max_value)
-
     #
-    step_logZ = (max_logZ - min_logZ) / metallicity_distribution_resolution
+    step_logZ = (
+        global_logZ_distribution_max - global_logZ_distribution_min
+    ) / global_logZ_distribution_res
 
     ##################################
-    # create a range of metallicities (thex-values, or random variables)
-    log_metallicities = np.arange(min_logZ, max_logZ + step_logZ, step_logZ)
-    metallicities = np.exp(log_metallicities)
+    # create a range of metallicities (the x-values, or random variables)
+    global_log_metallicities = np.arange(
+        global_logZ_distribution_min,
+        global_logZ_distribution_max + step_logZ,
+        step_logZ,
+    )
 
     ##################################
     # Log-Linear redshift dependence of sigma
@@ -87,11 +86,12 @@ def compas_metallicity_distribution(
         2.0
         / (sigma[:, np.newaxis])
         * NormDist.pdf(
-            (log_metallicities - mu_metallicities[:, np.newaxis]) / sigma[:, np.newaxis]
+            (global_log_metallicities - mu_metallicities[:, np.newaxis])
+            / sigma[:, np.newaxis]
         )
         * NormDist.cdf(
             alpha
-            * (log_metallicities - mu_metallicities[:, np.newaxis])
+            * (global_log_metallicities - mu_metallicities[:, np.newaxis])
             / sigma[:, np.newaxis]
         )
     )
@@ -104,19 +104,19 @@ def compas_metallicity_distribution(
     ##################################
     # Select the metallicities that we have
     dPdLogZ_for_sampled_metallicities = dPdlogZ[
-        :, np.digitize(metallicity_centers, metallicities) - 1
+        :, np.digitize(log_metallicity_centers, global_log_metallicities) - 1
     ]
 
-    ##################################
-    # Calculate the dlogZ (stepsizes) values, adding one to the end.
-    dlogZ_sampled = np.diff(np.log(config["convolution_metallicity_bin_edges"]))
+    # ##################################
+    # # Calculate the dlogZ (stepsizes) values, adding one to the end.
+    # dlogZ_sampled = np.diff(np.log(config["convolution_metallicity_bin_edges"]))
 
-    ##################################
-    # Calculate dP/dlogZ * dlogZ
-    dP = dPdLogZ_for_sampled_metallicities * dlogZ_sampled
+    # ##################################
+    # # Calculate dP/dlogZ * dlogZ
+    # dP = dPdLogZ_for_sampled_metallicities * dlogZ_sampled
 
     #
-    return dP
+    return dPdLogZ_for_sampled_metallicities
 
 
 def mean_metallicity(z, z0, alpha):
@@ -150,38 +150,46 @@ def metallicity_distribution_lognormal(Z, z, z0, alpha, sigma):
     )
 
 
-# def metallicity_distribution_Neijsel19(Z, z, z0, alpha, sigma):
-#     """
-#     Function to calculate the metallicity distribution fraction at a given redshift according to Neijsel et al 2019 (https://ui.adsabs.harvard.edu/abs/2019MNRAS.490.3740N/abstract)
-#     """
+def metallicity_distribution_Neijsel19(log_metallicity_centers, redshifts):
+    """
+    Function to calculate the metallicity distribution fraction at a given redshift according to Neijsel et al 2019 (https://ui.adsabs.harvard.edu/abs/2019MNRAS.490.3740N/abstract)
+
+    TODO: add kwargs so user can override anything
+    """
+
+    dPdlogZ = compas_log_skew_normal_distribution_metallicity_distribution(
+        redshifts=redshifts,
+        log_metallicity_centers=log_metallicity_centers,
+        # metallicity distribution settings for Neijssel 2019
+        mu0=0.035,
+        muz=-0.23,
+        sigma_0=0.39,
+        sigma_z=0.0,
+        alpha=0.0,
+    )
+
+    return dPdlogZ
 
 
-#             # # metallicity distribution settings for Neijssel 2019
-#             # 'mu0': 0.035,
-#             # 'muz': -0.23,
-#             # 'sigma_0': 0.39,
-#             # 'sigma_z': 0.0
-#             # 'alpha': 0.0,
-
-
-#     metallicity_distribution_lognormal(Z=Z, z=z, z0, alpha, sigma)
-
-
-def metallicity_distribution_vanSon2022(metallicities, redshifts):
+def metallicity_distribution_vanSon2022(log_metallicity_centers, redshifts):
     """
     Function to calculate the metallicity distribution fraction as a function of redshift according to van Son et al. 2022
 
-    TODO: bind everything in here
+    TODO: add kwargs so user can override anything
     """
 
-    #     # metallicity distribution settings for van Son 2021
-    # "mu0": 0.025,
-    # "muz": -0.05,
-    # "sigma_0": 1.125,
-    # "sigma_z": 0.05,
-    # "alpha": -1.77,
+    dPdlogZ = compas_log_skew_normal_distribution_metallicity_distribution(
+        redshifts=redshifts,
+        log_metallicity_centers=log_metallicity_centers,
+        # metallicity distribution settings for van Son 2021
+        mu0=0.025,
+        muz=-0.05,
+        sigma_0=1.125,
+        sigma_z=0.05,
+        alpha=-1.77,
+    )
 
-    pass
+    return dPdlogZ
 
 
 def metallicity_distribution_dummy(constant=1):
@@ -190,5 +198,14 @@ def metallicity_distribution_dummy(constant=1):
     """
 
     # override redshift to have it not change
-
     return constant
+
+
+if __name__ == "__main__":
+
+    # compas_log_skew_normal_distribution_metallicity_distribution(redshifts=[0, 1, 2], logZmetallicity_centers=)
+
+    dpdlogZ = metallicity_distribution_vanSon2022(
+        log_metallicities=np.array([0.01, 0.005, 0.002, 0.001]),
+        redshifts=np.array([0, 1, 2]),
+    )

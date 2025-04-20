@@ -1,5 +1,8 @@
 """
-Functions related to the arrays we store the
+Module for calculating origin redshift arrays.
+
+This module provides functions for calculating the redshift at the origin (birth) of stellar systems or events,
+based on their current redshift and delay times.
 """
 
 import astropy.units as u
@@ -16,13 +19,43 @@ def calculate_origin_redshift_array(
     data_dict,
 ):
     """
-    TODO: update text
-    Function to calculate the birth redshift array for the merging/formation events based on
-    the current redshift and the merger/formation time of the system.
+    Calculate the birth redshift array for merging/formation events.
 
-    We do this by calculating the lookback time (which is age_of_universe(z=0) - age_of_universe(z))
-    adding the merger time of the system to the lookback time, getting the birth time
-    and then calculating the birth redshift from the birth time
+    This function computes the origin (birth) redshift of stellar systems or events by:
+    - Calculating the lookback time (age of the universe at the current redshift).
+    - Adding the delay time (time between formation and the event) to the lookback time.
+    - Converting the resulting birth time back to redshift using cosmological parameters.
+
+    Parameters:
+
+    - config (dict): Configuration dictionary containing:
+        - "logger": Logger object for debug information.
+        - "cosmology": Astropy cosmology object for calculations.
+        - "redshift_interpolator_max_redshift": Maximum redshift for the interpolator.
+        - "interpolators": Dictionary with "lookback_time_to_redshift_interpolator" for conversions.
+    - convolution_redshift_value (float): The current redshift value for convolution.
+    - data_dict (dict): Dictionary containing event data, including:
+        - "delay_time": Astropy Quantity array of delay times (time between formation and event).
+
+    Returns:
+    - origin_redshift_values (np.ndarray): Array of calculated birth redshifts for the events.
+      Values outside the valid range are set to -1.
+
+    Example:
+    ```python
+    config = {
+        "logger": logger,
+        "cosmology": cosmology,
+        "redshift_interpolator_max_redshift": 10.0,
+        "interpolators": {
+            "lookback_time_to_redshift_interpolator": interpolator
+        },
+    }
+    convolution_redshift_value = 0.5
+    data_dict = {"delay_time": np.array([1.0, 2.0]) * u.Gyr}
+    birth_redshifts = calculate_origin_redshift_array(config, convolution_redshift_value, data_dict)
+    ```
+
     """
 
     config["logger"].debug(

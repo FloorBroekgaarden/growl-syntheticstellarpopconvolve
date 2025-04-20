@@ -24,12 +24,16 @@ import datetime
 import os
 import sys
 
-import m2r2
 from git import Repo
 
 from syntheticstellarpopconvolve.default_convolution_config import (
     default_convolution_config_dict,
-    write_default_settings_to_rst_file,
+)
+from syntheticstellarpopconvolve.default_convolution_instruction import (
+    default_convolution_instruction_dict,
+)
+from syntheticstellarpopconvolve.docs import (
+    write_convolution_config_and_instruction_documentation_to_rst_file,
 )
 
 
@@ -92,22 +96,22 @@ Generated on Synthetic Stellar Pop Convolve branch {sspc_git_branch_name}: <a hr
         outfile_filehandle.write(formatted_text)
 
 
-#
-def patched_m2r2_setup(app):
-    """
-    Function to handle the markdown parsing better
-    """
+# #
+# def patched_m2r2_setup(app):
+#     """
+#     Function to handle the markdown parsing better
+#     """
 
-    try:
-        return current_m2r2_setup(app)
-    except AttributeError:
-        app.add_source_suffix(".md", "markdown")
-        app.add_source_parser(m2r2.M2RParser)
-    return dict(
-        version=m2r2.__version__,
-        parallel_read_safe=True,
-        parallel_write_safe=True,
-    )
+#     try:
+#         return current_m2r2_setup(app)
+#     except AttributeError:
+#         app.add_source_suffix(".md", "markdown")
+#         app.add_source_parser(m2r2.M2RParser)
+#     return dict(
+#         version=m2r2.__version__,
+#         parallel_read_safe=True,
+#         parallel_write_safe=True,
+#     )
 
 
 # Include paths for python code
@@ -136,7 +140,8 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "hawkmoth",
-    "m2r2",
+    # "m2r2",
+    "myst_parser",
     "sphinx_rtd_theme",
     "sphinx_autodoc_typehints",  # https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
     "nbsphinx",
@@ -166,7 +171,12 @@ napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
 
-source_suffix = [".rst", ".md"]
+# source_suffix = [".rst", ".md"]
+
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -197,16 +207,22 @@ html_css_files = [
 ]
 
 
-"""Patching m2r2"""
-current_m2r2_setup = m2r2.setup
+#######
+# logo
+html_logo = "_static/logo/sspc_logo.png"
 
-#
-m2r2.setup = patched_m2r2_setup
 
-print("Generating default_convolution_config.rst")
-write_default_settings_to_rst_file(
-    options_defaults_dict=default_convolution_config_dict,
-    output_file="default_convolution_config.rst",
+# """Patching m2r2"""
+# current_m2r2_setup = m2r2.setup
+
+# #
+# m2r2.setup = patched_m2r2_setup
+
+print("Generating convolution_documentation.rst")
+write_convolution_config_and_instruction_documentation_to_rst_file(
+    convolution_config_defaults_dict=default_convolution_config_dict,
+    convolution_instruction_defaults_dict=default_convolution_instruction_dict,
+    output_file="convolution_documentation.rst",
 )
 print("Done")
 

@@ -30,7 +30,10 @@ class test_store_redshift_shell_info(unittest.TestCase):
         # Set up SFR
         convolution_config["SFR_info"] = {
             "redshift_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         #
@@ -82,7 +85,10 @@ class test_store_redshift_shell_info(unittest.TestCase):
         # Set up SFR
         convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]),
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         #

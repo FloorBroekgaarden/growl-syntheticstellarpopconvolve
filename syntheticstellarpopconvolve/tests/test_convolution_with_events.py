@@ -6,7 +6,7 @@ TODO: test things with multiply SFR histories
 """
 
 import copy
-import json
+import logging
 import os
 import unittest
 
@@ -14,10 +14,16 @@ import astropy.units as u
 import h5py
 import numpy as np
 import pandas as pd
-import pkg_resources
 
-from syntheticstellarpopconvolve import convolve, default_convolution_config
-from syntheticstellarpopconvolve.general_functions import temp_dir
+from syntheticstellarpopconvolve import (
+    convolve,
+    default_convolution_config,
+    default_convolution_instruction,
+)
+from syntheticstellarpopconvolve.general_functions import (
+    generate_boilerplate_outputfile,
+    temp_dir,
+)
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "test_convolution_with_events", clean_path=True
@@ -31,8 +37,8 @@ class test_convolution_with_events(unittest.TestCase):
         """ """
 
         #
-        input_hdf5_filename = os.path.join(TMP_DIR, "input_hdf5_sfr_only.h5")
         output_hdf5_filename = os.path.join(TMP_DIR, "output_hdf5_sfr_only.h5")
+        generate_boilerplate_outputfile(output_hdf5_filename)
 
         ##############
         # SET UP DATA
@@ -42,45 +48,21 @@ class test_convolution_with_events(unittest.TestCase):
         }
         dummy_df = pd.DataFrame.from_records(dummy_data)
 
-        #############
-        # create input HDF5 file
-        with h5py.File(input_hdf5_filename, "w") as input_hdf5_file:
-
-            ######################
-            # Create groups
-            input_hdf5_file.create_group("input_data")
-            input_hdf5_file.create_group("input_data/events")
-            input_hdf5_file.create_group("config")
-
-            ###############
-            # Readout population settings
-            population_settings_filename = pkg_resources.resource_filename(
-                "syntheticstellarpopconvolve",
-                "example_data/example_population_settings.json",
-            )
-
-            with open(population_settings_filename, "r") as f:
-                population_settings = json.loads(f.read())
-
-            # Delete some stuff from the settings
-            del population_settings["population_settings"]["bse_options"]["metallicity"]
-
-            # Write population config to file
-            input_hdf5_file.create_dataset(
-                "config/population", data=json.dumps(population_settings)
-            )
-
         ##############
         # Store data in pandas
-        dummy_df.to_hdf(input_hdf5_filename, key="input_data/events/{}".format("dummy"))
+        dummy_df.to_hdf(output_hdf5_filename, key="input_data/{}".format("dummy"))
 
         #
         convolution_config = copy.copy(default_convolution_config)
+        convolution_config["logger"].setLevel(logging.CRITICAL)
 
         # Set up SFR
         convolution_config["SFR_info"] = {
             "lookback_time_bin_edges": np.array([0, 1, 2, 3, 4, 5]) * u.yr,
-            "starformation_array": np.array([1, 1, 1, 1, 1]) * u.Msun / u.yr / u.Gpc**3,
+            "starformation_rate_array": np.array([1, 1, 1, 1, 1])
+            * u.Msun
+            / u.yr
+            / u.Gpc**3,
         }
 
         # set up convolution bins
@@ -92,7 +74,6 @@ class test_convolution_with_events(unittest.TestCase):
         convolution_config["time_type"] = "lookback_time"
 
         #
-        convolution_config["input_filename"] = input_hdf5_filename
         convolution_config["output_filename"] = output_hdf5_filename
 
         convolution_config["redshift_interpolator_data_output_filename"] = os.path.join(
@@ -102,17 +83,16 @@ class test_convolution_with_events(unittest.TestCase):
         #
         convolution_config["convolution_instructions"] = [
             {
-                "input_data_type": "event",
+                **default_convolution_instruction,
                 "input_data_name": "dummy",
                 "output_data_name": "dummy",
+                "convolution_type": "integrate",
                 "data_column_dict": {
                     "delay_time": "delay_time",
-                    "yield_rate": "probability",
+                    "normalized_yield": "probability",
                 },
-                "ignore_metallicity": True,
             },
         ]
-        # convolution_config["logger"].setLevel("DEBUG")
 
         #
         convolution_config["tmp_dir"] = os.path.join(TMP_DIR, "tmp")
@@ -125,25 +105,25 @@ class test_convolution_with_events(unittest.TestCase):
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/0.5 yr"
+                "output_data/dummy/dummy/convolution_results/0.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/1.5 yr"
+                "output_data/dummy/dummy/convolution_results/1.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 4])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/2.5 yr"
+                "output_data/dummy/dummy/convolution_results/2.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 3, 0])))
 
             #
             arr_ = output_hdf5_file[
-                "output_data/event/dummy/dummy/convolved_array/3.5 yr"
+                "output_data/dummy/dummy/convolution_results/3.5 yr/yield"
             ][()]
             self.assertTrue(np.array_equal(arr_, np.array([1, 2, 0, 0])))
 

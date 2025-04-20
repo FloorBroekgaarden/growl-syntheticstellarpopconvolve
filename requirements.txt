@@ -9,3 +9,4 @@ psutil
 tables
 simplejson
 halo
+matplotlib

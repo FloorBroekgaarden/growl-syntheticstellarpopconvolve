@@ -4,18 +4,17 @@ Testcases for ensemble_utils.py file
 
 import unittest
 
+import numpy as np
 import pandas as pd
 
 from syntheticstellarpopconvolve.ensemble_utils import (
     convert_ensemble_to_dataframe,
     find_columnames_recursively,
+    flatten_data_ensemble1d,
+    inflate_ensemble_with_lists_and_named_layers,
+    inflate_ensemble_with_lists_without_named_layers,
 )
-
-# from syntheticstellarpopconvolve import default_convolution_config
 from syntheticstellarpopconvolve.general_functions import temp_dir
-
-# import numpy as np
-
 
 TMP_DIR = temp_dir(
     "tests", "tests_convolution", "tests_ensemble_utils", clean_path=True
@@ -108,6 +107,205 @@ class test_convert_ensemble_to_dataframe(unittest.TestCase):
 
         expected_df = pd.DataFrame.from_records(records)
         self.assertTrue(df.equals(expected_df))
+
+
+class test_flatten_data_ensemble1d(unittest.TestCase):
+    def test_flatten_data_ensemble1d_no_named_key(self):
+        input_file = {1: 1, 2: 2}
+
+        flattened_data_ensemble1d = flatten_data_ensemble1d(input_file)
+
+        np.testing.assert_array_almost_equal(
+            flattened_data_ensemble1d, np.array([[1.0, 2.0], [1.0, 2.0]])
+        )
+
+    def test_flatten_data_ensemble1d(self):
+        input_file = {"a": {1: 1, 2: 2}}
+
+        flattened_data_ensemble1d = flatten_data_ensemble1d(input_file, "a")
+
+        np.testing.assert_array_almost_equal(
+            flattened_data_ensemble1d, np.array([[1.0, 2.0], [1.0, 2.0]])
+        )
+
+
+class test_inflate_ensemble_with_lists_and_named_layers(unittest.TestCase):
+    def setUp(self):
+        self.example_ensemble_data = {
+            "a": {
+                "5": {
+                    "b": {
+                        "1": 0.5,
+                        "2": 0.5,
+                    }
+                },
+                "6": {
+                    "b": {
+                        "3": 0.5,
+                        "4": 0.5,
+                    }
+                },
+                "7": {
+                    "b": {
+                        "8": 0.5,
+                        "9": 0.5,
+                    }
+                },
+            }
+        }
+
+        # self.example_ensemble_data_2 = {
+        #     "ensemble_data": {
+        #         "a": {
+        #             "5": {
+        #                 "b": {
+        #                     "1": 0.5,
+        #                     "2": 0.5,
+        #                 }
+        #             },
+        #             "6": {
+        #                 "b": {
+        #                     "3": 0.5,
+        #                     "4": 0.5,
+        #                 }
+        #             },
+        #             "7": {
+        #                 "b": {
+        #                     "8": 0.5,
+        #                     "9": 0.5,
+        #                 }
+        #             },
+        #         }
+        #     }
+        # }
+
+    def test_named_layers(self):
+        inflated_ensemble = inflate_ensemble_with_lists_and_named_layers(
+            self.example_ensemble_data
+        )
+        expected_result = [
+            ["5", "5", "6", "6", "7", "7"],
+            ["1", "2", "3", "4", "8", "9"],
+            [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+        ]
+        self.assertEqual(expected_result, inflated_ensemble)
+
+    # def test_named_layers(self):
+    #     # Test with named layers
+    #     df = convert_ensemble_to_dataframe(
+    #         self.example_ensemble_data, contains_named_layers=True
+    #     )
+    #     self.assertEqual(list(df.columns), ["a", "b", "probability"])
+    #     self.assertEqual(len(df), 6)
+
+    # def test_unnamed_layers_with_columnames(self):
+    #     # Test without named layers but with provided column names
+    #     columnames = ["custom1", "a", "custom2", "b"]
+    #     df = convert_ensemble_to_dataframe(
+    #         self.example_ensemble_data,
+    #         contains_named_layers=False,
+    #         columnames=columnames,
+    #     )
+    #     self.assertEqual(list(df.columns), columnames + ["probability"])
+    #     self.assertEqual(len(df), 6)
+
+    # def test_unnamed_layers_without_columnames(self):
+    #     # Test without named layers and without column names (should raise ValueError)
+    #     with self.assertRaises(ValueError):
+    #         convert_ensemble_to_dataframe(
+    #             self.example_ensemble_data, contains_named_layers=False
+    #         )
+
+    # def test_named_layers_2(self):
+    #     # Test with named layers
+    #     df = convert_ensemble_to_dataframe(
+    #         self.example_ensemble_data_2, contains_named_layers=True
+    #     )
+    #     self.assertEqual(list(df.columns), ["a", "b", "probability"])
+    #     print(df)
+    #     self.assertEqual(len(df), 6)
+
+    # def test_unnamed_layers_with_columnames_2(self):
+    #     # Test without named layers but with provided column names
+    #     columnames = ["ensemble", "custom1", "a", "custom2", "b"]
+    #     df = convert_ensemble_to_dataframe(
+    #         self.example_ensemble_data_2, contains_named_layers=False, columnames=columnames
+    #     )
+    #     self.assertEqual(list(df.columns), columnames+["probability"])
+    #     self.assertEqual(len(df), 6)
+
+    # def test_unnamed_layers_without_columnames_2(self):
+    #     # Test without named layers and without column names (should raise ValueError)
+    #     with self.assertRaises(ValueError):
+    #         convert_ensemble_to_dataframe(self.example_ensemble_data_2, contains_named_layers=False)
+
+
+class test_inflate_ensemble_with_lists_without_named_layers(unittest.TestCase):
+    def setUp(self):
+        self.example_ensemble_data = {
+            5: {1: 0.5, 2: 0.5},
+            6: {3: 0.5, 4: 0.5},
+        }
+
+        self.example_ensemble_data_2 = {
+            1: {5: {1: 0.5, 2: 0.5}, 6: {3: 0.5, 4: 0.5}},
+            2: {5: {1: 0.5, 2: 0.5}, 6: {3: 0.5, 4: 0.5}},
+        }
+
+    def test_inflate_ensemble_with_lists_without_named_layers(self):
+        inflated_ensemble = inflate_ensemble_with_lists_without_named_layers(
+            self.example_ensemble_data
+        )
+        expected_result = [[5, 5, 6, 6], [1.0, 2.0, 3.0, 4.0], [0.5, 0.5, 0.5, 0.5]]
+        self.assertEqual(expected_result, inflated_ensemble)
+
+    def test_inflate_ensemble_with_lists_without_named_layers_2(self):
+        inflated_ensemble = inflate_ensemble_with_lists_without_named_layers(
+            self.example_ensemble_data_2
+        )
+        expected_result = [
+            [1, 1, 1, 1, 2, 2, 2, 2],
+            [5, 5, 6, 6, 5, 5, 6, 6],
+            [1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0],
+            [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+        ]
+        self.assertEqual(expected_result, inflated_ensemble)
+
+    # def test_unnamed_layers_with_columnames(self):
+    #     # Test without named layers but with provided column names
+    #     columnames = ["a", "b"]
+    #     df = convert_ensemble_to_dataframe(
+    #         self.example_ensemble_data,
+    #         contains_named_layers=False,
+    #         columnames=columnames,
+    #     )
+    #     self.assertEqual(list(df.columns), columnames + ["probability"])
+    #     self.assertEqual(len(df), 6)
+
+    # def test_named_layers_without_columnames(self):
+    #     # Test named layers
+    #     with self.assertRaises(ValueError):
+    #         convert_ensemble_to_dataframe(
+    #             self.example_ensemble_data, contains_named_layers=False
+    #         )
+
+    # def test_unnamed_layers_with_columnames_2(self):
+    #     # Test without named layers but with provided column names
+    #     columnames = ["a", "b", "c"]
+    #     df = convert_ensemble_to_dataframe(
+    #         self.example_ensemble_data_2,
+    #         contains_named_layers=False,
+    #         columnames=columnames,
+    #     )
+    #     self.assertEqual(list(df.columns), columnames + ["probability"])
+    #     self.assertEqual(len(df), 18)
+
+    # def test_unnamed_layers_without_columnames_2(self):
+    #     # Test without named layers and without column names (should raise ValueError)
+    #     with self.assertRaises(ValueError):
+    #         convert_ensemble_to_dataframe(
+    #             self.example_ensemble_data_2, contains_named_layers=False
+    #         )
 
 
 # class test__get_ensemble_structure(unittest.TestCase):
@@ -671,163 +869,5 @@ class test_convert_ensemble_to_dataframe(unittest.TestCase):
 #             get_ensemble_structure(self.ensemble_named_layer, named_layer_list=[1])
 
 
-# class test_convert_ensemble_to_dataframe_with_named_layers(unittest.TestCase):
-#     def setUp(self):
-#         self.example_ensemble_data = {
-#             "a": {
-#                 "5": {
-#                     "b": {
-#                         "1": 0.5,
-#                         "2": 0.5,
-#                     }
-#                 },
-#                 "6": {
-#                     "b": {
-#                         "3": 0.5,
-#                         "4": 0.5,
-#                     }
-#                 },
-#                 "7": {
-#                     "b": {
-#                         "8": 0.5,
-#                         "9": 0.5,
-#                     }
-#                 },
-#             }
-#         }
-
-#         # self.example_ensemble_data_2 = {
-#         #     "ensemble_data": {
-#         #         "a": {
-#         #             "5": {
-#         #                 "b": {
-#         #                     "1": 0.5,
-#         #                     "2": 0.5,
-#         #                 }
-#         #             },
-#         #             "6": {
-#         #                 "b": {
-#         #                     "3": 0.5,
-#         #                     "4": 0.5,
-#         #                 }
-#         #             },
-#         #             "7": {
-#         #                 "b": {
-#         #                     "8": 0.5,
-#         #                     "9": 0.5,
-#         #                 }
-#         #             },
-#         #         }
-#         #     }
-#         # }
-
-#     def test_named_layers(self):
-#         # Test with named layers
-#         df = convert_ensemble_to_dataframe(
-#             self.example_ensemble_data, contains_named_layers=True
-#         )
-#         self.assertEqual(list(df.columns), ["a", "b", "probability"])
-#         self.assertEqual(len(df), 6)
-
-#     def test_unnamed_layers_with_columnames(self):
-#         # Test without named layers but with provided column names
-#         columnames = ["custom1", "a", "custom2", "b"]
-#         df = convert_ensemble_to_dataframe(
-#             self.example_ensemble_data,
-#             contains_named_layers=False,
-#             columnames=columnames,
-#         )
-#         self.assertEqual(list(df.columns), columnames + ["probability"])
-#         self.assertEqual(len(df), 6)
-
-#     def test_unnamed_layers_without_columnames(self):
-#         # Test without named layers and without column names (should raise ValueError)
-#         with self.assertRaises(ValueError):
-#             convert_ensemble_to_dataframe(
-#                 self.example_ensemble_data, contains_named_layers=False
-#             )
-
-#     # def test_named_layers_2(self):
-#     #     # Test with named layers
-#     #     df = convert_ensemble_to_dataframe(
-#     #         self.example_ensemble_data_2, contains_named_layers=True
-#     #     )
-#     #     self.assertEqual(list(df.columns), ["a", "b", "probability"])
-#     #     print(df)
-#     #     self.assertEqual(len(df), 6)
-
-#     # def test_unnamed_layers_with_columnames_2(self):
-#     #     # Test without named layers but with provided column names
-#     #     columnames = ["ensemble", "custom1", "a", "custom2", "b"]
-#     #     df = convert_ensemble_to_dataframe(
-#     #         self.example_ensemble_data_2, contains_named_layers=False, columnames=columnames
-#     #     )
-#     #     self.assertEqual(list(df.columns), columnames+["probability"])
-#     #     self.assertEqual(len(df), 6)
-
-#     # def test_unnamed_layers_without_columnames_2(self):
-#     #     # Test without named layers and without column names (should raise ValueError)
-#     #     with self.assertRaises(ValueError):
-#     #         convert_ensemble_to_dataframe(self.example_ensemble_data_2, contains_named_layers=False)
-
-
-# class test_convert_ensemble_to_dataframe_without_named_layers(unittest.TestCase):
-#     def setUp(self):
-#         self.example_ensemble_data = {
-#             5: {1: 0.5, 2: 0.5},
-#             6: {3: 0.5, 4: 0.5},
-#             7: {8: 0.25, 9: 0.5},
-#         }
-
-#         self.example_ensemble_data_2 = {
-#             1: {5: {1: 0.5, 2: 0.5}, 6: {3: 0.5, 4: 0.5}, 7: {8: 0.25, 9: 0.5}},
-#             2: {5: {1: 0.5, 2: 0.5}, 6: {3: 0.5, 4: 0.5}, 7: {8: 0.25, 9: 0.5}},
-#             3: {5: {1: 0.5, 2: 0.5}, 6: {3: 0.5, 4: 0.5}, 7: {8: 0.25, 9: 0.5}},
-#         }
-
-#     def test_unnamed_layers_with_columnames(self):
-#         # Test without named layers but with provided column names
-#         columnames = ["a", "b"]
-#         df = convert_ensemble_to_dataframe(
-#             self.example_ensemble_data,
-#             contains_named_layers=False,
-#             columnames=columnames,
-#         )
-#         self.assertEqual(list(df.columns), columnames + ["probability"])
-#         self.assertEqual(len(df), 6)
-
-#     def test_named_layers_without_columnames(self):
-#         # Test named layers
-#         with self.assertRaises(ValueError):
-#             convert_ensemble_to_dataframe(
-#                 self.example_ensemble_data, contains_named_layers=False
-#             )
-
-#     def test_unnamed_layers_with_columnames_2(self):
-#         # Test without named layers but with provided column names
-#         columnames = ["a", "b", "c"]
-#         df = convert_ensemble_to_dataframe(
-#             self.example_ensemble_data_2,
-#             contains_named_layers=False,
-#             columnames=columnames,
-#         )
-#         self.assertEqual(list(df.columns), columnames + ["probability"])
-#         self.assertEqual(len(df), 18)
-
-#     def test_unnamed_layers_without_columnames_2(self):
-#         # Test without named layers and without column names (should raise ValueError)
-#         with self.assertRaises(ValueError):
-#             convert_ensemble_to_dataframe(
-#                 self.example_ensemble_data_2, contains_named_layers=False
-#             )
-
-
 if __name__ == "__main__":
     unittest.main()
-#     # test_convert_ensemble_to_dataframe_obj = test_convert_ensemble_to_dataframe_with_named_layers()
-#     # test_convert_ensemble_to_dataframe_obj.setUp()
-#     # test_convert_ensemble_to_dataframe_obj.test_named_layers_2()
-
-#     # test_convert_ensemble_to_dataframe_obj = test_convert_ensemble_to_dataframe_without_named_layers()
-#     # test_convert_ensemble_to_dataframe_obj.setUp()
-#     # test_convert_ensemble_to_dataframe_obj.test_unnamed_layers_without_columnames_2()

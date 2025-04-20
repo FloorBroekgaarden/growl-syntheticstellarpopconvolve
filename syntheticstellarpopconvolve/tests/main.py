@@ -11,6 +11,7 @@ from syntheticstellarpopconvolve.tests.test_calculate_birth_redshift_array impor
     test_calculate_origin_redshift_array,
 )
 from syntheticstellarpopconvolve.tests.test_calculate_starformation_rate import (
+    test_calculate_digitized_sfr_rates_binned_data_for_backward_convolution,
     test_calculate_digitized_sfr_rates_non_binned_data_for_backward_convolution,
     test_calculate_origin_time_array,
     test_general_sfr_digitise_function,
@@ -20,9 +21,12 @@ from syntheticstellarpopconvolve.tests.test_check_and_prepare_output_file import
 )
 from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_config import (
     test_check_convolution_config,
+    test_update_convolution_config,
 )
 from syntheticstellarpopconvolve.tests.test_check_and_update_convolution_instruction import (
+    test_check_and_update_convolution_instructions,
     test_check_convolution_instruction,
+    test_check_delay_time_data_bin_info_dict,
     test_check_metallicity,
 )
 from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
@@ -30,7 +34,12 @@ from syntheticstellarpopconvolve.tests.test_check_and_update_sfr_dict import (
     test_pad_sfr_dict,
     test_update_sfr_dict,
 )
+from syntheticstellarpopconvolve.tests.test_convolution_by_integration import (
+    test_convolution_by_integration_post_convolution_hook_wrapper,
+)
 from syntheticstellarpopconvolve.tests.test_convolution_by_sampling import (
+    test_convolution_by_sampling_post_convolution_hook_wrapper,
+    test_sample_systems,
     test_select_dict_entries_with_new_indices,
 )
 from syntheticstellarpopconvolve.tests.test_convolution_with_events import (
@@ -47,10 +56,8 @@ from syntheticstellarpopconvolve.tests.test_convolve_nonbinned_data_with_backwar
 )
 from syntheticstellarpopconvolve.tests.test_convolve_on_the_fly import (
     test_convolve_on_the_fly,
-)
-from syntheticstellarpopconvolve.tests.test_convolve_populations import (
-    test_extract_data,
-    test_generate_data_dict,
+    test_convolve_on_the_fly_post_convolution_hook_wrapper,
+    test_handle_call_on_the_fly_function,
 )
 from syntheticstellarpopconvolve.tests.test_cosmology_utils import (
     test_age_of_universe_to_redshift,
@@ -68,19 +75,31 @@ from syntheticstellarpopconvolve.tests.test_default_convolution_config import (
     test_logger_validation,
     test_unit_validation,
 )
-from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_calculate_digitized_sfr_rates,; test_calculate_origin_time_array,
+from syntheticstellarpopconvolve.tests.test_ensemble_utils import (
+    test_convert_ensemble_to_dataframe,
+    test_find_columnames_recursively,
+    test_flatten_data_ensemble1d,
+    test_inflate_ensemble_with_lists_and_named_layers,
+    test_inflate_ensemble_with_lists_without_named_layers,
+)
+from syntheticstellarpopconvolve.tests.test_general_functions import (
     test_calculate_bin_edges,
     test_calculate_bincenters,
     test_check_required,
     test_create_job_dict,
     test_create_time_bin_info_dict,
+    test_extract_data,
+    test_extract_unit_dict,
     test_generate_boilerplate_outputfile,
+    test_generate_data_dict,
     test_generate_group_name,
+    test_get_normalized_yield_unit,
     test_get_physical_dimensions,
     test_get_tmp_dir,
     test_get_username,
     test_handle_custom_scaling_or_conversion,
     test_has_unit,
+    test_is_mass_unit,
     test_is_time_unit,
     test_pad_function,
     test_sample_around_bin_center,
@@ -88,6 +107,7 @@ from syntheticstellarpopconvolve.tests.test_general_functions import (  # test_c
 )
 from syntheticstellarpopconvolve.tests.test_post_convolution_hook_routines import (
     test_extract_arguments,
+    test_handle_post_convolution_function,
 )
 from syntheticstellarpopconvolve.tests.test_prepare_redshift_interpolator import (
     test_create_interpolation_datasets,

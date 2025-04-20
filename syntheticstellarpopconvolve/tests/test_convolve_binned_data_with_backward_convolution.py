@@ -1,5 +1,7 @@
 """
 Tests for backward convolution of binned data.
+
+TODO: make sure metallicity weighting is covered as
 """
 
 import copy
@@ -62,9 +64,7 @@ def sample_post_convolution_function(
 
 
 class test_convolve_binned_data_with_backward_convolution(unittest.TestCase):
-    """
-    TODO: make a more complicated post convolution hook function test
-    """
+    """ """
 
     def setUp(self):
         #

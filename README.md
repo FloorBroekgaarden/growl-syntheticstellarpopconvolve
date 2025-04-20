@@ -9,15 +9,22 @@ stellar-population convolution code-base `Synthetic Stellar Pop Convolve
 repository](https://gitlab.com/dhendriks/syntheticstellarpopconvolve) as well
 as on [Pypi](https://pypi.org/project/syntheticstellarpopconvolve/).
 
+For detailed tutorials and use-case examples, check out the **tutorial notebooks**:
+📖 **[Example Notebooks](https://synthetic-stellar-pop-convolve.readthedocs.io/en/latest/example_notebooks.html)**
+
 **warning: the code is not fully released yet, some things may not work reliably**
 
 ## **Overview**
-**SSPC** (*Synthetic Stellar Pop Convolve*) is a Python package designed to convolve
-stellar population synthesis outputs ([binary_c](https://binary_c.gitlab.io/binary_c/)([-python](https://binary_c.gitlab.io/binary_c-python/)), [COMPAS](https://compas.science/), [COSMIC](https://cosmic-popsynth.github.io/COSMIC/), [SEVN](https://demoblack.com/catalog_codes/sevn-public-version/)) with star formation histories, enabling
-detailed predictions of astrophysical event rates over cosmic time. By
-integrating synthetic stellar and binary evolution models with cosmological
-and observational constraints, SSPC helps generate realistic event
-distributions.
+**SSPC** (*Synthetic Stellar Pop Convolve*) is a Python package designed to
+convolve stellar population synthesis outputs
+([binary_c](https://binary_c.gitlab.io/binary_c/)([-python](https://binary_c.gitlab.io/binary_c-python/)),
+[COMPAS](https://compas.science/),
+[COSMIC](https://cosmic-popsynth.github.io/COSMIC/),
+[SEVN](https://demoblack.com/catalog_codes/sevn-public-version/)) with star
+formation histories, enabling detailed predictions of astrophysical event
+rates over cosmic time. By integrating synthetic stellar and binary evolution
+models with cosmological and observational constraints, SSPC helps generate
+realistic event distributions.
 
 The code was originally developed by [David
 Hendriks](https://www.davidhendriks.com/) (with invaluable help from [Lieke
@@ -61,12 +68,13 @@ SSPC provides a robust framework for convolving stellar population synthesis dat
 - ✅ **Multiprocessing and sequential convolution support**: Uses multiprocessing when each convolution target time is independent, but can use sequential convolution when the next step depends on the previous one.
 - ✅ **Astropy support**: Uses Astropy units to perform unit checks and dimensional analysis of yields.
 - ✅ **Post-convolution processing**: Allows user-provided **post-convolution** functions to refine results (e.g., LISA frequency range selection), re-weighting based on detection probability, and
+- ✅ **Chunked convolution** for large datasets that don’t fit into memory (after convolution-by-sampling).
 
 Planned features:
 
-- **Chunked convolution** for large datasets that don’t fit into memory.
 - **Better support for spatially resolved star-formation rates**.
-- **Support for star formation using generators** for use-cases where the previous convolution time affects the star formation of the next convolution time.
+- **Support for star formation using custom generators** for use-cases where the previous convolution time affects the star formation (or metallicity distribution) of the next convolution time.
+- **Support for uncertainty propagation of star-formation rates**.
 
 ---
 

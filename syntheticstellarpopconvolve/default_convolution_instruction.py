@@ -30,7 +30,7 @@ default_convolution_instruction_dict = {
     },
     "chunk_total": {
         "value": 0,
-        "description": "Total number of chunks to be considered. Should be an integer rounded up.",
+        "description": "Total number of chunks to be considered. Should be an integer rounded up calculated as ceil(<total entries in input dataframe>/<chunk size>).",
         "validation": int,
     },
     "multiply_by_convolution_time_binsize": {

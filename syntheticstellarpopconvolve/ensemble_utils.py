@@ -982,56 +982,56 @@ from syntheticstellarpopconvolve.default_convolution_config import (
 # Inflation functions:
 
 
-def inflate_ensemble(ensemble_data):
-    """
-    Function to inflate an ensemble, taking all the values for each datalayer and making a rectangular grid for it
+# def inflate_ensemble(ensemble_data):
+#     """
+#     Function to inflate an ensemble, taking all the values for each datalayer and making a rectangular grid for it
 
-    The first value should be a namelayer
-    """
+#     The first value should be a namelayer
+#     """
 
-    parameter_name = list(ensemble_data.keys())[0]
+#     parameter_name = list(ensemble_data.keys())[0]
 
-    next_layer_keys = list(ensemble_data[parameter_name].keys())
+#     next_layer_keys = list(ensemble_data[parameter_name].keys())
 
-    first_of_next_next_layer = ensemble_data[parameter_name][next_layer_keys[0]]
-    is_final_layer = not isinstance(first_of_next_next_layer, (dict, OrderedDict))
+#     first_of_next_next_layer = ensemble_data[parameter_name][next_layer_keys[0]]
+#     is_final_layer = not isinstance(first_of_next_next_layer, (dict, OrderedDict))
 
-    # if this is the final layer, then handle this layer with the dedicated function
-    if is_final_layer:
-        flattened_data = flatten_data_ensemble1d(ensemble_data, parameter_name).T
-        return flattened_data
+#     # if this is the final layer, then handle this layer with the dedicated function
+#     if is_final_layer:
+#         flattened_data = flatten_data_ensemble1d(ensemble_data, parameter_name).T
+#         return flattened_data
 
-    # If its not the final layer, we should call this function again and return the result
-    combined_array = None
-    for valuekey in next_layer_keys:
-        # Check if its the final layer
-        next_next_layer = ensemble_data[parameter_name][valuekey]
+#     # If its not the final layer, we should call this function again and return the result
+#     combined_array = None
+#     for valuekey in next_layer_keys:
+#         # Check if its the final layer
+#         next_next_layer = ensemble_data[parameter_name][valuekey]
 
-        # combine result with the current value key
-        res = inflate_ensemble(next_next_layer)
+#         # combine result with the current value key
+#         res = inflate_ensemble(next_next_layer)
 
-        # look at how many rows we have
-        rows = res.shape[0]
-        cols = res.shape[-1]
+#         # look at how many rows we have
+#         rows = res.shape[0]
+#         cols = res.shape[-1]
 
-        # Get a column with the current valuekeys
-        new_column = np.array([float(valuekey)] * rows)
+#         # Get a column with the current valuekeys
+#         new_column = np.array([float(valuekey)] * rows)
 
-        # Create a new array with the shape that can fit the new column
-        new_array = np.zeros((rows, cols + 1))
+#         # Create a new array with the shape that can fit the new column
+#         new_array = np.zeros((rows, cols + 1))
 
-        # Set the new column as the first one and the rest in the rest
-        new_array[:, 0] = new_column
-        new_array[:, 1:] = res
+#         # Set the new column as the first one and the rest in the rest
+#         new_array[:, 0] = new_column
+#         new_array[:, 1:] = res
 
-        # Combine the arrays
-        if combined_array is None:
-            combined_array = new_array
-        else:
-            combined_array = np.append(combined_array, new_array, axis=0)
+#         # Combine the arrays
+#         if combined_array is None:
+#             combined_array = new_array
+#         else:
+#             combined_array = np.append(combined_array, new_array, axis=0)
 
-    # Return the results
-    return combined_array
+#     # Return the results
+#     return combined_array
 
 
 def flatten_data_ensemble1d(input_dict, named_subkey_1=None):
@@ -1052,18 +1052,18 @@ def flatten_data_ensemble1d(input_dict, named_subkey_1=None):
     }
     """
 
+    #
     if named_subkey_1 is None:
-        data = []
-        for key_1 in sorted(input_dict):
-            value = input_dict[key_1]
-            data.append([key_1, float(value)])
-        data = np.array(data).T
+        _input_dict = input_dict
     else:
-        data = []
-        for key_1 in sorted(input_dict[named_subkey_1]):
-            value = input_dict[named_subkey_1][key_1]
-            data.append([key_1, float(value)])
-        data = np.array(data).T
+        _input_dict = input_dict[named_subkey_1]
+
+    #
+    data = []
+    for key_1 in sorted(_input_dict):
+        value = _input_dict[key_1]
+        data.append([key_1, float(value)])
+    data = np.array(data).T
 
     return data
 

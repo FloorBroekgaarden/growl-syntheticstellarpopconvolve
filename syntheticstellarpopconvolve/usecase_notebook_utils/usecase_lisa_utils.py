@@ -487,26 +487,26 @@ def sample_distances_and_angles_interpolated(NBin, Hr, inverse_cdf):  # DH0001
     YSet_rel = positions[:, 1]
     ZSet_rel = positions[:, 2]
 
-	# Compute distance from the Sun
-	d = np.sqrt(XSet_rel**2 + YSet_rel**2 + ZSet_rel**2) * u.kpc  # Distance
+    # Compute distance from the Sun
+    d = np.sqrt(XSet_rel**2 + YSet_rel**2 + ZSet_rel**2) * u.kpc  # Distance
 
-	# Compute Galactic longitude and latitude
-	l = np.arctan2(y, x_sun_rel) * u.rad  # Galactic longitude
-	b = np.arcsin(z / d) * u.rad  # Galactic latitude
+    # Compute Galactic longitude and latitude
+    l = np.arctan2(y, x_sun_rel) * u.rad  # Galactic longitude
+    b = np.arcsin(z / d) * u.rad  # Galactic latitude
 
-	# Convert to degrees
-	l = l.to(u.deg)
-	b = b.to(u.deg)
+    # Convert to degrees
+    l = l.to(u.deg)
+    b = b.to(u.deg)
 
-	# Create SkyCoord in Galactic frame
-	galactic_coords = SkyCoord(l=l, b=b, distance=d, frame="galactic")
+    # Create SkyCoord in Galactic frame
+    galactic_coords = SkyCoord(l=l, b=b, distance=d, frame="galactic")
 
-	# Convert to ICRS (RA/Dec)
-	icrs_coords = galactic_coords.transform_to("icrs")
+    # Convert to ICRS (RA/Dec)
+    icrs_coords = galactic_coords.transform_to("icrs")
 
-	# Extract RA and Dec
-	ra = icrs_coords.ra.deg
-	dec = icrs_coords.dec.deg
+    # Extract RA and Dec
+    ra = icrs_coords.ra.deg
+    dec = icrs_coords.dec.deg
 
     return d, ra, dec
 

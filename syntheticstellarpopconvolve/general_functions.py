@@ -7,10 +7,10 @@ Mostly unsorted, likely better placed in together with related functionality.
 import functools
 import json
 import logging
-import math
 import os
 import shutil
 import tempfile
+import warnings
 from inspect import isfunction
 
 import astropy.units as u
@@ -26,17 +26,165 @@ logger = logging.getLogger(__name__)
 dimensionless_unit = u.m / u.m
 
 
-def get_total_chunk_number(config, convolution_instruction):
+def maybe_strip_scaled_dimensionless(q):
+    if not isinstance(q, u.Quantity):
+        return q
+    try:
+        scale = q.to_value(u.dimensionless_unscaled)
+        warnings.warn(
+            f"Detected dimensionless-but-scaled quantity: {q.unit}. Stripping units."
+        )
+        return scale
+    except u.UnitConversionError:
+        return q
+
+
+def print_hdf5_structure(f, subkey=None, detailed=True):
+    if detailed:
+
+        def _print_tree(name, obj):  # DH0001
+            if isinstance(obj, h5py.Dataset):
+                print(f"{name}: Dataset, shape={obj.shape}, dtype={obj.dtype}")
+            elif isinstance(obj, h5py.Group):
+                print(f"{name}: Group")
+
+    else:
+
+        def _print_tree(name, obj):  # DH0001
+            print(subkey + "/" + name)
+
+    if subkey is not None:
+        f[subkey].visititems(_print_tree)
+    else:
+        f.visititems(_print_tree)
+
+
+def generate_data_dict(config, convolution_instruction):
     """
-    Function to determine the total number of chunks required to read out an input dataset with a chunk_number chunk size.
+    Function to generate the data dict.
     """
 
-    with pd.HDFStore(config["output_filename"], "r") as store:
-        key = "/input_data/{}".format(convolution_instruction["input_data_name"])
-        n_rows = store.get_storer(key).nrows
-        print(n_rows)
+    # on the fly sampling generates its own data
+    if "convolution_type" in convolution_instruction:
+        if convolution_instruction["convolution_type"] == "on-the-fly":
+            return config, {}, convolution_instruction
 
-    return int(math.ceil(n_rows / convolution_instruction["chunk_size"]))
+    #
+    config["logger"].debug(
+        "Generating data_dict using the extractor function {}".format(
+            extract_data.__name__,
+        )
+    )
+
+    # otherwise extract
+    config, data_dict, convolution_instruction = extract_data(
+        config=config, convolution_instruction=convolution_instruction
+    )
+
+    return config, data_dict, convolution_instruction
+
+
+def extract_data(config, convolution_instruction):
+    """
+    Function to extract the data from the correct table and store the information in the correct column.
+
+    Only extracts what is required by the data column dict
+    """
+
+    #
+    data_dict = {}
+
+    if convolution_instruction["chunked_readout"]:
+
+        chunk_number = convolution_instruction["chunk_number"]
+        chunksize = convolution_instruction["chunk_size"]  # Number of rows per chunk
+
+        # Calculate row range
+        start = chunk_number * chunksize
+        stop = start + chunksize
+
+        #
+        df = pd.read_hdf(
+            config["output_filename"],
+            "/input_data/{}".format(convolution_instruction["input_data_name"]),
+            start=start,
+            stop=stop,
+        )
+    else:
+        #
+        df = pd.read_hdf(
+            config["output_filename"],
+            "/input_data/{}".format(convolution_instruction["input_data_name"]),
+        )
+
+    data_column_dict = convolution_instruction["data_column_dict"]
+
+    # add all the columns to the data dictionary. This automatically handles the correct additional columns for the extra weights function
+    for column in data_column_dict.keys():
+        config["logger"].debug(
+            "Extracting {} as the {} data".format(data_column_dict[column], column)
+        )
+
+        # if its a string we just assume its the column name
+        if isinstance(data_column_dict[column], str):
+            data_dict[column] = df[data_column_dict[column]].to_numpy()
+
+            #################
+            # Handle unit for delay-time
+            if column == "delay_time":
+                data_dict[column] = (
+                    data_dict[column] * config["delay_time_default_unit"]
+                )
+
+        elif isinstance(data_column_dict[column], dict):
+            if "column_name" not in data_column_dict[column]:
+                raise ValueError(
+                    "Please provide the input-data column name through the 'column_name' key."
+                )
+
+            # extract data with the explicit column name entry
+            data = df[data_column_dict[column]["column_name"]].to_numpy()
+
+            #################
+            # Handle conversion
+            data = handle_custom_scaling_or_conversion(
+                config=config,
+                data_layer_or_column_dict_entry=data_column_dict[column],
+                value=data,
+            )
+
+            # Store
+            data_dict[column] = data
+
+            #################
+            # Handle unit for delay-time
+            # TODO: this should just take whatever unit is provided
+            if column == "delay_time":
+                if "unit" in data_column_dict[column].keys():
+                    unit = data_column_dict[column]["unit"]
+                else:
+                    unit = config["delay_time_default_unit"]
+
+                #
+                data_dict[column] = data_dict[column] * unit
+        else:
+            raise ValueError("input type not supported.")
+
+    ##########
+    # If we have binned data we should addd the delay time bin indices to the
+    if convolution_instruction["contains_binned_data"]:
+        data_dict["delay_time_data_bin_index"] = (
+            np.digitize(
+                data_dict["delay_time"].to(u.yr),
+                convolution_instruction["delay_time_data_bin_info_dict"][
+                    "delay_time_data_bin_edges"
+                ].to(u.yr),
+            )
+            - 1
+        )
+
+    #
+    return config, data_dict, convolution_instruction
 
 
 def sample_around_bin_center(bin_edges, values):

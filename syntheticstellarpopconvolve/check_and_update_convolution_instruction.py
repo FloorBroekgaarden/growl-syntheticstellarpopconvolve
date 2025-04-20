@@ -167,9 +167,9 @@ def check_convolution_instruction(convolution_instruction, convolution_config):
         )
 
 
-def check_and_update_convolution_instruction(
+def check_and_update_convolution_instruction(  # DH0001
     convolution_instruction, convolution_config
-):  # DH0001
+):
     """
     Function to check convolution instructions
     """

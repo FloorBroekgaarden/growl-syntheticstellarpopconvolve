@@ -77,6 +77,11 @@ setup(
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://gitlab.com/dhendriks/syntheticstellarpopconvolve",
+    project_urls={
+        "Documentation": "https://synthetic-stellar-pop-convolve.readthedocs.io/en/latest/",
+        "Source": "https://gitlab.com/dhendriks/syntheticstellarpopconvolve",
+        "Bug Tracker": "https://gitlab.com/dhendriks/syntheticstellarpopconvolve/-/issues",
+    },
     license="gpl",
     keywords=[
         "astrophysics",

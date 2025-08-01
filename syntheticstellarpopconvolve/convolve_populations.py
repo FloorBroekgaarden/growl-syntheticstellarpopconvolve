@@ -80,7 +80,7 @@ def handle_storing_convolution_results(  # DH0001
         store_convolution_result_entries(
             config=config,
             current_time_bin_group=current_time_bin_grp,
-            convolution_result=convolution_results["convolution_results"],
+            convolution_result=convolution_results,
         )
 
 

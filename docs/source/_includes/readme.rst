@@ -56,14 +56,17 @@ supernovae, compact object mergers, nucleosynthetic yields) by
 integrating stellar population synthesis outputs with **(cosmological)
 star formation rate (SFR) models**.
 
-SSPC is particularly useful for: - **Gravitational-wave astrophysics**
-(binary black hole/neutron star mergers). - **Supernova rate
-predictions** for different stellar environments. - **Galaxy chemical
-evolution modeling**, linking nucleosynthetic yields to cosmic star
-formation. - **Transient event forecasts**, such as tidal disruption
-events, gamma-ray bursts, and luminous red novae. - **Generalized
-stellar population modeling**, providing insight into the evolution of
-stellar populations over cosmic time.
+SSPC is particularly useful for:
+
+-  **Gravitational-wave astrophysics** (binary black hole/neutron star
+   mergers).
+-  **Supernova rate predictions** for different stellar environments.
+-  **Galaxy chemical evolution modeling**, linking nucleosynthetic
+   yields to cosmic star formation.
+-  **Transient event forecasts**, such as tidal disruption events,
+   gamma-ray bursts, and luminous red novae.
+-  **Generalized stellar population modeling**, providing insight into
+   the evolution of stellar populations over cosmic time.
 
 **Features**
 ------------
@@ -297,9 +300,11 @@ Run the following commands from the ``commands/`` directory:
 -----------------------
 
 If you have questions or suggestions, bugfixes, or feature requests,
-feel free to reach out via: - **Gitlab issue**: `Gitlab
-issue <https://gitlab.com/dhendriks/syntheticstellarpopconvolve/-/issues/new>`__
-- **Email**: mail@davidhendriks.com
+feel free to reach out via:
+
+-  **Gitlab issue**: `Gitlab
+   issue <https://gitlab.com/dhendriks/syntheticstellarpopconvolve/-/issues/new>`__
+-  **Email**: mail@davidhendriks.com
 
 Please help improve SSPC by reporting issues and suggesting new
 features!
@@ -309,7 +314,7 @@ features!
 **License**
 ~~~~~~~~~~~
 
-SSPC is released under the **MIT License**. See `LICENSE <LICENSE>`__
+SSPC is released under the **GPL License**. See `LICENSE <LICENSE>`__
 for details.
 
 .. |docstring coverage| image:: ./badges/docstring_coverage.svg

@@ -49,6 +49,7 @@ stellar population synthesis outputs with **(cosmological) star formation rate
 (SFR) models**.
 
 SSPC is particularly useful for:
+
 - **Gravitational-wave astrophysics** (binary black hole/neutron star mergers).
 - **Supernova rate predictions** for different stellar environments.
 - **Galaxy chemical evolution modeling**, linking nucleosynthetic yields to cosmic star formation.
@@ -220,6 +221,7 @@ Run the following commands from the `commands/` directory:
 ```bash
 ./generate_docs.sh
 ```
+
 📊 **Generate docstring & test coverage reports**:
 ```bash
 ./generate_reports.sh
@@ -229,6 +231,7 @@ Run the following commands from the `commands/` directory:
 
 ## **Community & Support**
 If you have questions or suggestions, bugfixes, or feature requests, feel free to reach out via:
+
 - **Gitlab issue**: [Gitlab issue](https://gitlab.com/dhendriks/syntheticstellarpopconvolve/-/issues/new)
 - **Email**: [mail@davidhendriks.com](mailto:mail@davidhendriks.com)
 
@@ -237,4 +240,4 @@ Please help improve SSPC by reporting issues and suggesting new features!
 ---
 
 ### **License**
-SSPC is released under the **MIT License**. See [LICENSE](LICENSE) for details.
+SSPC is released under the **GPL License**. See [LICENSE](LICENSE) for details.

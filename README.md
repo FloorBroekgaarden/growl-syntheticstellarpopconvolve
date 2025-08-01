@@ -154,10 +154,11 @@ with h5py.File(
 ) as output_hdf5file:
     groupname = "output_data/example/example/convolution_results/0.5 yr/"
 
-    data = output_hdf5file[groupname + "/yield"][()]
+    yield_data = output_hdf5file[groupname + "/yield"][()]
     unit_dict = extract_unit_dict(output_hdf5file, groupname)
 
-    print(data)
+    print(yield_data) # values
+    print(unit_dict) # units
 ```
 
 For more detailed examples, check out the **tutorial notebooks**:
@@ -227,10 +228,11 @@ Run the following commands from the `commands/` directory:
 ---
 
 ## **Community & Support**
-If you have questions or suggestions, feel free to reach out via:
+If you have questions or suggestions, bugfixes, or feature requests, feel free to reach out via:
+- **Gitlab issue**: [Gitlab issue](https://gitlab.com/dhendriks/syntheticstellarpopconvolve/-/issues/new)
 - **Email**: [mail@davidhendriks.com](mailto:mail@davidhendriks.com)
 
-Help improve SSPC by reporting issues and suggesting new features!
+Please help improve SSPC by reporting issues and suggesting new features!
 
 ---
 

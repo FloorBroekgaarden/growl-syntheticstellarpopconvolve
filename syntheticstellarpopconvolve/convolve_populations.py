@@ -9,6 +9,7 @@ import os
 import pickle
 import traceback
 import warnings
+import numpy as np
 from functools import partial
 
 import h5py
@@ -67,13 +68,13 @@ def handle_storing_convolution_results(  # DH0001
     else:
         # Create group
         current_time_bin_grp = grp.create_group(
-            "convolution_results/{}".format(str(bin_center))
+            "convolution_results/{}".format(str(np.round(bin_center,4)))
         )
 
         ############
         # handle storing entries and units
         config["logger"].debug(
-            "Storing convolution results of bin-center {}".format(str(bin_center))
+            "Storing convolution results of bin-center {}".format(str(np.round(bin_center,4)))
         )
 
         #

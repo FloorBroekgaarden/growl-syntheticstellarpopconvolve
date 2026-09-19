@@ -683,12 +683,14 @@ def handle_sequential_convolution(config, convolution_instruction, sfr_dict):  #
             # Readout group
             grp = output_hdf5file[full_groupname]
 
-            # Handle storing
+            # Handle storing. NOTE: unpack the inner results dict, as the
+            # multiprocessing path does via the pickle payload; passing the
+            # outer dict made h5py fail on an object-dtype entry.
             handle_storing_convolution_results(
                 config=config,
                 grp=grp,
                 bin_center=bin_center,
-                convolution_results=convolution_results,
+                convolution_results=convolution_results["convolution_results"],
             )
 
 

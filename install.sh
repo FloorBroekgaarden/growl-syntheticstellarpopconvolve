@@ -3,6 +3,7 @@
 # Script to install syntheticstellarpopconvolve in the current venv
 
 VERSION_NUMBER=$(grep -oP '__version__ = "\K[^"]+' syntheticstellarpopconvolve/_version.py | awk '{print $1}')
+VERSION_NUMBER=$"0.4" # fix for now
 
 echo "installing syntheticstellarpopconvolve version $VERSION_NUMBER"
 

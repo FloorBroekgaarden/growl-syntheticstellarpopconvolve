@@ -101,7 +101,7 @@ def store_convolution_result_entries(  # DH0001
             continue
 
         #
-        config["logger"].error(f"Storing {entry}")
+        config["logger"].debug(f"Storing {entry}")
 
         # unpack data
         entry_data = convolution_result[entry]
